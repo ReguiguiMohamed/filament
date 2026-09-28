@@ -3,6 +3,7 @@ package pipeline
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/apache/arrow-go/v18/arrow"
 
@@ -28,10 +29,16 @@ type partKey struct {
 	part     int
 }
 
+type schemaPreparation struct {
+	once sync.Once
+	err  error
+}
+
 type registeredSchema struct {
-	model rowmodel.Schema
-	arrow *arrow.Schema
-	plan  *transform.Plan // nil → the resource bypasses the transformer pool
+	model       rowmodel.Schema
+	preparation *schemaPreparation
+	arrow       *arrow.Schema
+	plan        *transform.Plan // nil → the resource bypasses the transformer pool
 }
 
 var _ arrowbatch.Inlet = (*inlet)(nil)
@@ -43,6 +50,9 @@ func (in *inlet) Builder(resource string, part int, supplied rowmodel.Schema) (a
 	key := partKey{resource: resource, part: part}
 	p.registryMu.Lock()
 	defer p.registryMu.Unlock()
+	if err := rowmodel.ValidateReservedFields(supplied); err != nil {
+		return nil, fmt.Errorf("pipeline: %w", err)
+	}
 	schema := supplied.Clone()
 	if schema.Resource == "" {
 		schema.Resource = resource
@@ -74,7 +84,7 @@ func (in *inlet) Builder(resource string, part int, supplied rowmodel.Schema) (a
 		if err != nil {
 			return nil, err
 		}
-		registered = registeredSchema{model: schema, arrow: want, plan: plan}
+		registered = registeredSchema{model: schema, arrow: want, preparation: &schemaPreparation{}, plan: plan}
 		p.schemas[resource] = registered
 	}
 	if _, exists := p.builders[key]; exists {
@@ -121,7 +131,7 @@ func (w *auditWriter) EndRow(meta rowmodel.Meta) error {
 // take the same channel as rows so a part's completion never overtakes its data.
 type slot struct {
 	p        *Pipeline
-	out      chan *arrowbatch.Batch
+	out      chan queuedBatch
 	resource string
 	part     int
 	seq      uint64
@@ -137,7 +147,9 @@ func (s *slot) Chunk(b *arrowbatch.Batch) error {
 	b.Resource = s.resource
 	b.Part = s.part
 	b.Seq = seq
-	b.Cursor = cursorOf(s.resource, s.part, b.Last, int(rows))
+	if s.p.stream == nil {
+		b.Cursor = cursorOf(s.resource, s.part, b.Last, int(rows))
+	}
 	if err := s.send(b); err != nil {
 		return err
 	}
@@ -169,12 +181,19 @@ func (s *slot) Drained(meta filament.RowMeta, total int) error {
 // send queues a batch, blocking on backpressure. It returns the pipeline error
 // (or ErrPipelineClosed) once the writer has given up, so a Source stops
 // extracting instead of spinning against a dead pipeline.
-func (s *slot) send(b *arrowbatch.Batch) error { return s.p.send(s.out, b) }
+func (s *slot) send(b *arrowbatch.Batch) error {
+	var epoch *filament.EpochRef
+	if s.p.stream != nil && s.p.stream.epoch != nil {
+		ref := *s.p.stream.epoch
+		epoch = &ref
+	}
+	return s.p.send(s.out, queuedBatch{batch: b, epoch: epoch})
+}
 
-// send queues b on ch, blocking on backpressure, until the pipeline gives up.
-func (p *Pipeline) send(ch chan *arrowbatch.Batch, b *arrowbatch.Batch) error {
+// send queues item on ch, blocking on backpressure, until the pipeline gives up.
+func (p *Pipeline) send(ch chan queuedBatch, item queuedBatch) error {
 	select {
-	case ch <- b:
+	case ch <- item:
 		return nil
 	case <-p.done:
 		if err := p.Err(); err != nil {

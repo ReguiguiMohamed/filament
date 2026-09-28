@@ -7,6 +7,7 @@ import { CatchBoundary } from "@tanstack/react-router";
 import FlexWrapper, { FlexDirection } from "@galaxy-io/dls/containers/FlexWrapper";
 import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
 import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import TextInput from "@galaxy-io/dls/inputs/TextInput";
 import Text, { TextSize } from "@galaxy-io/dls/text/Text";
 
 import { ConnectorKind, ReadMode, WriteMode } from "@/gen/ingestion/v1/common_pb";
@@ -32,7 +33,10 @@ import {
   usePipelineCanvasState,
 } from "@/pages/pipelines/canvas/providers/canvas/PipelineCanvasProvider";
 import type { CanvasEdge } from "@/pages/pipelines/canvas/types";
-import { getCanvasEdgeResourceLabel } from "@/pages/pipelines/canvas/utils";
+import {
+  getCanvasEdgeResourceLabel,
+  getDefaultDestinationResource,
+} from "@/pages/pipelines/canvas/utils";
 import {
   READ_MODE_TO_LABEL_MAP,
   WRITE_MODE_TO_LABEL_MAP,
@@ -53,7 +57,8 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
   const resource = getCanvasEdgeResource(edge);
 
   const {
-    isCdc,
+    isContinuous,
+    hasReadLevers,
     isLoading,
     isLoadingColumns,
     sourceConnectionId,
@@ -79,6 +84,7 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
   const writeMode =
     configuredWriteMode === WriteMode.UNSPECIFIED ? effectiveWriteMode : configuredWriteMode;
   const cursors = edge.data?.cursors ?? [];
+  const destinationResource = edge.data?.destinationResource ?? "";
 
   const buildRecommendedCursors = () =>
     coveredResources
@@ -140,6 +146,8 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
       cursors,
       transform,
     });
+  const handleDestinationChange = (value: string) =>
+    setEdgeConfig(edge.id, { readMode, writeMode, cursors, destinationResource: value.trim() });
 
   const cursorsByResource = new Map(cursors.map((cursor) => [cursor.resource, cursor.field]));
 
@@ -204,7 +212,7 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
           padding="12px"
         >
           <FlexWrapper direction={FlexDirection.COLUMN} gap={12} fillWidth>
-            {!isCdc && (
+            {hasReadLevers && (
               <SelectInput
                 label="Read mode"
                 options={readModeSelectOptions}
@@ -228,7 +236,20 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
               isDisabled={isReadOnly || isLoading}
               fillWidth
             />
-            {readMode === ReadMode.INCREMENTAL &&
+            {isContinuous && isNamedResource && (
+              <TextInput
+                label="Destination"
+                value={destinationResource}
+                onChange={handleDestinationChange}
+                placeholder={getDefaultDestinationResource(resource)}
+                variant={InputVariant.TERTIARY}
+                size={InputSize.LARGE}
+                isDisabled={isReadOnly}
+                fillWidth
+              />
+            )}
+            {hasReadLevers &&
+              readMode === ReadMode.INCREMENTAL &&
               coveredResources.map((resourceName) => (
                 <PipelineCanvasPanelResourceCursorField
                   key={resourceName}

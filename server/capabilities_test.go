@@ -84,7 +84,6 @@ func (leverSink) Spec() filament.SinkSpec {
 	return filament.SinkSpec{
 		Name: "leversink",
 		Capabilities: filament.SinkCapabilities{
-			Upsertable: true,
 			WritePolicies: filament.WriteCapabilities(
 				filament.IngestionFullReplace,
 				filament.IngestionFullUpsert,

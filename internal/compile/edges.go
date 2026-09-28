@@ -26,6 +26,7 @@ type routeGroup struct {
 	selectors     map[string]bool
 	cursorConfigs map[string]filament.ResourceCursorConfig
 	transforms    map[string]any // resource → steps, merged across the route's edges
+	destinations  map[string]string
 }
 
 // groupEdges collapses edges into per-route groups, preserving first-seen order.
@@ -33,6 +34,9 @@ type routeGroup struct {
 // the same resource (or two all-resources edges) with different read modes
 // conflict. All edges in a route must carry the same write mode.
 func groupEdges(edges []*ingestionv1.PipelineEdge, nodes map[string]*ingestionv1.PipelineNode) ([]*routeGroup, error) {
+	if err := ValidateDestinations(edges); err != nil {
+		return nil, err
+	}
 	byKey := map[string]*routeGroup{}
 	var ordered []*routeGroup
 	for _, edge := range edges {
@@ -64,6 +68,7 @@ func groupEdges(edges []*ingestionv1.PipelineEdge, nodes map[string]*ingestionv1
 				selectors:     map[string]bool{},
 				cursorConfigs: map[string]filament.ResourceCursorConfig{},
 				transforms:    map[string]any{},
+				destinations:  map[string]string{},
 			}
 			byKey[key] = group
 			ordered = append(ordered, group)
@@ -80,6 +85,9 @@ func groupEdges(edges []*ingestionv1.PipelineEdge, nodes map[string]*ingestionv1
 		resource := edge.GetResource()
 		if err := mergeTransform(group, edge); err != nil {
 			return nil, err
+		}
+		if label := edge.GetDestinationResource(); label != "" {
+			group.destinations[resource] = label
 		}
 		if previous, exists := group.readModes[resource]; exists && previous != readMode {
 			if resource == "" {

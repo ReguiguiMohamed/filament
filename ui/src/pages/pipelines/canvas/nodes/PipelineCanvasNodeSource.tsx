@@ -5,6 +5,7 @@ import { useNodeConnections } from "@xyflow/react";
 
 import { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 import type { Connection } from "@/gen/ingestion/v1/connections_pb";
+import type { Resource } from "@/gen/ingestion/v1/connectors_pb";
 import { DiscoverResourcesRequestSchema } from "@/gen/ingestion/v1/connectors_pb";
 
 import { CONNECTOR_KIND_TO_HANDLE_ID_MAP } from "@/pages/pipelines/canvas/constants";
@@ -29,18 +30,12 @@ const useSourceResources = (connectionId: Connection["id"]) => {
     options: { enabled: connectionId !== "", retry: false, networkMode: "always" },
   });
 
-  const tables = useMemo<PipelineCanvasNodeTableInfo[]>(
-    () =>
-      data?.resources.map((resource) => ({
-        name: resource.name,
-        isConnected: false,
-        hasTransform: false,
-        isInvalid: false,
-      })) ?? [],
+  const names = useMemo<Resource["name"][]>(
+    () => data?.resources.map((resource) => resource.name) ?? [],
     [data?.resources],
   );
 
-  return { tables, error, isLoading: isFetching, refresh: () => void refetch() };
+  return { names, error, isLoading: isFetching, refresh: () => void refetch() };
 };
 
 const PipelineCanvasNodeSource = memo(({ id, data, selected }: PipelineCanvasNodeSourceProps) => {
@@ -51,7 +46,7 @@ const PipelineCanvasNodeSource = memo(({ id, data, selected }: PipelineCanvasNod
   const { data: connectionsData } = useSuspenseListConnectionsQuery();
   const connection = connectionsData.connections.find((item) => item.id === data.connectionId);
   const {
-    tables: discoveredTables,
+    names: discoveredNames,
     error,
     isLoading,
     refresh,
@@ -64,7 +59,11 @@ const PipelineCanvasNodeSource = memo(({ id, data, selected }: PipelineCanvasNod
 
   const { edges } = usePipelineCanvasState();
   const { invalidEdgeIds } = usePipelineCanvasValidation();
-  const tables = useMemo(() => {
+  const tables = useMemo<PipelineCanvasNodeTableInfo[]>(() => {
+    const nodeHandleId = CONNECTOR_KIND_TO_HANDLE_ID_MAP[ConnectorKind.SOURCE];
+    const connectedNames = [...connectedHandleIds].filter(
+      (name): name is string => !!name && name !== nodeHandleId,
+    );
     const own = edges.filter((edge) => edge.source === id && edge.data?.transform !== undefined);
     // A resource routed to several sinks is invalid if any of its edges is.
     const transformed = new Map<string | null | undefined, boolean>();
@@ -74,13 +73,13 @@ const PipelineCanvasNodeSource = memo(({ id, data, selected }: PipelineCanvasNod
         (transformed.get(edge.sourceHandle) ?? false) || invalidEdgeIds.has(edge.id),
       );
     }
-    return discoveredTables.map((table) => ({
-      ...table,
-      isConnected: connectedHandleIds.has(table.name),
-      hasTransform: transformed.has(table.name),
-      isInvalid: transformed.get(table.name) ?? false,
+    return [...new Set([...discoveredNames, ...connectedNames])].map((name) => ({
+      name,
+      isConnected: connectedHandleIds.has(name),
+      hasTransform: transformed.has(name),
+      isInvalid: transformed.get(name) ?? false,
     }));
-  }, [discoveredTables, connectedHandleIds, edges, id, invalidEdgeIds]);
+  }, [discoveredNames, connectedHandleIds, edges, id, invalidEdgeIds]);
 
   return (
     <PipelineCanvasNode

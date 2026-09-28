@@ -44,8 +44,9 @@ const serializeEdgeConfig = ({
   writeMode,
   cursors,
   transform,
+  destinationResource,
 }: PipelineCanvasEdgeData): string =>
-  `${readMode}|${writeMode}|${cursors
+  `${JSON.stringify(destinationResource ?? "")}|${readMode}|${writeMode}|${cursors
     .map((cursor) => `${cursor.resource}:${cursor.field}:${cursor.lookbackSeconds}`)
     .sort()
     .join(";")}|${transform ? JSON.stringify(canonicalize(transform)) : ""}`;

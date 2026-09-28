@@ -48,6 +48,7 @@ export type PipelineCanvasEdgeTransform = JsonObject;
 
 export type PipelineCanvasEdgeData = Pick<PipelineEdge, "readMode" | "writeMode" | "cursors"> & {
   transform?: PipelineCanvasEdgeTransform;
+  destinationResource?: string;
 };
 
 export type CanvasEdge = Edge<PipelineCanvasEdgeData>;
