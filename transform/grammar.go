@@ -120,11 +120,12 @@ func grammarPath(pointer string) string {
 	tokens := strings.Split(pointer, "/")
 	var b strings.Builder
 	for i, tok := range tokens {
+		tok = pointerUnescape.Replace(tok)
 		switch {
-		case isIndex(tok):
-			fmt.Fprintf(&b, "[%s]", tok)
 		case i > 0 && (tokens[i-1] == "resources" || tokens[i-1] == "compute" || tokens[i-1] == "rename"):
 			fmt.Fprintf(&b, "[%q]", tok)
+		case isIndex(tok):
+			fmt.Fprintf(&b, "[%s]", tok)
 		case i == 0:
 			b.WriteString(tok)
 		default:
@@ -133,6 +134,9 @@ func grammarPath(pointer string) string {
 	}
 	return b.String()
 }
+
+// pointerUnescape decodes the JSON pointer escapes for "/" and "~".
+var pointerUnescape = strings.NewReplacer("~1", "/", "~0", "~")
 
 func isIndex(s string) bool {
 	if s == "" {

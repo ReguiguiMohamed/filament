@@ -115,7 +115,7 @@ func groupEdges(edges []*ingestionv1.PipelineEdge, nodes map[string]*ingestionv1
 // run. A resource-specific edge may only define its own resource, and two
 // edges may not define the same one.
 func mergeTransform(group *routeGroup, edge *ingestionv1.PipelineEdge) error {
-	if edge.GetTransform() == nil {
+	if !HasTransform(edge) {
 		return nil
 	}
 	resources, err := TransformResources(edge)
@@ -129,6 +129,12 @@ func mergeTransform(group *routeGroup, edge *ingestionv1.PipelineEdge) error {
 		group.transforms[resource] = steps
 	}
 	return nil
+}
+
+// HasTransform reports whether the edge carries a transform definition. An
+// empty object is the same as none: rows pass through unchanged.
+func HasTransform(edge *ingestionv1.PipelineEdge) bool {
+	return len(edge.GetTransform().GetFields()) > 0
 }
 
 // TransformResources parses an edge's transform against the grammar and

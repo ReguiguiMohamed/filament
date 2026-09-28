@@ -90,6 +90,7 @@ export const usePipelineCanvasValidation = (): PipelineCanvasValidation => {
     input: create(GetPipelineRequestSchema, { id, includeVersions: true }),
   });
   const currentVersion = pipelineData.pipeline?.currentVersion;
+  const executionMode = pipelineData.pipeline?.executionMode;
   const state = usePipelineCanvasState();
 
   const requestJson = useMemo(
@@ -97,10 +98,11 @@ export const usePipelineCanvasValidation = (): PipelineCanvasValidation => {
       toJsonString(
         ValidatePipelineRequestSchema,
         create(ValidatePipelineRequestSchema, {
-          graph: mapCanvasStateToVersionRequest(state, id, currentVersion).graph,
+          executionMode,
+          graph: mapCanvasStateToVersionRequest(state, id, currentVersion, executionMode).graph,
         }),
       ),
-    [state, id, currentVersion],
+    [state, id, currentVersion, executionMode],
   );
   const debouncedJson = useDebouncedValue(requestJson, PIPELINE_CANVAS_VALIDATION_DEBOUNCE_MS);
   const input = useMemo(

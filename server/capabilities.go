@@ -82,7 +82,7 @@ func (a *Server) validatePipelineGraph(ctx context.Context, tenant string, graph
 		route := edge.GetFromNode() + "\x00" + edge.GetToNode()
 		// Run compile merges a route's transforms and refuses a resource named
 		// twice; catch it here so the version is not saved only to fail at run.
-		if edge.GetTransform() != nil {
+		if compile.HasTransform(edge) {
 			if resources, err := compile.TransformResources(edge); err == nil {
 				seen := routeTransforms[route]
 				if seen == nil {
@@ -265,7 +265,7 @@ func (a *Server) validateEdge(ctx context.Context, edge *ingestionv1.PipelineEdg
 // fails validation rather than the run. Issues carry the definition path the
 // builder uses to place them.
 func validateEdgeTransform(ctx context.Context, edge *ingestionv1.PipelineEdge, from *ingestionv1.PipelineNode, srcConn filament.Connection, probes *sourceProbes, ev *ingestionv1.EdgeValidation) {
-	if edge.GetTransform() == nil {
+	if !compile.HasTransform(edge) {
 		return
 	}
 	raw, err := edge.GetTransform().MarshalJSON()
@@ -302,9 +302,7 @@ func validateEdgeTransform(ctx context.Context, edge *ingestionv1.PipelineEdge, 
 			edgeError(ev, "transform", fmt.Sprintf("schema for %q: %v", resource, err))
 			continue
 		}
-		if schema.Resource == "" {
-			schema.Resource = resource
-		}
+		schema.Resource = resource
 		if _, _, err := transform.Analyze(def, schema); err != nil {
 			transformErrors(ev, err)
 		}
@@ -686,6 +684,9 @@ func validateContinuousEdge(ctx context.Context, edge *ingestionv1.PipelineEdge,
 	}
 	if edge.GetSelector() != "" && edge.GetSelector() != edge.GetResource() {
 		edgeError(ev, "resource", "continuous execution requires fixed resources, not selectors")
+	}
+	if compile.HasTransform(edge) {
+		edgeError(ev, "transform", "continuous execution does not apply transforms")
 	}
 	var resources []string
 	if edge.Resource != "" {

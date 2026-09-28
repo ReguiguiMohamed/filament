@@ -126,7 +126,7 @@ var catalog = []function{
 				{Name: "length", DisplayName: "Length", Types: int64Types, Literal: true, Optional: true},
 			}, Returns: rowmodel.LogicalString,
 		},
-		validate: positive("substring", 1),
+		validate: validators(positive("substring", 1), nonnegative("substring", "length", 2)),
 		exec:     kernel.Substring,
 	},
 	{

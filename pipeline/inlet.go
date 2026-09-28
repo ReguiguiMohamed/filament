@@ -59,12 +59,12 @@ func (in *inlet) Builder(resource string, part int, supplied rowmodel.Schema) (a
 	} else if schema.Resource != resource {
 		return nil, fmt.Errorf("pipeline: schema resource %q does not match builder resource %q", schema.Resource, resource)
 	}
+	// The plan compiles against the source layout before CDC and audit
+	// shaping, the same schema validation and ensureSchema compile against.
+	layout := schema
 	if p.audit != nil && p.audit.CDCAppend {
 		schema = rowmodel.AsCDCAppendHistory(schema)
 	}
-	// The plan sees the source layout the builder emits, so its output
-	// nullability matches the DDL ensureSchema derives after the same shaping.
-	layout := schema
 	if p.audit != nil {
 		var err error
 		schema, err = rowmodel.WithAuditFields(schema, p.audit.CDC)

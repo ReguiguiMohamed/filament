@@ -9,6 +9,7 @@ import type { Resource } from "@/gen/ingestion/v1/connectors_pb";
 import { DiscoverResourcesRequestSchema } from "@/gen/ingestion/v1/connectors_pb";
 
 import { CONNECTOR_KIND_TO_HANDLE_ID_MAP } from "@/pages/pipelines/canvas/constants";
+import { getCanvasEdgeResource } from "@/pages/pipelines/canvas/graph/serialize";
 import { usePipelineCanvasSelection } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasSelection";
 import { usePipelineCanvasValidation } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasValidation";
 import PipelineCanvasNode from "@/pages/pipelines/canvas/nodes/PipelineCanvasNode";
@@ -66,12 +67,20 @@ const PipelineCanvasNodeSource = memo(({ id, data, selected }: PipelineCanvasNod
     );
     const own = edges.filter((edge) => edge.source === id && edge.data?.transform !== undefined);
     // A resource routed to several sinks is invalid if any of its edges is.
-    const transformed = new Map<string | null | undefined, boolean>();
+    // An all-resources edge marks every resource its definition names.
+    const transformed = new Map<string, boolean>();
     for (const edge of own) {
-      transformed.set(
-        edge.sourceHandle,
-        (transformed.get(edge.sourceHandle) ?? false) || invalidEdgeIds.has(edge.id),
-      );
+      const resource = getCanvasEdgeResource(edge);
+      const resources = edge.data?.transform?.resources;
+      const names =
+        resource !== ""
+          ? [resource]
+          : typeof resources === "object" && resources !== null && !Array.isArray(resources)
+            ? Object.keys(resources)
+            : [];
+      for (const name of names) {
+        transformed.set(name, (transformed.get(name) ?? false) || invalidEdgeIds.has(edge.id));
+      }
     }
     return [...new Set([...discoveredNames, ...connectedNames])].map((name) => ({
       name,

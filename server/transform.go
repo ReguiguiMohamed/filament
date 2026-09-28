@@ -85,9 +85,7 @@ func (a *Server) ValidateTransform(ctx context.Context, req *connect.Request[ing
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("schema for %q: %w", resource, err))
 	}
-	if schema.Resource == "" {
-		schema.Resource = resource
-	}
+	schema.Resource = resource
 
 	// A Struct is JSON, and JSON is yaml, so the transform takes the same
 	// path a hand-written one does.

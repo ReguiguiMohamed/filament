@@ -44,7 +44,10 @@ const serializeTransformLiteral = ({ literalKind, value }: TransformLiteralExpr)
     ? null
     : match<TransformLiteralKind, JsonValue>(literalKind)
         .with(TransformLiteralKind.STRING, () => value)
-        .with(TransformLiteralKind.NUMBER, () => Number(value))
+        .with(TransformLiteralKind.NUMBER, () => {
+          const parsed = value.trim() === "" ? Number.NaN : Number(value);
+          return Number.isFinite(parsed) ? parsed : null;
+        })
         .with(TransformLiteralKind.BOOLEAN, () => value === "true")
         .exhaustive();
 
