@@ -34,7 +34,7 @@ const PipelineCanvasPanelResourceTransformSection = () => {
       emptyMessage={PIPELINE_CANVAS_PANEL_RESOURCE_TRANSFORM_EMPTY_MESSAGE}
       isOpen={isOpen}
       onToggle={() => setIsOpen((prev) => !prev)}
-      headerAction={
+      trailing={
         isReadOnly ? undefined : (
           <Button
             label="Add step"
