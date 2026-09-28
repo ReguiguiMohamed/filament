@@ -3,8 +3,6 @@ import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 import Accordion, { AccordionVariant } from "@galaxy-io/dls/accordion/Accordion";
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import Wrapper from "@galaxy-io/dls/containers/Wrapper";
 
 import EmptyLayout from "@/layouts/EmptyLayout";
 import { LayoutSize } from "@/layouts/types";
@@ -17,13 +15,7 @@ interface PipelineCanvasPanelSectionProps {
   emptyMessage: string;
   padding?: ComponentProps<typeof Accordion>["padding"];
   isOpenInitial?: boolean;
-  /** Trailing content in the header, such as an action for the section. */
-  metric?: ReactNode;
-  /** Independent action visually placed in the header, outside its toggle button. */
-  headerAction?: ReactNode;
-  /** Space reserved inside the header for headerAction. */
-  headerActionWidth?: number;
-  /** Controlled open state; pass with onToggle. */
+  trailing?: ReactNode;
   isOpen?: boolean;
   onToggle?: () => void;
 }
@@ -36,14 +28,12 @@ const PipelineCanvasPanelSection = ({
   emptyMessage,
   padding = 0,
   isOpenInitial = true,
-  metric,
-  headerAction,
-  headerActionWidth = 96,
+  trailing,
   isOpen,
   onToggle,
   children,
 }: PropsWithChildren<PipelineCanvasPanelSectionProps>) => {
-  const accordion = (
+  return (
     <Accordion
       icon={icon}
       header={header}
@@ -52,7 +42,7 @@ const PipelineCanvasPanelSection = ({
       isOpenInitial={isOpenInitial}
       isOpen={isOpen}
       onToggle={onToggle}
-      metric={headerAction ? <FlexItem width={headerActionWidth} shrink={0} /> : metric}
+      trailing={trailing}
     >
       {isEmpty ? (
         <EmptyLayout size={LayoutSize.SMALL} header={emptyHeader} message={emptyMessage} />
@@ -60,20 +50,6 @@ const PipelineCanvasPanelSection = ({
         children
       )}
     </Accordion>
-  );
-
-  if (!headerAction) return accordion;
-
-  // Accordion's metric is deliberately non-interactive because DLS renders it
-  // inside the toggle button. Overlay the sibling action into the reserved
-  // header space so the controls remain visually grouped and semantically independent.
-  return (
-    <Wrapper position="relative" fillWidth>
-      {accordion}
-      <Wrapper position="absolute" top="8px" right="32px">
-        {headerAction}
-      </Wrapper>
-    </Wrapper>
   );
 };
 

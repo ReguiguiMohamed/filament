@@ -57,6 +57,7 @@ export const usePipelineCanvasPanelResourceOptions = (edge: CanvasEdge) => {
   const sourceConnectionId = sourceConnection?.id ?? "";
   const isCdc = sourceConnection?.replication === ReplicationMode.CDC;
   const hasReadLevers = !isCdc && !isContinuous;
+  const isTransformable = !isContinuous;
   const edgeResource = getCanvasEdgeResource(edge);
 
   const { data: discovered, isLoading: isLoadingResources } = useDiscoverResourcesQuery({
@@ -181,6 +182,7 @@ export const usePipelineCanvasPanelResourceOptions = (edge: CanvasEdge) => {
   return {
     isContinuous,
     hasReadLevers,
+    isTransformable,
     isLoading,
     isLoadingColumns,
     sourceConnectionId,

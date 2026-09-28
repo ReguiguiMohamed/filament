@@ -120,7 +120,7 @@ export const mapCanvasStateToVersionRequest = (
       selector: baseEdge?.selector ?? "",
       ...getCanvasEdgeConfig(edge, baseEdge),
       ...(executionMode === ExecutionMode.CONTINUOUS
-        ? { readMode: ReadMode.UNSPECIFIED, cursors: [] }
+        ? { readMode: ReadMode.UNSPECIFIED, cursors: [], transform: undefined }
         : {}),
     };
   });
