@@ -59,6 +59,7 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
   const {
     isContinuous,
     hasReadLevers,
+    isTransformable,
     isLoading,
     isLoadingColumns,
     sourceConnectionId,
@@ -261,27 +262,28 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
               ))}
           </FlexWrapper>
         </PipelineCanvasPanelSection>
-        {isLoadingColumns ? (
-          <PipelineCanvasPanelResourceTransformSectionPending />
-        ) : (
-          <CatchBoundary
-            getResetKey={() => edge.id}
-            errorComponent={PipelineCanvasPanelResourceTransformSectionError}
-          >
-            <Suspense fallback={<PipelineCanvasPanelResourceTransformSectionPending />}>
-              <PipelineTransformFieldsProvider
-                definition={edge.data?.transform}
-                onChange={handleTransformChange}
-                resources={coveredResources}
-                columnsByResource={columnsByResource}
-                sourceConnectionId={sourceConnectionId}
-                isReadOnly={isReadOnly}
-              >
-                <PipelineCanvasPanelResourceTransformSection />
-              </PipelineTransformFieldsProvider>
-            </Suspense>
-          </CatchBoundary>
-        )}
+        {isTransformable &&
+          (isLoadingColumns ? (
+            <PipelineCanvasPanelResourceTransformSectionPending />
+          ) : (
+            <CatchBoundary
+              getResetKey={() => edge.id}
+              errorComponent={PipelineCanvasPanelResourceTransformSectionError}
+            >
+              <Suspense fallback={<PipelineCanvasPanelResourceTransformSectionPending />}>
+                <PipelineTransformFieldsProvider
+                  definition={edge.data?.transform}
+                  onChange={handleTransformChange}
+                  resources={coveredResources}
+                  columnsByResource={columnsByResource}
+                  sourceConnectionId={sourceConnectionId}
+                  isReadOnly={isReadOnly}
+                >
+                  <PipelineCanvasPanelResourceTransformSection />
+                </PipelineTransformFieldsProvider>
+              </Suspense>
+            </CatchBoundary>
+          ))}
       </PipelineCanvasPanelBody>
     </>
   );
