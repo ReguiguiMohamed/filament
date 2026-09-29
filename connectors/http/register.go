@@ -17,6 +17,7 @@ func init() {
 	registry.RegisterSource("github", filament.MaturityBeta, func() filament.Source { return NewGitHub() })
 	registry.RegisterSource("gong", filament.MaturityAlpha, func() filament.Source { return NewGong() })
 	registry.RegisterSource("granola", filament.MaturityAlpha, func() filament.Source { return NewGranola() })
+	registry.RegisterSource("instantly", filament.MaturityAlpha, func() filament.Source { return NewInstantly() })
 	registry.RegisterSource("linear", filament.MaturityBeta, func() filament.Source { return NewLinear() })
 	registry.RegisterSource("mailchimp", filament.MaturityAlpha, func() filament.Source { return NewMailchimp() })
 	registry.RegisterSource("monday", filament.MaturityAlpha, func() filament.Source { return NewMonday() })

@@ -16,6 +16,9 @@ var gongManifest []byte
 //go:embed manifests/granola.yaml
 var granolaManifest []byte
 
+//go:embed manifests/instantly.yaml
+var instantlyManifest []byte
+
 //go:embed manifests/linear.yaml
 var linearManifest []byte
 
@@ -67,6 +70,11 @@ func NewGong() *Source {
 // NewGranola returns a Source backed by the embedded Granola REST API manifest.
 func NewGranola() *Source {
 	return newCatalogSource(granolaManifest)
+}
+
+// NewInstantly returns a Source backed by the embedded Instantly API manifest.
+func NewInstantly() *Source {
+	return newCatalogSource(instantlyManifest)
 }
 
 // NewLinear returns a Source backed by the embedded Linear manifest.
