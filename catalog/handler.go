@@ -251,7 +251,7 @@ func (h handler) Inspect(ctx context.Context, req *connect.Request[catalogv1.Ins
 	}
 	resp := &catalogv1.InspectResponse{Resources: make([]*catalogv1.ResourceInspection, 0, len(inspections))}
 	for _, inspection := range inspections {
-		out := &catalogv1.ResourceInspection{Name: inspection.Name, PrimaryKey: inspection.PrimaryKey, Ranked: inspection.Ranked}
+		out := &catalogv1.ResourceInspection{Name: inspection.Name, PrimaryKey: inspection.PrimaryKey, Ranked: inspection.Ranked, ManagedIncremental: inspection.ManagedIncremental}
 		if err := inspection.PrimaryKeyErr; err != nil {
 			out.PrimaryKeyError = err.Error()
 		}

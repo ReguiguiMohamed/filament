@@ -114,4 +114,7 @@ type ResourceInspection struct {
 	Columns    []CursorColumn
 	Ranked     bool
 	ColumnsErr error
+	// ManagedIncremental marks a resource whose incremental state the source
+	// owns, so it needs no cursor column.
+	ManagedIncremental bool
 }

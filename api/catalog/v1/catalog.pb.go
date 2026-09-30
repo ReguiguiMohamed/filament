@@ -905,6 +905,9 @@ type ResourceInspection struct {
 	// columns_unsupported is set when the source exposes neither cursor columns
 	// nor a schema.
 	ColumnsUnsupported bool `protobuf:"varint,7,opt,name=columns_unsupported,json=columnsUnsupported,proto3" json:"columns_unsupported,omitempty"`
+	// managed_incremental marks a resource whose incremental state the source
+	// owns, so it needs no cursor column.
+	ManagedIncremental bool `protobuf:"varint,8,opt,name=managed_incremental,json=managedIncremental,proto3" json:"managed_incremental,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -984,6 +987,13 @@ func (x *ResourceInspection) GetColumnsError() string {
 func (x *ResourceInspection) GetColumnsUnsupported() bool {
 	if x != nil {
 		return x.ColumnsUnsupported
+	}
+	return false
+}
+
+func (x *ResourceInspection) GetManagedIncremental() bool {
+	if x != nil {
+		return x.ManagedIncremental
 	}
 	return false
 }
@@ -1094,7 +1104,7 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1f\n" +
 	"\vconfig_json\x18\x02 \x01(\fR\n" +
 	"configJson\x12\x1c\n" +
-	"\tresources\x18\x03 \x03(\tR\tresources\"\x86\x02\n" +
+	"\tresources\x18\x03 \x03(\tR\tresources\"\xb7\x02\n" +
 	"\x12ResourceInspection\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vprimary_key\x18\x02 \x03(\tR\n" +
@@ -1103,7 +1113,8 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\fcolumns_json\x18\x04 \x01(\fR\vcolumnsJson\x12\x16\n" +
 	"\x06ranked\x18\x05 \x01(\bR\x06ranked\x12#\n" +
 	"\rcolumns_error\x18\x06 \x01(\tR\fcolumnsError\x12/\n" +
-	"\x13columns_unsupported\x18\a \x01(\bR\x12columnsUnsupported\"O\n" +
+	"\x13columns_unsupported\x18\a \x01(\bR\x12columnsUnsupported\x12/\n" +
+	"\x13managed_incremental\x18\b \x01(\bR\x12managedIncremental\"O\n" +
 	"\x0fInspectResponse\x12<\n" +
 	"\tresources\x18\x01 \x03(\v2\x1e.catalog.v1.ResourceInspectionR\tresources*<\n" +
 	"\x04Kind\x12\x14\n" +

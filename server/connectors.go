@@ -249,7 +249,9 @@ func (a *Server) GetResourceColumns(ctx context.Context, req *connect.Request[in
 			}
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("resource columns %q: %w", inspection.Name, err))
 		}
-		response.Resources = append(response.Resources, &ingestionv1.ResourceColumns{Resource: inspection.Name, Columns: cursorColumnsToProto(inspection.Columns)})
+		response.Resources = append(response.Resources, &ingestionv1.ResourceColumns{
+			Resource: inspection.Name, Columns: cursorColumnsToProto(inspection.Columns), ManagedIncremental: inspection.ManagedIncremental,
+		})
 	}
 	return connect.NewResponse(response), nil
 }

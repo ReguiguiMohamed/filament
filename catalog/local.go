@@ -196,6 +196,9 @@ func (l local) Inspect(ctx context.Context, name string, cfg filament.Config, re
 		default:
 			inspection.ColumnsErr = fmt.Errorf("%w: %q does not provide resource columns", filament.ErrUnsupported, name)
 		}
+		if managed, ok := source.(filament.ManagedIncrementalSource); ok {
+			inspection.ManagedIncremental = managed.ManagedIncremental(resource)
+		}
 		out = append(out, inspection)
 	}
 	return out, nil

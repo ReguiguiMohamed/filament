@@ -141,6 +141,9 @@ message ResourceInspection {
   // columns_unsupported is set when the source exposes neither cursor columns
   // nor a schema.
   bool columns_unsupported = 7;
+  // managed_incremental marks a resource whose incremental state the source
+  // owns, so it needs no cursor column.
+  bool managed_incremental = 8;
 }
 
 message InspectResponse {

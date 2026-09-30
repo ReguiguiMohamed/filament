@@ -328,7 +328,8 @@ func (r *remote) Inspect(ctx context.Context, source string, cfg filament.Config
 	for _, resource := range resp.Msg.GetResources() {
 		inspection := filament.ResourceInspection{
 			Name: resource.GetName(), PrimaryKey: resource.GetPrimaryKey(), Ranked: resource.GetRanked(),
-			PrimaryKeyErr: failure(resource.GetPrimaryKeyError()),
+			ManagedIncremental: resource.GetManagedIncremental(),
+			PrimaryKeyErr:      failure(resource.GetPrimaryKeyError()),
 		}
 		switch {
 		case resource.GetColumnsUnsupported():
