@@ -71,6 +71,7 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
     effectiveWriteMode,
     cursorOptionsByResource,
     recommendedCursorByResource,
+    managedIncrementalResources,
   } = usePipelineCanvasPanelResourceOptions(edge);
 
   const { label: resourceLabel, isNamedResource } = getCanvasEdgeResourceLabel(
@@ -89,7 +90,11 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
 
   const buildRecommendedCursors = () =>
     coveredResources
-      .filter((resourceName) => (recommendedCursorByResource[resourceName] ?? "") !== "")
+      .filter(
+        (resourceName) =>
+          !managedIncrementalResources.has(resourceName) &&
+          (recommendedCursorByResource[resourceName] ?? "") !== "",
+      )
       .map((resourceName) =>
         create(ResourceCursorConfigSchema, {
           resource: resourceName,
@@ -111,7 +116,9 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
   const handleReadModeChange = (mode: ReadMode) => {
     const nextWriteMode =
       mode === ReadMode.INCREMENTAL && writeMode === WriteMode.REPLACE
-        ? (writeModeOptions.find((candidate) => candidate !== WriteMode.REPLACE) ?? writeMode)
+        ? writeModeOptions.includes(WriteMode.UPSERT)
+          ? WriteMode.UPSERT
+          : (writeModeOptions.find((candidate) => candidate !== WriteMode.REPLACE) ?? writeMode)
         : writeMode;
     setEdgeConfig(edge.id, {
       readMode: mode,
@@ -251,15 +258,21 @@ const PipelineCanvasPanelResourceDetail = ({ edge }: PipelineCanvasPanelResource
             )}
             {hasReadLevers &&
               readMode === ReadMode.INCREMENTAL &&
-              coveredResources.map((resourceName) => (
-                <PipelineCanvasPanelResourceCursorField
-                  key={resourceName}
-                  value={cursorsByResource.get(resourceName) ?? ""}
-                  options={cursorOptionsByResource[resourceName] ?? []}
-                  isDisabled={isReadOnly || isLoading}
-                  onChange={(field) => handleCursorChange(resourceName, field)}
-                />
-              ))}
+              coveredResources.map((resourceName) =>
+                managedIncrementalResources.has(resourceName) ? (
+                  <Text key={resourceName} size={TextSize.BODY_SM}>
+                    {resourceName}: incremental state is managed by the source.
+                  </Text>
+                ) : (
+                  <PipelineCanvasPanelResourceCursorField
+                    key={resourceName}
+                    value={cursorsByResource.get(resourceName) ?? ""}
+                    options={cursorOptionsByResource[resourceName] ?? []}
+                    isDisabled={isReadOnly || isLoading}
+                    onChange={(field) => handleCursorChange(resourceName, field)}
+                  />
+                ),
+              )}
           </FlexWrapper>
         </PipelineCanvasPanelSection>
         {isTransformable &&

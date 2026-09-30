@@ -141,6 +141,16 @@ export const usePipelineCanvasPanelResourceOptions = (edge: CanvasEdge) => {
     [columns?.resources],
   );
 
+  const managedIncrementalResources = useMemo(
+    () =>
+      new Set(
+        (columns?.resources ?? [])
+          .filter((entry) => entry.managedIncremental)
+          .map((entry) => entry.resource),
+      ),
+    [columns?.resources],
+  );
+
   const cursorOptionsByResource = useMemo<Record<Resource["name"], ResourceColumn[]>>(
     () =>
       Object.fromEntries(
@@ -194,5 +204,6 @@ export const usePipelineCanvasPanelResourceOptions = (edge: CanvasEdge) => {
     effectiveWriteMode: verdict?.effectiveWriteMode ?? WriteMode.UNSPECIFIED,
     cursorOptionsByResource,
     recommendedCursorByResource,
+    managedIncrementalResources,
   };
 };
