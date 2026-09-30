@@ -10,6 +10,7 @@ import (
 	"github.com/galaxy-io/filament"
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	"github.com/galaxy-io/filament/arrowbatch"
+	"github.com/galaxy-io/filament/catalog"
 	"github.com/galaxy-io/filament/datastore/sqlite"
 	"github.com/galaxy-io/filament/identity"
 	"github.com/galaxy-io/filament/registry"
@@ -109,14 +110,16 @@ func testCtx() context.Context {
 }
 
 // leverAPI builds a server with one standard source connection, one CDC
-// source connection, and one sink connection.
+// source connection, and one sink connection. strictsink is registered for
+// the tests that need a sink with required pipeline-scoped fields.
 func leverAPI(t *testing.T) (*Server, map[string]string) {
 	t.Helper()
 	sources := registry.NewSources()
 	sources.Register("leversource", func() filament.Source { return leverSource{} })
 	sinks := registry.NewSinks()
 	sinks.Register("leversink", func() filament.Sink { return leverSink{} })
-	api := New(sources, sinks, sqlite.NewMemory(), nil, nil)
+	sinks.Register("strictsink", func() filament.Sink { return strictSink{} })
+	api := New(catalog.Local(sources, sinks), sqlite.NewMemory(), nil, nil)
 
 	create := func(kind ingestionv1.ConnectorKind, name, connector string, config map[string]any) string {
 		var cfg *structpb.Struct

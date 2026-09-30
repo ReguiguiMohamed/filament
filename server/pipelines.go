@@ -175,17 +175,21 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 		if err != nil {
 			return fmt.Errorf("load connection %q: %w", sinkNode.GetConnectionId(), err)
 		}
-		source, err := a.sources.Resolve(sourceConn.Connector)
+		sourceSpec, err := a.catalog.SourceSpec(sourceConn.Connector)
 		if err != nil {
 			return err
 		}
-		sink, err := a.sinks.Resolve(sinkConn.Connector)
+		sinkSpec, err := a.catalog.SinkSpec(sinkConn.Connector)
+		if err != nil {
+			return err
+		}
+		replication, err := a.catalog.Replication(ctx, sourceConn.Connector, filament.NewConfig(sourceConn.Config))
 		if err != nil {
 			return err
 		}
 
 		var ingestionType filament.IngestionType
-		if filament.ReplicationOf(source, filament.NewConfig(sourceConn.Config)) == filament.ReplicationCDC {
+		if replication == filament.ReplicationCDC {
 			if edge.GetReadMode() != ingestionv1.ReadMode_READ_MODE_UNSPECIFIED {
 				return fmt.Errorf("edge %s -> %s: CDC connections do not accept a read mode", edge.GetFromNode(), edge.GetToNode())
 			}
@@ -226,10 +230,10 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 				return fmt.Errorf("edge %s -> %s: %w", edge.GetFromNode(), edge.GetToNode(), err)
 			}
 		}
-		if err := filament.ValidateSourceIngestion(source.Spec(), ingestionType); err != nil {
+		if err := filament.ValidateSourceIngestion(sourceSpec, ingestionType); err != nil {
 			return fmt.Errorf("edge %s -> %s: %w", edge.GetFromNode(), edge.GetToNode(), err)
 		}
-		if err := filament.ValidateSinkIngestion(sink.Spec(), ingestionType); err != nil {
+		if err := filament.ValidateSinkIngestion(sinkSpec, ingestionType); err != nil {
 			return fmt.Errorf("edge %s -> %s: %w", edge.GetFromNode(), edge.GetToNode(), err)
 		}
 	}

@@ -7,22 +7,22 @@ import (
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 )
 
-// schemaFor resolves a connector's config schema by kind + name from the source
-// and sink registries.
+// schemaFor resolves a connector's config schema by kind + name from the
+// catalog.
 func (a *Server) schemaFor(kind ingestionv1.ConnectorKind, connector string) (filament.ConfigSchema, error) {
 	switch kind {
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
-		src, err := a.sources.Resolve(connector)
+		spec, err := a.catalog.SourceSpec(connector)
 		if err != nil {
 			return filament.ConfigSchema{}, err
 		}
-		return src.Spec().Config, nil
+		return spec.Config, nil
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
-		sink, err := a.sinks.Resolve(connector)
+		spec, err := a.catalog.SinkSpec(connector)
 		if err != nil {
 			return filament.ConfigSchema{}, err
 		}
-		return sink.Spec().Config, nil
+		return spec.Config, nil
 	default:
 		return filament.ConfigSchema{}, fmt.Errorf("connector kind is required")
 	}
