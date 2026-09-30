@@ -54,14 +54,6 @@ func (l local) SinkSpec(name string) (filament.SinkSpec, error) {
 	return sink.Spec(), nil
 }
 
-func (l local) Replication(_ context.Context, name string, cfg filament.Config) (filament.ReplicationMode, error) {
-	source, err := l.source(name)
-	if err != nil {
-		return "", err
-	}
-	return filament.ReplicationOf(source, cfg), nil
-}
-
 func (l local) PlanReplicationStream(_ context.Context, name string, req filament.ReplicationStreamPlanningRequest) (filament.ReplicationStreamPlan, error) {
 	source, err := l.source(name)
 	if err != nil {

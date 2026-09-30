@@ -159,11 +159,7 @@ func (a *Server) validateEdge(ctx context.Context, edge *ingestionv1.PipelineEdg
 		validateContinuousEdge(ctx, edge, from, srcConn, pair, runtimeSupported, probes, ev)
 		return nil
 	}
-	replication, err := a.catalog.Replication(ctx, srcConn.Connector, filament.NewConfig(srcConn.Config))
-	if err != nil {
-		edgeError(ev, "from_node", err.Error())
-		return nil
-	}
+	replication := filament.ReplicationFor(pair.Source, filament.NewConfig(srcConn.Config))
 	ev.Replication = replicationToProto(replication)
 
 	// CDC connections fix the read side to the change stream and expose append
@@ -504,15 +500,18 @@ func newSourceProbes(server *Server, edges []*ingestionv1.PipelineEdge) *sourceP
 
 // inspect returns the node's inspections for one resource, or for every
 // selectable resource when resource is empty. The node-wide answer is
-// memoized; a resource missing from it is inspected on its own.
+// memoized; a resource missing from it, or unreachable through it, is
+// inspected on its own.
 func (p *sourceProbes) inspect(ctx context.Context, node *ingestionv1.PipelineNode, conn filament.Connection, resource string) ([]filament.ResourceInspection, error) {
 	id := node.GetId()
 	all, err := p.memo(ctx, id, node, conn, p.demand[id])
-	if err != nil {
-		return nil, err
-	}
 	if resource == "" {
-		return all, nil
+		return all, err
+	}
+	if err != nil {
+		// A source that cannot list its resources can still answer for a
+		// named one, so a named edge keeps its own key and cursor checks.
+		return p.memo(ctx, id+"\x00"+resource, node, conn, []string{resource})
 	}
 	for _, inspection := range all {
 		if inspection.Name == resource {

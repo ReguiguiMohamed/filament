@@ -33,6 +33,10 @@ func (leverSource) Spec() filament.ConnectorSpec {
 			filament.IngestionCDCMerge,
 		),
 		Resources: filament.ResourceCapabilities{Discoverable: true},
+		Config: filament.ConfigSchema{Fields: []filament.ConfigField{{
+			Name: filament.ReplicationField, Type: filament.FieldEnum, Default: string(filament.ReplicationStandard),
+			Enum: []filament.EnumOption{{Value: string(filament.ReplicationStandard)}, {Value: string(filament.ReplicationCDC)}},
+		}}},
 	}
 }
 
@@ -42,13 +46,6 @@ func (leverSource) Teardown(context.Context) error                   { return ni
 
 func (leverSource) Extract(context.Context, filament.RecordSink, filament.ExtractOpts) error {
 	return nil
-}
-
-func (leverSource) Replication(cfg filament.Config) filament.ReplicationMode {
-	if cfg.String("replication") == string(filament.ReplicationCDC) {
-		return filament.ReplicationCDC
-	}
-	return filament.ReplicationStandard
 }
 
 func (leverSource) Discover(context.Context, filament.DiscoverOpts) (filament.DiscoverResult, error) {

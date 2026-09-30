@@ -12,8 +12,6 @@ service CatalogService {
   // Describe returns connector specs and driver contracts. They are fixed for
   // the life of the host process.
   rpc Describe(DescribeRequest) returns (DescribeResponse);
-  // Replication reports the mode each source config selects.
-  rpc Replication(ReplicationRequest) returns (ReplicationResponse);
   // PlanReplicationStream asks a streaming source to plan its consumer.
   rpc PlanReplicationStream(PlanReplicationStreamRequest) returns (PlanReplicationStreamResponse);
   // Validate runs the connector's pure config validation.
@@ -58,21 +56,6 @@ message DescribeRequest {
 
 message DescribeResponse {
   repeated Connector connectors = 1;
-}
-
-message ReplicationQuery {
-  string source = 1;
-  bytes config_json = 2;
-}
-
-message ReplicationRequest {
-  repeated ReplicationQuery queries = 1;
-}
-
-message ReplicationResponse {
-  // modes holds one entry per query, in order. An unknown source yields an
-  // empty mode.
-  repeated string modes = 1;
 }
 
 message PlanReplicationStreamRequest {

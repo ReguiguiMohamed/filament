@@ -35,9 +35,6 @@ const (
 const (
 	// CatalogServiceDescribeProcedure is the fully-qualified name of the CatalogService's Describe RPC.
 	CatalogServiceDescribeProcedure = "/catalog.v1.CatalogService/Describe"
-	// CatalogServiceReplicationProcedure is the fully-qualified name of the CatalogService's
-	// Replication RPC.
-	CatalogServiceReplicationProcedure = "/catalog.v1.CatalogService/Replication"
 	// CatalogServicePlanReplicationStreamProcedure is the fully-qualified name of the CatalogService's
 	// PlanReplicationStream RPC.
 	CatalogServicePlanReplicationStreamProcedure = "/catalog.v1.CatalogService/PlanReplicationStream"
@@ -57,8 +54,6 @@ type CatalogServiceClient interface {
 	// Describe returns connector specs and driver contracts. They are fixed for
 	// the life of the host process.
 	Describe(context.Context, *connect.Request[v1.DescribeRequest]) (*connect.Response[v1.DescribeResponse], error)
-	// Replication reports the mode each source config selects.
-	Replication(context.Context, *connect.Request[v1.ReplicationRequest]) (*connect.Response[v1.ReplicationResponse], error)
 	// PlanReplicationStream asks a streaming source to plan its consumer.
 	PlanReplicationStream(context.Context, *connect.Request[v1.PlanReplicationStreamRequest]) (*connect.Response[v1.PlanReplicationStreamResponse], error)
 	// Validate runs the connector's pure config validation.
@@ -87,12 +82,6 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+CatalogServiceDescribeProcedure,
 			connect.WithSchema(catalogServiceMethods.ByName("Describe")),
-			connect.WithClientOptions(opts...),
-		),
-		replication: connect.NewClient[v1.ReplicationRequest, v1.ReplicationResponse](
-			httpClient,
-			baseURL+CatalogServiceReplicationProcedure,
-			connect.WithSchema(catalogServiceMethods.ByName("Replication")),
 			connect.WithClientOptions(opts...),
 		),
 		planReplicationStream: connect.NewClient[v1.PlanReplicationStreamRequest, v1.PlanReplicationStreamResponse](
@@ -131,7 +120,6 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 // catalogServiceClient implements CatalogServiceClient.
 type catalogServiceClient struct {
 	describe              *connect.Client[v1.DescribeRequest, v1.DescribeResponse]
-	replication           *connect.Client[v1.ReplicationRequest, v1.ReplicationResponse]
 	planReplicationStream *connect.Client[v1.PlanReplicationStreamRequest, v1.PlanReplicationStreamResponse]
 	validate              *connect.Client[v1.ValidateRequest, v1.ValidateResponse]
 	testConnection        *connect.Client[v1.TestConnectionRequest, v1.TestConnectionResponse]
@@ -142,11 +130,6 @@ type catalogServiceClient struct {
 // Describe calls catalog.v1.CatalogService.Describe.
 func (c *catalogServiceClient) Describe(ctx context.Context, req *connect.Request[v1.DescribeRequest]) (*connect.Response[v1.DescribeResponse], error) {
 	return c.describe.CallUnary(ctx, req)
-}
-
-// Replication calls catalog.v1.CatalogService.Replication.
-func (c *catalogServiceClient) Replication(ctx context.Context, req *connect.Request[v1.ReplicationRequest]) (*connect.Response[v1.ReplicationResponse], error) {
-	return c.replication.CallUnary(ctx, req)
 }
 
 // PlanReplicationStream calls catalog.v1.CatalogService.PlanReplicationStream.
@@ -179,8 +162,6 @@ type CatalogServiceHandler interface {
 	// Describe returns connector specs and driver contracts. They are fixed for
 	// the life of the host process.
 	Describe(context.Context, *connect.Request[v1.DescribeRequest]) (*connect.Response[v1.DescribeResponse], error)
-	// Replication reports the mode each source config selects.
-	Replication(context.Context, *connect.Request[v1.ReplicationRequest]) (*connect.Response[v1.ReplicationResponse], error)
 	// PlanReplicationStream asks a streaming source to plan its consumer.
 	PlanReplicationStream(context.Context, *connect.Request[v1.PlanReplicationStreamRequest]) (*connect.Response[v1.PlanReplicationStreamResponse], error)
 	// Validate runs the connector's pure config validation.
@@ -205,12 +186,6 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		CatalogServiceDescribeProcedure,
 		svc.Describe,
 		connect.WithSchema(catalogServiceMethods.ByName("Describe")),
-		connect.WithHandlerOptions(opts...),
-	)
-	catalogServiceReplicationHandler := connect.NewUnaryHandler(
-		CatalogServiceReplicationProcedure,
-		svc.Replication,
-		connect.WithSchema(catalogServiceMethods.ByName("Replication")),
 		connect.WithHandlerOptions(opts...),
 	)
 	catalogServicePlanReplicationStreamHandler := connect.NewUnaryHandler(
@@ -247,8 +222,6 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		switch r.URL.Path {
 		case CatalogServiceDescribeProcedure:
 			catalogServiceDescribeHandler.ServeHTTP(w, r)
-		case CatalogServiceReplicationProcedure:
-			catalogServiceReplicationHandler.ServeHTTP(w, r)
 		case CatalogServicePlanReplicationStreamProcedure:
 			catalogServicePlanReplicationStreamHandler.ServeHTTP(w, r)
 		case CatalogServiceValidateProcedure:
@@ -270,10 +243,6 @@ type UnimplementedCatalogServiceHandler struct{}
 
 func (UnimplementedCatalogServiceHandler) Describe(context.Context, *connect.Request[v1.DescribeRequest]) (*connect.Response[v1.DescribeResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("catalog.v1.CatalogService.Describe is not implemented"))
-}
-
-func (UnimplementedCatalogServiceHandler) Replication(context.Context, *connect.Request[v1.ReplicationRequest]) (*connect.Response[v1.ReplicationResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("catalog.v1.CatalogService.Replication is not implemented"))
 }
 
 func (UnimplementedCatalogServiceHandler) PlanReplicationStream(context.Context, *connect.Request[v1.PlanReplicationStreamRequest]) (*connect.Response[v1.PlanReplicationStreamResponse], error) {

@@ -252,148 +252,6 @@ func (x *DescribeResponse) GetConnectors() []*Connector {
 	return nil
 }
 
-type ReplicationQuery struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Source        string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	ConfigJson    []byte                 `protobuf:"bytes,2,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReplicationQuery) Reset() {
-	*x = ReplicationQuery{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReplicationQuery) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReplicationQuery) ProtoMessage() {}
-
-func (x *ReplicationQuery) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReplicationQuery.ProtoReflect.Descriptor instead.
-func (*ReplicationQuery) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ReplicationQuery) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-func (x *ReplicationQuery) GetConfigJson() []byte {
-	if x != nil {
-		return x.ConfigJson
-	}
-	return nil
-}
-
-type ReplicationRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Queries       []*ReplicationQuery    `protobuf:"bytes,1,rep,name=queries,proto3" json:"queries,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReplicationRequest) Reset() {
-	*x = ReplicationRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReplicationRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReplicationRequest) ProtoMessage() {}
-
-func (x *ReplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReplicationRequest.ProtoReflect.Descriptor instead.
-func (*ReplicationRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *ReplicationRequest) GetQueries() []*ReplicationQuery {
-	if x != nil {
-		return x.Queries
-	}
-	return nil
-}
-
-type ReplicationResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// modes holds one entry per query, in order. An unknown source yields an
-	// empty mode.
-	Modes         []string `protobuf:"bytes,1,rep,name=modes,proto3" json:"modes,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ReplicationResponse) Reset() {
-	*x = ReplicationResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ReplicationResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ReplicationResponse) ProtoMessage() {}
-
-func (x *ReplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ReplicationResponse.ProtoReflect.Descriptor instead.
-func (*ReplicationResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ReplicationResponse) GetModes() []string {
-	if x != nil {
-		return x.Modes
-	}
-	return nil
-}
-
 type PlanReplicationStreamRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Source              string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
@@ -407,7 +265,7 @@ type PlanReplicationStreamRequest struct {
 
 func (x *PlanReplicationStreamRequest) Reset() {
 	*x = PlanReplicationStreamRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -419,7 +277,7 @@ func (x *PlanReplicationStreamRequest) String() string {
 func (*PlanReplicationStreamRequest) ProtoMessage() {}
 
 func (x *PlanReplicationStreamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,7 +290,7 @@ func (x *PlanReplicationStreamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanReplicationStreamRequest.ProtoReflect.Descriptor instead.
 func (*PlanReplicationStreamRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{6}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PlanReplicationStreamRequest) GetSource() string {
@@ -480,7 +338,7 @@ type PlanReplicationStreamResponse struct {
 
 func (x *PlanReplicationStreamResponse) Reset() {
 	*x = PlanReplicationStreamResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -492,7 +350,7 @@ func (x *PlanReplicationStreamResponse) String() string {
 func (*PlanReplicationStreamResponse) ProtoMessage() {}
 
 func (x *PlanReplicationStreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -505,7 +363,7 @@ func (x *PlanReplicationStreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanReplicationStreamResponse.ProtoReflect.Descriptor instead.
 func (*PlanReplicationStreamResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{7}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PlanReplicationStreamResponse) GetPlanJson() []byte {
@@ -526,7 +384,7 @@ type ValidateRequest struct {
 
 func (x *ValidateRequest) Reset() {
 	*x = ValidateRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +396,7 @@ func (x *ValidateRequest) String() string {
 func (*ValidateRequest) ProtoMessage() {}
 
 func (x *ValidateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +409,7 @@ func (x *ValidateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateRequest.ProtoReflect.Descriptor instead.
 func (*ValidateRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{8}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ValidateRequest) GetKind() Kind {
@@ -585,7 +443,7 @@ type ValidateResponse struct {
 
 func (x *ValidateResponse) Reset() {
 	*x = ValidateResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -597,7 +455,7 @@ func (x *ValidateResponse) String() string {
 func (*ValidateResponse) ProtoMessage() {}
 
 func (x *ValidateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -610,7 +468,7 @@ func (x *ValidateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateResponse.ProtoReflect.Descriptor instead.
 func (*ValidateResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{9}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ValidateResponse) GetFailure() string {
@@ -631,7 +489,7 @@ type TestConnectionRequest struct {
 
 func (x *TestConnectionRequest) Reset() {
 	*x = TestConnectionRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +501,7 @@ func (x *TestConnectionRequest) String() string {
 func (*TestConnectionRequest) ProtoMessage() {}
 
 func (x *TestConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +514,7 @@ func (x *TestConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestConnectionRequest.ProtoReflect.Descriptor instead.
 func (*TestConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TestConnectionRequest) GetKind() Kind {
@@ -690,7 +548,7 @@ type TestConnectionResponse struct {
 
 func (x *TestConnectionResponse) Reset() {
 	*x = TestConnectionResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -702,7 +560,7 @@ func (x *TestConnectionResponse) String() string {
 func (*TestConnectionResponse) ProtoMessage() {}
 
 func (x *TestConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -715,7 +573,7 @@ func (x *TestConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestConnectionResponse.ProtoReflect.Descriptor instead.
 func (*TestConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *TestConnectionResponse) GetFailure() string {
@@ -736,7 +594,7 @@ type DiscoverRequest struct {
 
 func (x *DiscoverRequest) Reset() {
 	*x = DiscoverRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -748,7 +606,7 @@ func (x *DiscoverRequest) String() string {
 func (*DiscoverRequest) ProtoMessage() {}
 
 func (x *DiscoverRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -761,7 +619,7 @@ func (x *DiscoverRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscoverRequest.ProtoReflect.Descriptor instead.
 func (*DiscoverRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{12}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DiscoverRequest) GetSource() string {
@@ -795,7 +653,7 @@ type DiscoverResponse struct {
 
 func (x *DiscoverResponse) Reset() {
 	*x = DiscoverResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +665,7 @@ func (x *DiscoverResponse) String() string {
 func (*DiscoverResponse) ProtoMessage() {}
 
 func (x *DiscoverResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +678,7 @@ func (x *DiscoverResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscoverResponse.ProtoReflect.Descriptor instead.
 func (*DiscoverResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{13}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DiscoverResponse) GetResultJson() []byte {
@@ -842,7 +700,7 @@ type InspectRequest struct {
 
 func (x *InspectRequest) Reset() {
 	*x = InspectRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -854,7 +712,7 @@ func (x *InspectRequest) String() string {
 func (*InspectRequest) ProtoMessage() {}
 
 func (x *InspectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -867,7 +725,7 @@ func (x *InspectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectRequest.ProtoReflect.Descriptor instead.
 func (*InspectRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{14}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *InspectRequest) GetSource() string {
@@ -914,7 +772,7 @@ type ResourceInspection struct {
 
 func (x *ResourceInspection) Reset() {
 	*x = ResourceInspection{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -926,7 +784,7 @@ func (x *ResourceInspection) String() string {
 func (*ResourceInspection) ProtoMessage() {}
 
 func (x *ResourceInspection) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -939,7 +797,7 @@ func (x *ResourceInspection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceInspection.ProtoReflect.Descriptor instead.
 func (*ResourceInspection) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{15}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ResourceInspection) GetName() string {
@@ -1007,7 +865,7 @@ type InspectResponse struct {
 
 func (x *InspectResponse) Reset() {
 	*x = InspectResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1019,7 +877,7 @@ func (x *InspectResponse) String() string {
 func (*InspectResponse) ProtoMessage() {}
 
 func (x *InspectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +890,7 @@ func (x *InspectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectResponse.ProtoReflect.Descriptor instead.
 func (*InspectResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{16}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *InspectResponse) GetResources() []*ResourceInspection {
@@ -1060,15 +918,7 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x10DescribeResponse\x125\n" +
 	"\n" +
 	"connectors\x18\x01 \x03(\v2\x15.catalog.v1.ConnectorR\n" +
-	"connectors\"K\n" +
-	"\x10ReplicationQuery\x12\x16\n" +
-	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1f\n" +
-	"\vconfig_json\x18\x02 \x01(\fR\n" +
-	"configJson\"L\n" +
-	"\x12ReplicationRequest\x126\n" +
-	"\aqueries\x18\x01 \x03(\v2\x1c.catalog.v1.ReplicationQueryR\aqueries\"+\n" +
-	"\x13ReplicationResponse\x12\x14\n" +
-	"\x05modes\x18\x01 \x03(\tR\x05modes\"\xdb\x01\n" +
+	"connectors\"\xdb\x01\n" +
 	"\x1cPlanReplicationStreamRequest\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x122\n" +
 	"\x15replication_stream_id\x18\x02 \x01(\tR\x13replicationStreamId\x120\n" +
@@ -1120,10 +970,9 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vKIND_SOURCE\x10\x01\x12\r\n" +
-	"\tKIND_SINK\x10\x022\xc0\x04\n" +
+	"\tKIND_SINK\x10\x022\xf0\x03\n" +
 	"\x0eCatalogService\x12E\n" +
-	"\bDescribe\x12\x1b.catalog.v1.DescribeRequest\x1a\x1c.catalog.v1.DescribeResponse\x12N\n" +
-	"\vReplication\x12\x1e.catalog.v1.ReplicationRequest\x1a\x1f.catalog.v1.ReplicationResponse\x12l\n" +
+	"\bDescribe\x12\x1b.catalog.v1.DescribeRequest\x1a\x1c.catalog.v1.DescribeResponse\x12l\n" +
 	"\x15PlanReplicationStream\x12(.catalog.v1.PlanReplicationStreamRequest\x1a).catalog.v1.PlanReplicationStreamResponse\x12E\n" +
 	"\bValidate\x12\x1b.catalog.v1.ValidateRequest\x1a\x1c.catalog.v1.ValidateResponse\x12W\n" +
 	"\x0eTestConnection\x12!.catalog.v1.TestConnectionRequest\x1a\".catalog.v1.TestConnectionResponse\x12E\n" +
@@ -1146,54 +995,48 @@ func file_catalog_v1_catalog_proto_rawDescGZIP() []byte {
 }
 
 var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_catalog_v1_catalog_proto_goTypes = []any{
 	(Kind)(0),                             // 0: catalog.v1.Kind
 	(*Connector)(nil),                     // 1: catalog.v1.Connector
 	(*DescribeRequest)(nil),               // 2: catalog.v1.DescribeRequest
 	(*DescribeResponse)(nil),              // 3: catalog.v1.DescribeResponse
-	(*ReplicationQuery)(nil),              // 4: catalog.v1.ReplicationQuery
-	(*ReplicationRequest)(nil),            // 5: catalog.v1.ReplicationRequest
-	(*ReplicationResponse)(nil),           // 6: catalog.v1.ReplicationResponse
-	(*PlanReplicationStreamRequest)(nil),  // 7: catalog.v1.PlanReplicationStreamRequest
-	(*PlanReplicationStreamResponse)(nil), // 8: catalog.v1.PlanReplicationStreamResponse
-	(*ValidateRequest)(nil),               // 9: catalog.v1.ValidateRequest
-	(*ValidateResponse)(nil),              // 10: catalog.v1.ValidateResponse
-	(*TestConnectionRequest)(nil),         // 11: catalog.v1.TestConnectionRequest
-	(*TestConnectionResponse)(nil),        // 12: catalog.v1.TestConnectionResponse
-	(*DiscoverRequest)(nil),               // 13: catalog.v1.DiscoverRequest
-	(*DiscoverResponse)(nil),              // 14: catalog.v1.DiscoverResponse
-	(*InspectRequest)(nil),                // 15: catalog.v1.InspectRequest
-	(*ResourceInspection)(nil),            // 16: catalog.v1.ResourceInspection
-	(*InspectResponse)(nil),               // 17: catalog.v1.InspectResponse
+	(*PlanReplicationStreamRequest)(nil),  // 4: catalog.v1.PlanReplicationStreamRequest
+	(*PlanReplicationStreamResponse)(nil), // 5: catalog.v1.PlanReplicationStreamResponse
+	(*ValidateRequest)(nil),               // 6: catalog.v1.ValidateRequest
+	(*ValidateResponse)(nil),              // 7: catalog.v1.ValidateResponse
+	(*TestConnectionRequest)(nil),         // 8: catalog.v1.TestConnectionRequest
+	(*TestConnectionResponse)(nil),        // 9: catalog.v1.TestConnectionResponse
+	(*DiscoverRequest)(nil),               // 10: catalog.v1.DiscoverRequest
+	(*DiscoverResponse)(nil),              // 11: catalog.v1.DiscoverResponse
+	(*InspectRequest)(nil),                // 12: catalog.v1.InspectRequest
+	(*ResourceInspection)(nil),            // 13: catalog.v1.ResourceInspection
+	(*InspectResponse)(nil),               // 14: catalog.v1.InspectResponse
 }
 var file_catalog_v1_catalog_proto_depIdxs = []int32{
 	0,  // 0: catalog.v1.Connector.kind:type_name -> catalog.v1.Kind
 	0,  // 1: catalog.v1.DescribeRequest.kind:type_name -> catalog.v1.Kind
 	1,  // 2: catalog.v1.DescribeResponse.connectors:type_name -> catalog.v1.Connector
-	4,  // 3: catalog.v1.ReplicationRequest.queries:type_name -> catalog.v1.ReplicationQuery
-	0,  // 4: catalog.v1.ValidateRequest.kind:type_name -> catalog.v1.Kind
-	0,  // 5: catalog.v1.TestConnectionRequest.kind:type_name -> catalog.v1.Kind
-	16, // 6: catalog.v1.InspectResponse.resources:type_name -> catalog.v1.ResourceInspection
-	2,  // 7: catalog.v1.CatalogService.Describe:input_type -> catalog.v1.DescribeRequest
-	5,  // 8: catalog.v1.CatalogService.Replication:input_type -> catalog.v1.ReplicationRequest
-	7,  // 9: catalog.v1.CatalogService.PlanReplicationStream:input_type -> catalog.v1.PlanReplicationStreamRequest
-	9,  // 10: catalog.v1.CatalogService.Validate:input_type -> catalog.v1.ValidateRequest
-	11, // 11: catalog.v1.CatalogService.TestConnection:input_type -> catalog.v1.TestConnectionRequest
-	13, // 12: catalog.v1.CatalogService.Discover:input_type -> catalog.v1.DiscoverRequest
-	15, // 13: catalog.v1.CatalogService.Inspect:input_type -> catalog.v1.InspectRequest
-	3,  // 14: catalog.v1.CatalogService.Describe:output_type -> catalog.v1.DescribeResponse
-	6,  // 15: catalog.v1.CatalogService.Replication:output_type -> catalog.v1.ReplicationResponse
-	8,  // 16: catalog.v1.CatalogService.PlanReplicationStream:output_type -> catalog.v1.PlanReplicationStreamResponse
-	10, // 17: catalog.v1.CatalogService.Validate:output_type -> catalog.v1.ValidateResponse
-	12, // 18: catalog.v1.CatalogService.TestConnection:output_type -> catalog.v1.TestConnectionResponse
-	14, // 19: catalog.v1.CatalogService.Discover:output_type -> catalog.v1.DiscoverResponse
-	17, // 20: catalog.v1.CatalogService.Inspect:output_type -> catalog.v1.InspectResponse
-	14, // [14:21] is the sub-list for method output_type
-	7,  // [7:14] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0,  // 3: catalog.v1.ValidateRequest.kind:type_name -> catalog.v1.Kind
+	0,  // 4: catalog.v1.TestConnectionRequest.kind:type_name -> catalog.v1.Kind
+	13, // 5: catalog.v1.InspectResponse.resources:type_name -> catalog.v1.ResourceInspection
+	2,  // 6: catalog.v1.CatalogService.Describe:input_type -> catalog.v1.DescribeRequest
+	4,  // 7: catalog.v1.CatalogService.PlanReplicationStream:input_type -> catalog.v1.PlanReplicationStreamRequest
+	6,  // 8: catalog.v1.CatalogService.Validate:input_type -> catalog.v1.ValidateRequest
+	8,  // 9: catalog.v1.CatalogService.TestConnection:input_type -> catalog.v1.TestConnectionRequest
+	10, // 10: catalog.v1.CatalogService.Discover:input_type -> catalog.v1.DiscoverRequest
+	12, // 11: catalog.v1.CatalogService.Inspect:input_type -> catalog.v1.InspectRequest
+	3,  // 12: catalog.v1.CatalogService.Describe:output_type -> catalog.v1.DescribeResponse
+	5,  // 13: catalog.v1.CatalogService.PlanReplicationStream:output_type -> catalog.v1.PlanReplicationStreamResponse
+	7,  // 14: catalog.v1.CatalogService.Validate:output_type -> catalog.v1.ValidateResponse
+	9,  // 15: catalog.v1.CatalogService.TestConnection:output_type -> catalog.v1.TestConnectionResponse
+	11, // 16: catalog.v1.CatalogService.Discover:output_type -> catalog.v1.DiscoverResponse
+	14, // 17: catalog.v1.CatalogService.Inspect:output_type -> catalog.v1.InspectResponse
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_catalog_v1_catalog_proto_init() }
@@ -1207,7 +1050,7 @@ func file_catalog_v1_catalog_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catalog_v1_catalog_proto_rawDesc), len(file_catalog_v1_catalog_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

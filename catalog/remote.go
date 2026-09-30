@@ -22,8 +22,15 @@ const (
 	// again. They are fixed for a host build, so this only matters across a
 	// host upgrade.
 	describeTTL = 30 * time.Second
+	// describeRetry is how long a failed refresh keeps serving the last
+	// snapshot before the host is asked again, so an outage costs one
+	// timeout per interval rather than one per call.
+	describeRetry = 5 * time.Second
 	// describeTimeout bounds a spec fetch, which has no caller deadline.
 	describeTimeout = 5 * time.Second
+	// callTimeout bounds a live call whose caller set no deadline, such as
+	// the scheduler compiling on its process context.
+	callTimeout = 30 * time.Second
 )
 
 // Remote returns a Catalog that forwards to the connector host at baseURL, so
@@ -77,13 +84,14 @@ func fromConnect(err error) error {
 
 // snapshot is one Describe of the host: the listing as listed, plus each
 // name's concrete spec and contracts. A name the listing lacks is asked for
-// individually and added as it is looked up.
+// individually once and remembered either way for the snapshot's life.
 type snapshot struct {
 	at          time.Time
 	sources     []filament.ConnectorSpec
 	sinks       []filament.SinkSpec
 	sourceNames map[string]sourceEntry
 	sinkNames   map[string]sinkEntry
+	missing     map[string]error
 }
 
 type sourceEntry struct {
@@ -108,11 +116,12 @@ func (r *remote) described() (*snapshot, error) {
 	resp, err := r.client.Describe(ctx, connect.NewRequest(&catalogv1.DescribeRequest{}))
 	if err != nil {
 		if r.snapshot != nil {
+			r.snapshot.at = time.Now().Add(describeRetry - describeTTL)
 			return r.snapshot, nil
 		}
 		return nil, fromConnect(err)
 	}
-	next := &snapshot{at: time.Now(), sourceNames: map[string]sourceEntry{}, sinkNames: map[string]sinkEntry{}}
+	next := &snapshot{at: time.Now(), sourceNames: map[string]sourceEntry{}, sinkNames: map[string]sinkEntry{}, missing: map[string]error{}}
 	listed := map[string]sourceEntry{}
 	for _, connector := range resp.Msg.GetConnectors() {
 		switch connector.GetKind() {
@@ -168,7 +177,13 @@ func (r *remote) source(name string) (sourceEntry, error) {
 	if entry, ok := snap.sourceNames[name]; ok {
 		return entry, nil
 	}
+	if err, ok := snap.missing["source\x00"+name]; ok {
+		return sourceEntry{}, err
+	}
 	connector, err := r.describeOne(catalogv1.Kind_KIND_SOURCE, name)
+	if errors.Is(err, filament.ErrNotFound) {
+		snap.missing["source\x00"+name] = err
+	}
 	if err != nil {
 		return sourceEntry{}, err
 	}
@@ -190,7 +205,13 @@ func (r *remote) sink(name string) (sinkEntry, error) {
 	if entry, ok := snap.sinkNames[name]; ok {
 		return entry, nil
 	}
+	if err, ok := snap.missing["sink\x00"+name]; ok {
+		return sinkEntry{}, err
+	}
 	connector, err := r.describeOne(catalogv1.Kind_KIND_SINK, name)
+	if errors.Is(err, filament.ErrNotFound) {
+		snap.missing["sink\x00"+name] = err
+	}
 	if err != nil {
 		return sinkEntry{}, err
 	}
@@ -242,25 +263,17 @@ func (r *remote) SinkContracts(name string) (filament.SinkContracts, error) {
 	return entry.contracts, err
 }
 
-func (r *remote) Replication(ctx context.Context, source string, cfg filament.Config) (filament.ReplicationMode, error) {
-	raw, err := encodeConfig(cfg)
-	if err != nil {
-		return "", err
+// bounded adds callTimeout to a context that carries no deadline of its own.
+func bounded(ctx context.Context) (context.Context, context.CancelFunc) {
+	if _, ok := ctx.Deadline(); ok {
+		return ctx, func() {}
 	}
-	resp, err := r.client.Replication(ctx, connect.NewRequest(&catalogv1.ReplicationRequest{
-		Queries: []*catalogv1.ReplicationQuery{{Source: source, ConfigJson: raw}},
-	}))
-	if err != nil {
-		return "", fromConnect(err)
-	}
-	modes := resp.Msg.GetModes()
-	if len(modes) != 1 || modes[0] == "" {
-		return "", wireError{sentinel: filament.ErrNotFound, message: fmt.Sprintf("not found: source %q", source)}
-	}
-	return filament.ReplicationMode(modes[0]), nil
+	return context.WithTimeout(ctx, callTimeout)
 }
 
 func (r *remote) PlanReplicationStream(ctx context.Context, source string, req filament.ReplicationStreamPlanningRequest) (filament.ReplicationStreamPlan, error) {
+	ctx, cancel := bounded(ctx)
+	defer cancel()
 	var plan filament.ReplicationStreamPlan
 	raw, err := encodeConfig(req.Config)
 	if err != nil {
@@ -278,6 +291,8 @@ func (r *remote) PlanReplicationStream(ctx context.Context, source string, req f
 }
 
 func (r *remote) Validate(ctx context.Context, kind filament.ConnectorKind, name string, cfg filament.Config) error {
+	ctx, cancel := bounded(ctx)
+	defer cancel()
 	raw, err := encodeConfig(cfg)
 	if err != nil {
 		return err
@@ -290,6 +305,8 @@ func (r *remote) Validate(ctx context.Context, kind filament.ConnectorKind, name
 }
 
 func (r *remote) TestConnection(ctx context.Context, kind filament.ConnectorKind, name string, cfg filament.Config) error {
+	ctx, cancel := bounded(ctx)
+	defer cancel()
 	raw, err := encodeConfig(cfg)
 	if err != nil {
 		return err
@@ -302,6 +319,8 @@ func (r *remote) TestConnection(ctx context.Context, kind filament.ConnectorKind
 }
 
 func (r *remote) Discover(ctx context.Context, source string, cfg filament.Config, opts filament.DiscoverOpts) (filament.DiscoverResult, error) {
+	ctx, cancel := bounded(ctx)
+	defer cancel()
 	var result filament.DiscoverResult
 	raw, err := encodeConfig(cfg)
 	if err != nil {
@@ -316,6 +335,8 @@ func (r *remote) Discover(ctx context.Context, source string, cfg filament.Confi
 }
 
 func (r *remote) Inspect(ctx context.Context, source string, cfg filament.Config, resources []string) ([]filament.ResourceInspection, error) {
+	ctx, cancel := bounded(ctx)
+	defer cancel()
 	raw, err := encodeConfig(cfg)
 	if err != nil {
 		return nil, err

@@ -142,22 +142,6 @@ func (h handler) sinkConnector(spec filament.SinkSpec) (*catalogv1.Connector, er
 	return &catalogv1.Connector{Kind: catalogv1.Kind_KIND_SINK, Name: spec.Name, SpecJson: raw, Streams: contracts.Streams}, nil
 }
 
-func (h handler) Replication(ctx context.Context, req *connect.Request[catalogv1.ReplicationRequest]) (*connect.Response[catalogv1.ReplicationResponse], error) {
-	resp := &catalogv1.ReplicationResponse{Modes: make([]string, 0, len(req.Msg.GetQueries()))}
-	for _, query := range req.Msg.GetQueries() {
-		cfg, err := decodeConfig(query.GetConfigJson())
-		if err != nil {
-			return nil, err
-		}
-		mode, err := h.catalog.Replication(ctx, query.GetSource(), cfg)
-		if err != nil && !errors.Is(err, filament.ErrNotFound) {
-			return nil, ConnectError(err)
-		}
-		resp.Modes = append(resp.Modes, string(mode))
-	}
-	return connect.NewResponse(resp), nil
-}
-
 func (h handler) PlanReplicationStream(ctx context.Context, req *connect.Request[catalogv1.PlanReplicationStreamRequest]) (*connect.Response[catalogv1.PlanReplicationStreamResponse], error) {
 	cfg, err := decodeConfig(req.Msg.GetConfigJson())
 	if err != nil {

@@ -68,7 +68,7 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 	}
 
 	addr := workerAddress()
-	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(mux, "worker-host"), ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(mux, "worker-host"), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second}
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.ListenAndServe() }()
 	healthState.MarkStarted()
@@ -98,20 +98,25 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 
 // startExecutor mounts the engine over the datastore and event bus and
 // supervises continuous attempts in this process. It returns the readiness
-// checks the executor adds and a close that releases everything in order.
-func startExecutor(ctx context.Context, sources filament.SourceRegistry) ([]health.Check, func(), error) {
+// checks the executor adds and a close that cancels in-flight work, then
+// releases everything in order.
+func startExecutor(parent context.Context, sources filament.SourceRegistry) ([]health.Check, func(), error) {
+	ctx, cancel := context.WithCancel(parent)
 	deps, closeDeps, err := boot.FromEnv(ctx)
 	if err != nil {
+		cancel()
 		return nil, nil, err
 	}
 	deps.Sources = sources
 	bus, closeBus, err := boot.Bus()
 	if err != nil {
+		cancel()
 		closeDeps()
 		return nil, nil, err
 	}
 	h, err := boot.Mount(ctx, deps, bus, engine.New())
 	if err != nil {
+		cancel()
 		closeBus()
 		closeDeps()
 		return nil, nil, err
@@ -128,6 +133,7 @@ func startExecutor(ctx context.Context, sources filament.SourceRegistry) ([]heal
 		return nil
 	}}
 	return checks, func() {
+		cancel()
 		streams.Close()
 		_ = h.Close()
 		closeBus()

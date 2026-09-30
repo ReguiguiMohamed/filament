@@ -13,8 +13,8 @@ var ErrUnsupported = errors.New("unsupported by connector")
 var ErrConfigure = errors.New("connector rejected configuration")
 
 // Catalog is everything the control binaries need from connectors: the specs
-// that drive the UI and validation, the config-derived facts the compiler
-// reads, and the live inspection calls that reach the connected system. A
+// that drive the UI and validation, the driver facts the compiler reads, and
+// the live inspection calls that reach the connected system. A
 // local Catalog wraps the registries; a remote one forwards to a connector
 // host so the API never links a driver.
 type Catalog interface {
@@ -23,8 +23,6 @@ type Catalog interface {
 	SourceSpec(name string) (ConnectorSpec, error)
 	SinkSpec(name string) (SinkSpec, error)
 
-	// Replication reports the mode a source connection's config selects.
-	Replication(ctx context.Context, source string, cfg Config) (ReplicationMode, error)
 	// PlanReplicationStream asks a streaming source to plan its consumer.
 	// Sources that do not plan streams return ErrUnsupported.
 	PlanReplicationStream(ctx context.Context, source string, req ReplicationStreamPlanningRequest) (ReplicationStreamPlan, error)

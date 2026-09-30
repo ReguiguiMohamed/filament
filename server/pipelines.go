@@ -183,10 +183,7 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 		if err != nil {
 			return err
 		}
-		replication, err := a.catalog.Replication(ctx, sourceConn.Connector, filament.NewConfig(sourceConn.Config))
-		if err != nil {
-			return err
-		}
+		replication := filament.ReplicationFor(sourceSpec, filament.NewConfig(sourceConn.Config))
 
 		var ingestionType filament.IngestionType
 		if replication == filament.ReplicationCDC {
