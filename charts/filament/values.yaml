@@ -79,6 +79,25 @@ server:
   # @default -- `{}` (See [values.yaml])
   resources: {}
 
+# The connector host answers every connector call for the server: specs,
+# connection tests, discovery, and column inspection. It runs the worker image
+# and ServiceAccount from `controlPlane.dispatch.worker`, so drivers and cloud
+# identity match the workers that run pipelines.
+connectors:
+  # -- Minimum connector host log level. Valid values: INFO, DEBUG, TRACE.
+  logLevel: INFO
+
+  # -- Number of connector host replicas. The host is stateless.
+  replicas: 1
+
+  service:
+    # -- Connector host service and container port.
+    port: 8080
+
+  # -- Connector host resource requests and limits.
+  # @default -- `{}` (See [values.yaml])
+  resources: {}
+
 controlPlane:
   # -- Deploy the Filament control plane.
   enabled: true
@@ -133,7 +152,7 @@ controlPlane:
     staleAfterSeconds: ""
 
   dispatch:
-    # -- Worker dispatch backend.
+    # -- Where runs execute. `kubernetes` creates one worker Job per run. `worker` dispatches nothing and leaves execution to a long-lived worker started with `-execute`.
     mode: kubernetes
 
     worker:
@@ -141,7 +160,7 @@ controlPlane:
       logLevel: INFO
 
       image:
-        # -- Worker image repository used for dispatched Jobs.
+        # -- Worker image repository used for dispatched Jobs and the connector host.
         repository: ghcr.io/galaxy-io/filament/worker
         # -- Worker image tag.
         # @default -- `""` (defaults to chart appVersion)
@@ -151,7 +170,7 @@ controlPlane:
         # -- Image pull secrets for dispatched worker Jobs.
         pullSecrets: []
       serviceAccount:
-        # -- Existing ServiceAccount name for dispatched worker Jobs. When set, the chart does not create one.
+        # -- Existing ServiceAccount name for dispatched worker Jobs and the connector host. When set, the chart does not create one.
         name: ""
         # -- Annotations for the chart-created worker ServiceAccount, e.g. an IRSA role ARN.
         annotations: {}

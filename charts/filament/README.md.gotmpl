@@ -91,6 +91,18 @@ helm upgrade --install filament \
   {{- end }}
 {{- end }}
 
+## Connector host parameters
+
+The connector host answers every connector call for the server, so the server image carries no drivers. It runs the worker image and ServiceAccount set under `controlPlane.dispatch.worker` and receives no runtime Secret.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+{{- range .Values }}
+  {{- if hasPrefix "connectors." .Key }}
+| {{ .Key }} | {{ .Type }} | {{ if .Default }}{{ .Default }}{{ else }}{{ .AutoDefault }}{{ end }} | {{ if .Description }}{{ .Description }}{{ else }}{{ .AutoDescription }}{{ end }} |
+  {{- end }}
+{{- end }}
+
 ## Control plane parameters
 
 | Key | Type | Default | Description |

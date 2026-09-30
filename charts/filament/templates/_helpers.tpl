@@ -58,6 +58,21 @@ app.kubernetes.io/component: control-plane
 {{- end -}}
 
 
+{{- define "filament.connectors.fullname" -}}
+{{- printf "%s-connectors" (include "filament.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "filament.connectors.labels" -}}
+{{ include "filament.labels" . }}
+app.kubernetes.io/component: connectors
+{{- end -}}
+
+{{- define "filament.connectors.selectorLabels" -}}
+{{ include "filament.selectorLabels" . }}
+app.kubernetes.io/component: connectors
+{{- end -}}
+
+
 {{- define "filament.worker.fullname" -}}
 {{- printf "%s-worker" (include "filament.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
