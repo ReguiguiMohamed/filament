@@ -98,15 +98,15 @@ func (c *Compiler) Compile(ctx context.Context, tenant filament.TenantID, pipeli
 	for _, group := range groups {
 		key := group.key
 		resources, selectors := routeResources(group)
-		sourceRef, err := c.resolveNodeRef(group.source, connections)
+		sourceRef, err := c.resolveNodeRef(ctx, group.source, connections)
 		if err != nil {
 			return nil, err
 		}
-		sinkRef, err := c.resolveNodeRef(group.sink, connections)
+		sinkRef, err := c.resolveNodeRef(ctx, group.sink, connections)
 		if err != nil {
 			return nil, err
 		}
-		sourceSpec, err := c.Catalog.SourceSpec(sourceRef.Connector)
+		sourceSpec, err := c.Catalog.SourceSpec(ctx, sourceRef.Connector)
 		if err != nil {
 			return nil, err
 		}
@@ -265,13 +265,13 @@ func compileIngestionTypes(group *routeGroup, cdc bool) (map[string]filament.Ing
 // Connection it references, with the node's config/secret_refs shallow-merged
 // on top as the PIPELINE overlay (node keys win). connection_id is required.
 // It rejects an overlay that tries to set a CONNECTION-scoped field.
-func (c *Compiler) resolveNodeRef(node *ingestionv1.PipelineNode, connections map[string]filament.Connection) (filament.Ref, error) {
+func (c *Compiler) resolveNodeRef(ctx context.Context, node *ingestionv1.PipelineNode, connections map[string]filament.Connection) (filament.Ref, error) {
 	conn, ok := connections[node.GetConnectionId()]
 	if !ok {
 		return filament.Ref{}, fmt.Errorf("%w: node %q references missing connection %q", ErrInvalid, node.GetId(), node.GetConnectionId())
 	}
 	overlay := structMap(node.GetConfig())
-	if schema, err := c.schemaFor(conn.Kind, conn.Connector); err == nil {
+	if schema, err := c.schemaFor(ctx, conn.Kind, conn.Connector); err == nil {
 		if err := ValidateOverlayConfig(schema, overlay); err != nil {
 			return filament.Ref{}, fmt.Errorf("%w: node %q: %v", ErrInvalid, node.GetId(), err)
 		}
@@ -285,16 +285,16 @@ func (c *Compiler) resolveNodeRef(node *ingestionv1.PipelineNode, connections ma
 
 // schemaFor resolves a connector's config schema by kind + name from the
 // source and sink registries.
-func (c *Compiler) schemaFor(kind filament.ConnectorKind, connector string) (filament.ConfigSchema, error) {
+func (c *Compiler) schemaFor(ctx context.Context, kind filament.ConnectorKind, connector string) (filament.ConfigSchema, error) {
 	switch kind {
 	case filament.ConnectorKindSource:
-		spec, err := c.Catalog.SourceSpec(connector)
+		spec, err := c.Catalog.SourceSpec(ctx, connector)
 		if err != nil {
 			return filament.ConfigSchema{}, err
 		}
 		return spec.Config, nil
 	case filament.ConnectorKindSink:
-		spec, err := c.Catalog.SinkSpec(connector)
+		spec, err := c.Catalog.SinkSpec(ctx, connector)
 		if err != nil {
 			return filament.ConfigSchema{}, err
 		}

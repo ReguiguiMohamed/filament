@@ -22,11 +22,13 @@ func Local(sources filament.SourceRegistry, sinks filament.SinkRegistry) filamen
 	return local{sources: sources, sinks: sinks}
 }
 
-func (l local) SourceSpecs() ([]filament.ConnectorSpec, error) { return l.sources.Specs(), nil }
+func (l local) SourceSpecs(context.Context) ([]filament.ConnectorSpec, error) {
+	return l.sources.Specs(), nil
+}
 
-func (l local) SinkSpecs() ([]filament.SinkSpec, error) { return l.sinks.Specs(), nil }
+func (l local) SinkSpecs(context.Context) ([]filament.SinkSpec, error) { return l.sinks.Specs(), nil }
 
-func (l local) SourceSpec(name string) (filament.ConnectorSpec, error) {
+func (l local) SourceSpec(_ context.Context, name string) (filament.ConnectorSpec, error) {
 	if specs, ok := l.sources.(interface {
 		Spec(string) (filament.ConnectorSpec, error)
 	}); ok {
@@ -40,7 +42,7 @@ func (l local) SourceSpec(name string) (filament.ConnectorSpec, error) {
 	return source.Spec(), nil
 }
 
-func (l local) SinkSpec(name string) (filament.SinkSpec, error) {
+func (l local) SinkSpec(_ context.Context, name string) (filament.SinkSpec, error) {
 	if specs, ok := l.sinks.(interface {
 		Spec(string) (filament.SinkSpec, error)
 	}); ok {
@@ -66,7 +68,7 @@ func (l local) PlanReplicationStream(_ context.Context, name string, req filamen
 	return planner.PlanReplicationStream(req)
 }
 
-func (l local) SourceContracts(name string) (filament.SourceContracts, error) {
+func (l local) SourceContracts(_ context.Context, name string) (filament.SourceContracts, error) {
 	source, err := l.source(name)
 	if err != nil {
 		return filament.SourceContracts{}, err
@@ -74,7 +76,7 @@ func (l local) SourceContracts(name string) (filament.SourceContracts, error) {
 	return filament.SourceContractsOf(source), nil
 }
 
-func (l local) SinkContracts(name string) (filament.SinkContracts, error) {
+func (l local) SinkContracts(_ context.Context, name string) (filament.SinkContracts, error) {
 	sink, err := l.sink(name)
 	if err != nil {
 		return filament.SinkContracts{}, err

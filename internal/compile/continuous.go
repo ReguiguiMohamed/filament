@@ -52,15 +52,15 @@ func (c *Compiler) compileContinuous(ctx context.Context, tenant filament.Tenant
 		if connections[group.source.ConnectionId].Kind != filament.ConnectorKindSource || connections[group.sink.ConnectionId].Kind != filament.ConnectorKindSink {
 			return nil, fmt.Errorf("%w: route must connect a source to a sink", ErrInvalid)
 		}
-		sourceRef, err := c.resolveNodeRef(group.source, connections)
+		sourceRef, err := c.resolveNodeRef(ctx, group.source, connections)
 		if err != nil {
 			return nil, err
 		}
-		sinkRef, err := c.resolveNodeRef(group.sink, connections)
+		sinkRef, err := c.resolveNodeRef(ctx, group.sink, connections)
 		if err != nil {
 			return nil, err
 		}
-		pair, err := filament.PairOf(c.Catalog, sourceRef.Connector, sinkRef.Connector)
+		pair, err := filament.PairOf(ctx, c.Catalog, sourceRef.Connector, sinkRef.Connector)
 		if err != nil {
 			return nil, err
 		}

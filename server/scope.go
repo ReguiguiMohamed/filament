@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/galaxy-io/filament"
@@ -9,16 +10,16 @@ import (
 
 // schemaFor resolves a connector's config schema by kind + name from the
 // catalog.
-func (a *Server) schemaFor(kind ingestionv1.ConnectorKind, connector string) (filament.ConfigSchema, error) {
+func (a *Server) schemaFor(ctx context.Context, kind ingestionv1.ConnectorKind, connector string) (filament.ConfigSchema, error) {
 	switch kind {
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
-		spec, err := a.catalog.SourceSpec(connector)
+		spec, err := a.catalog.SourceSpec(ctx, connector)
 		if err != nil {
 			return filament.ConfigSchema{}, err
 		}
 		return spec.Config, nil
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
-		spec, err := a.catalog.SinkSpec(connector)
+		spec, err := a.catalog.SinkSpec(ctx, connector)
 		if err != nil {
 			return filament.ConfigSchema{}, err
 		}

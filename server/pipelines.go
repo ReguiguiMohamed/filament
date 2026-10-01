@@ -175,11 +175,11 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 		if err != nil {
 			return fmt.Errorf("load connection %q: %w", sinkNode.GetConnectionId(), err)
 		}
-		sourceSpec, err := a.catalog.SourceSpec(sourceConn.Connector)
+		sourceSpec, err := a.catalog.SourceSpec(ctx, sourceConn.Connector)
 		if err != nil {
 			return err
 		}
-		sinkSpec, err := a.catalog.SinkSpec(sinkConn.Connector)
+		sinkSpec, err := a.catalog.SinkSpec(ctx, sinkConn.Connector)
 		if err != nil {
 			return err
 		}

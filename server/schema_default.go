@@ -48,7 +48,7 @@ func (a *Server) sinkSchemaField(ctx context.Context, tenant filament.TenantID, 
 	if err != nil {
 		return ""
 	}
-	spec, err := a.catalog.SinkSpec(conn.Connector)
+	spec, err := a.catalog.SinkSpec(ctx, conn.Connector)
 	if err != nil {
 		return ""
 	}

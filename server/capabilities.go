@@ -149,7 +149,7 @@ func (a *Server) validateEdge(ctx context.Context, edge *ingestionv1.PipelineEdg
 		return nil
 	}
 
-	pair, ok := a.edgePair(srcConn.Connector, snkConn.Connector, ev)
+	pair, ok := a.edgePair(ctx, srcConn.Connector, snkConn.Connector, ev)
 	if !ok {
 		return nil
 	}
@@ -443,7 +443,7 @@ func (a *Server) validateNodeConfig(ctx context.Context, tenant string, node *in
 		}
 		return err
 	}
-	schema, err := a.schemaFor(connectionKindToProto(conn.Kind), conn.Connector)
+	schema, err := a.schemaFor(ctx, connectionKindToProto(conn.Kind), conn.Connector)
 	if err != nil {
 		return nil
 	}
@@ -607,18 +607,18 @@ func validateContinuousEdge(ctx context.Context, edge *ingestionv1.PipelineEdge,
 
 // edgePair loads both ends of an edge from the catalog, recording a lookup
 // failure against the node it belongs to.
-func (a *Server) edgePair(source, sink string, ev *ingestionv1.EdgeValidation) (filament.ConnectorPair, bool) {
+func (a *Server) edgePair(ctx context.Context, source, sink string, ev *ingestionv1.EdgeValidation) (filament.ConnectorPair, bool) {
 	var pair filament.ConnectorPair
 	var err error
-	if pair.Source, err = a.catalog.SourceSpec(source); err == nil {
-		pair.SourceContracts, err = a.catalog.SourceContracts(source)
+	if pair.Source, err = a.catalog.SourceSpec(ctx, source); err == nil {
+		pair.SourceContracts, err = a.catalog.SourceContracts(ctx, source)
 	}
 	if err != nil {
 		edgeError(ev, "from_node", err.Error())
 		return pair, false
 	}
-	if pair.Sink, err = a.catalog.SinkSpec(sink); err == nil {
-		pair.SinkContracts, err = a.catalog.SinkContracts(sink)
+	if pair.Sink, err = a.catalog.SinkSpec(ctx, sink); err == nil {
+		pair.SinkContracts, err = a.catalog.SinkContracts(ctx, sink)
 	}
 	if err != nil {
 		edgeError(ev, "to_node", err.Error())

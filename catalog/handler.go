@@ -46,7 +46,7 @@ func ConnectError(err error) *connect.Error {
 
 var errKindRequired = connect.NewError(connect.CodeInvalidArgument, errors.New("connector kind is required"))
 
-func (h handler) Describe(_ context.Context, req *connect.Request[catalogv1.DescribeRequest]) (*connect.Response[catalogv1.DescribeResponse], error) {
+func (h handler) Describe(ctx context.Context, req *connect.Request[catalogv1.DescribeRequest]) (*connect.Response[catalogv1.DescribeResponse], error) {
 	kind, name := req.Msg.GetKind(), req.Msg.GetName()
 	resp := &catalogv1.DescribeResponse{}
 	if name != "" {
@@ -54,9 +54,9 @@ func (h handler) Describe(_ context.Context, req *connect.Request[catalogv1.Desc
 		var err error
 		switch kind {
 		case catalogv1.Kind_KIND_SOURCE:
-			connector, err = h.source(name)
+			connector, err = h.source(ctx, name)
 		case catalogv1.Kind_KIND_SINK:
-			connector, err = h.sink(name)
+			connector, err = h.sink(ctx, name)
 		default:
 			return nil, errKindRequired
 		}
@@ -67,14 +67,14 @@ func (h handler) Describe(_ context.Context, req *connect.Request[catalogv1.Desc
 		return connect.NewResponse(resp), nil
 	}
 	if kind != catalogv1.Kind_KIND_SINK {
-		specs, err := h.catalog.SourceSpecs()
+		specs, err := h.catalog.SourceSpecs(ctx)
 		if err != nil {
 			return nil, ConnectError(err)
 		}
 		// Listed specs are sent as listed: an alias entry keeps its lookup
 		// name and target instead of resolving to the concrete spec.
 		for _, spec := range specs {
-			connector, err := h.sourceConnector(spec)
+			connector, err := h.sourceConnector(ctx, spec)
 			if err != nil {
 				return nil, ConnectError(err)
 			}
@@ -82,12 +82,12 @@ func (h handler) Describe(_ context.Context, req *connect.Request[catalogv1.Desc
 		}
 	}
 	if kind != catalogv1.Kind_KIND_SOURCE {
-		specs, err := h.catalog.SinkSpecs()
+		specs, err := h.catalog.SinkSpecs(ctx)
 		if err != nil {
 			return nil, ConnectError(err)
 		}
 		for _, spec := range specs {
-			connector, err := h.sinkConnector(spec)
+			connector, err := h.sinkConnector(ctx, spec)
 			if err != nil {
 				return nil, ConnectError(err)
 			}
@@ -99,24 +99,24 @@ func (h handler) Describe(_ context.Context, req *connect.Request[catalogv1.Desc
 
 // source describes one source by lookup name, resolving an alias to its
 // concrete spec.
-func (h handler) source(name string) (*catalogv1.Connector, error) {
-	spec, err := h.catalog.SourceSpec(name)
+func (h handler) source(ctx context.Context, name string) (*catalogv1.Connector, error) {
+	spec, err := h.catalog.SourceSpec(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return h.sourceConnector(spec)
+	return h.sourceConnector(ctx, spec)
 }
 
-func (h handler) sink(name string) (*catalogv1.Connector, error) {
-	spec, err := h.catalog.SinkSpec(name)
+func (h handler) sink(ctx context.Context, name string) (*catalogv1.Connector, error) {
+	spec, err := h.catalog.SinkSpec(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return h.sinkConnector(spec)
+	return h.sinkConnector(ctx, spec)
 }
 
-func (h handler) sourceConnector(spec filament.ConnectorSpec) (*catalogv1.Connector, error) {
-	contracts, err := h.catalog.SourceContracts(spec.Name)
+func (h handler) sourceConnector(ctx context.Context, spec filament.ConnectorSpec) (*catalogv1.Connector, error) {
+	contracts, err := h.catalog.SourceContracts(ctx, spec.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +130,8 @@ func (h handler) sourceConnector(spec filament.ConnectorSpec) (*catalogv1.Connec
 	}, nil
 }
 
-func (h handler) sinkConnector(spec filament.SinkSpec) (*catalogv1.Connector, error) {
-	contracts, err := h.catalog.SinkContracts(spec.Name)
+func (h handler) sinkConnector(ctx context.Context, spec filament.SinkSpec) (*catalogv1.Connector, error) {
+	contracts, err := h.catalog.SinkContracts(ctx, spec.Name)
 	if err != nil {
 		return nil, err
 	}

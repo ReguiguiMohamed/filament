@@ -27,13 +27,13 @@ func (a *Server) CreateConnection(ctx context.Context, req *connect.Request[inge
 		return nil, err
 	}
 	tenant := string(tenantID)
-	schema, err := a.schemaFor(req.Msg.GetKind(), req.Msg.GetConnector())
+	schema, err := a.schemaFor(ctx, req.Msg.GetKind(), req.Msg.GetConnector())
 	if err != nil {
 		return nil, connectorArgumentError(err)
 	}
 	connector := req.Msg.GetConnector()
 	if req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE {
-		spec, err := a.catalog.SourceSpec(connector)
+		spec, err := a.catalog.SourceSpec(ctx, connector)
 		if err != nil {
 			return nil, connectorArgumentError(err)
 		}
@@ -80,7 +80,7 @@ func (a *Server) CreateConnection(ctx context.Context, req *connect.Request[inge
 		a.deleteSecretRefs(ctx, written)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	return connect.NewResponse(&ingestionv1.CreateConnectionResponse{Connection: a.connectionForResponse(conn)}), nil
+	return connect.NewResponse(&ingestionv1.CreateConnectionResponse{Connection: a.connectionForResponse(ctx, conn)}), nil
 }
 
 // UpdateConnection applies changes to an existing connection, enforcing optimistic versioning.
@@ -104,7 +104,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 	if err := validateConnectionUpdateTarget(stored, in); err != nil {
 		return nil, err
 	}
-	schema, err := a.schemaFor(in.GetKind(), in.GetConnector())
+	schema, err := a.schemaFor(ctx, in.GetKind(), in.GetConnector())
 	if err != nil {
 		return nil, connectorArgumentError(err)
 	}
@@ -132,7 +132,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	if stored.Kind == filament.ConnectorKindSource {
-		spec, err := a.catalog.SourceSpec(stored.Connector)
+		spec, err := a.catalog.SourceSpec(ctx, stored.Connector)
 		if err != nil {
 			return nil, connectorArgumentError(err)
 		}
@@ -162,7 +162,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 		return nil, connect.NewError(connect.CodeAborted, err)
 	}
 	a.deleteReplacedSecretRefs(ctx, stored.SecretRefs, next.SecretRefs)
-	return connect.NewResponse(&ingestionv1.UpdateConnectionResponse{Connection: a.connectionForResponse(next)}), nil
+	return connect.NewResponse(&ingestionv1.UpdateConnectionResponse{Connection: a.connectionForResponse(ctx, next)}), nil
 }
 
 // validateConnectionUpdateTarget checks the persisted invariants that must
@@ -196,7 +196,7 @@ func (a *Server) GetConnection(ctx context.Context, req *connect.Request[ingesti
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	return connect.NewResponse(&ingestionv1.GetConnectionResponse{Connection: a.connectionForResponse(conn)}), nil
+	return connect.NewResponse(&ingestionv1.GetConnectionResponse{Connection: a.connectionForResponse(ctx, conn)}), nil
 }
 
 // ListConnections returns connections matching the request's tenant and kind filter.
@@ -222,7 +222,7 @@ func (a *Server) ListConnections(ctx context.Context, req *connect.Request[inges
 	}
 	out := make([]*ingestionv1.Connection, len(connections))
 	for i, c := range connections {
-		out[i] = a.connectionForResponse(c)
+		out[i] = a.connectionForResponse(ctx, c)
 	}
 	return connect.NewResponse(&ingestionv1.ListConnectionsResponse{Connections: out, Pagination: paginationOf(req.Msg.GetPagination(), options, total)}), nil
 }
@@ -237,30 +237,30 @@ func connectorArgumentError(err error) error {
 	return catalog.ConnectError(err)
 }
 
-func (a *Server) connectionForResponse(conn filament.Connection) *ingestionv1.Connection {
+func (a *Server) connectionForResponse(ctx context.Context, conn filament.Connection) *ingestionv1.Connection {
 	conn.Config = cloneConfigMap(conn.Config)
-	if schema, err := a.schemaFor(connectionKindToProto(conn.Kind), conn.Connector); err == nil {
+	if schema, err := a.schemaFor(ctx, connectionKindToProto(conn.Kind), conn.Connector); err == nil {
 		canonicalizeConnectionConfig(schema, conn.Config, cloneStrings(conn.SecretRefs))
 	}
 	out := connectionToProto(conn)
 	switch conn.Kind {
 	case filament.ConnectorKindSource:
-		spec, err := a.catalog.SourceSpec(conn.Connector)
+		spec, err := a.catalog.SourceSpec(ctx, conn.Connector)
 		if err != nil {
 			return out
 		}
-		contracts, err := a.catalog.SourceContracts(conn.Connector)
+		contracts, err := a.catalog.SourceContracts(ctx, conn.Connector)
 		if err != nil {
 			return out
 		}
 		out.Replication = replicationToProto(filament.ReplicationFor(spec, filament.NewConfig(conn.Config)))
 		out.ExecutionModes = a.sourceExecutionModes(spec, contracts)
 	case filament.ConnectorKindSink:
-		spec, err := a.catalog.SinkSpec(conn.Connector)
+		spec, err := a.catalog.SinkSpec(ctx, conn.Connector)
 		if err != nil {
 			return out
 		}
-		contracts, err := a.catalog.SinkContracts(conn.Connector)
+		contracts, err := a.catalog.SinkContracts(ctx, conn.Connector)
 		if err != nil {
 			return out
 		}

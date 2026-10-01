@@ -24,7 +24,7 @@ const (
 
 // ListConnectors returns the registered source and sink specs, optionally
 // filtered by kind.
-func (a *Server) ListConnectors(_ context.Context, req *connect.Request[ingestionv1.ListConnectorsRequest]) (*connect.Response[ingestionv1.ListConnectorsResponse], error) {
+func (a *Server) ListConnectors(ctx context.Context, req *connect.Request[ingestionv1.ListConnectorsRequest]) (*connect.Response[ingestionv1.ListConnectorsResponse], error) {
 	options, err := listOptionsOf(req.Msg.GetPagination(), req.Msg.GetSearch(), req.Msg.GetSorting(), map[ingestionv1.SortBy]string{
 		ingestionv1.SortBy_SORT_BY_NAME: "name",
 	}, "registry", false)
@@ -33,7 +33,7 @@ func (a *Server) ListConnectors(_ context.Context, req *connect.Request[ingestio
 	}
 	var connectors []*ingestionv1.ConnectorSpec
 	if req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_UNSPECIFIED || req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE {
-		specs, err := a.catalog.SourceSpecs()
+		specs, err := a.catalog.SourceSpecs(ctx)
 		if err != nil {
 			return nil, catalog.ConnectError(err)
 		}
@@ -42,7 +42,7 @@ func (a *Server) ListConnectors(_ context.Context, req *connect.Request[ingestio
 		}
 	}
 	if req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_UNSPECIFIED || req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK {
-		specs, err := a.catalog.SinkSpecs()
+		specs, err := a.catalog.SinkSpecs(ctx)
 		if err != nil {
 			return nil, catalog.ConnectError(err)
 		}
@@ -94,17 +94,17 @@ func (a *Server) ListConnectors(_ context.Context, req *connect.Request[ingestio
 }
 
 // GetConnector returns the spec for one registered connector.
-func (a *Server) GetConnector(_ context.Context, req *connect.Request[ingestionv1.GetConnectorRequest]) (*connect.Response[ingestionv1.GetConnectorResponse], error) {
+func (a *Server) GetConnector(ctx context.Context, req *connect.Request[ingestionv1.GetConnectorRequest]) (*connect.Response[ingestionv1.GetConnectorResponse], error) {
 	var spec *ingestionv1.ConnectorSpec
 	switch req.Msg.GetKind() {
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
-		sourceSpec, err := a.catalog.SourceSpec(req.Msg.GetConnector())
+		sourceSpec, err := a.catalog.SourceSpec(ctx, req.Msg.GetConnector())
 		if err != nil {
 			return nil, catalog.ConnectError(err)
 		}
 		spec = sourceSpecToProto(sourceSpec)
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
-		sinkSpec, err := a.catalog.SinkSpec(req.Msg.GetConnector())
+		sinkSpec, err := a.catalog.SinkSpec(ctx, req.Msg.GetConnector())
 		if err != nil {
 			return nil, catalog.ConnectError(err)
 		}
@@ -144,7 +144,7 @@ func (a *Server) ValidateConfig(ctx context.Context, req *connect.Request[ingest
 	if kind == filament.ConnectorKindUnspecified {
 		return connect.NewResponse(validationError("connector kind is required")), nil
 	}
-	schema, err := a.schemaFor(req.Msg.GetKind(), req.Msg.GetConnector())
+	schema, err := a.schemaFor(ctx, req.Msg.GetKind(), req.Msg.GetConnector())
 	if err != nil {
 		return nil, catalog.ConnectError(err)
 	}

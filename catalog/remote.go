@@ -26,7 +26,8 @@ const (
 	// snapshot before the host is asked again, so an outage costs one
 	// timeout per interval rather than one per call.
 	describeRetry = 5 * time.Second
-	// describeTimeout bounds a spec fetch, which has no caller deadline.
+	// describeTimeout bounds a spec fetch beyond any caller deadline, since
+	// one refresh serves every waiting caller.
 	describeTimeout = 5 * time.Second
 	// callTimeout bounds a live call whose caller set no deadline, such as
 	// the scheduler compiling on its process context.
@@ -106,17 +107,20 @@ type sinkEntry struct {
 
 // described returns the current snapshot, refreshing it when stale. A failed
 // refresh keeps serving the last snapshot: the specs are still true of the
-// host that comes back. Callers hold r.mu.
-func (r *remote) described() (*snapshot, error) {
+// worker that comes back. A caller that gave up does not hold the others
+// back. Callers hold r.mu.
+func (r *remote) described(ctx context.Context) (*snapshot, error) {
 	if r.snapshot != nil && time.Since(r.snapshot.at) < describeTTL {
 		return r.snapshot, nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), describeTimeout)
+	ctx, cancel := context.WithTimeout(ctx, describeTimeout)
 	defer cancel()
 	resp, err := r.client.Describe(ctx, connect.NewRequest(&catalogv1.DescribeRequest{}))
 	if err != nil {
 		if r.snapshot != nil {
-			r.snapshot.at = time.Now().Add(describeRetry - describeTTL)
+			if !errors.Is(err, context.Canceled) {
+				r.snapshot.at = time.Now().Add(describeRetry - describeTTL)
+			}
 			return r.snapshot, nil
 		}
 		return nil, fromConnect(err)
@@ -153,9 +157,9 @@ func (r *remote) described() (*snapshot, error) {
 	return next, nil
 }
 
-// describeOne asks the host for a name the listing does not carry.
-func (r *remote) describeOne(kind catalogv1.Kind, name string) (*catalogv1.Connector, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), describeTimeout)
+// describeOne asks the worker for a name the listing does not carry.
+func (r *remote) describeOne(ctx context.Context, kind catalogv1.Kind, name string) (*catalogv1.Connector, error) {
+	ctx, cancel := context.WithTimeout(ctx, describeTimeout)
 	defer cancel()
 	resp, err := r.client.Describe(ctx, connect.NewRequest(&catalogv1.DescribeRequest{Kind: kind, Name: name}))
 	if err != nil {
@@ -167,10 +171,10 @@ func (r *remote) describeOne(kind catalogv1.Kind, name string) (*catalogv1.Conne
 	return resp.Msg.GetConnectors()[0], nil
 }
 
-func (r *remote) source(name string) (sourceEntry, error) {
+func (r *remote) source(ctx context.Context, name string) (sourceEntry, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	snap, err := r.described()
+	snap, err := r.described(ctx)
 	if err != nil {
 		return sourceEntry{}, err
 	}
@@ -180,7 +184,7 @@ func (r *remote) source(name string) (sourceEntry, error) {
 	if err, ok := snap.missing["source\x00"+name]; ok {
 		return sourceEntry{}, err
 	}
-	connector, err := r.describeOne(catalogv1.Kind_KIND_SOURCE, name)
+	connector, err := r.describeOne(ctx, catalogv1.Kind_KIND_SOURCE, name)
 	if errors.Is(err, filament.ErrNotFound) {
 		snap.missing["source\x00"+name] = err
 	}
@@ -195,10 +199,10 @@ func (r *remote) source(name string) (sourceEntry, error) {
 	return entry, nil
 }
 
-func (r *remote) sink(name string) (sinkEntry, error) {
+func (r *remote) sink(ctx context.Context, name string) (sinkEntry, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	snap, err := r.described()
+	snap, err := r.described(ctx)
 	if err != nil {
 		return sinkEntry{}, err
 	}
@@ -208,7 +212,7 @@ func (r *remote) sink(name string) (sinkEntry, error) {
 	if err, ok := snap.missing["sink\x00"+name]; ok {
 		return sinkEntry{}, err
 	}
-	connector, err := r.describeOne(catalogv1.Kind_KIND_SINK, name)
+	connector, err := r.describeOne(ctx, catalogv1.Kind_KIND_SINK, name)
 	if errors.Is(err, filament.ErrNotFound) {
 		snap.missing["sink\x00"+name] = err
 	}
@@ -223,43 +227,43 @@ func (r *remote) sink(name string) (sinkEntry, error) {
 	return entry, nil
 }
 
-func (r *remote) SourceSpecs() ([]filament.ConnectorSpec, error) {
+func (r *remote) SourceSpecs(ctx context.Context) ([]filament.ConnectorSpec, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	snap, err := r.described()
+	snap, err := r.described(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return snap.sources, nil
 }
 
-func (r *remote) SinkSpecs() ([]filament.SinkSpec, error) {
+func (r *remote) SinkSpecs(ctx context.Context) ([]filament.SinkSpec, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	snap, err := r.described()
+	snap, err := r.described(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return snap.sinks, nil
 }
 
-func (r *remote) SourceSpec(name string) (filament.ConnectorSpec, error) {
-	entry, err := r.source(name)
+func (r *remote) SourceSpec(ctx context.Context, name string) (filament.ConnectorSpec, error) {
+	entry, err := r.source(ctx, name)
 	return entry.spec, err
 }
 
-func (r *remote) SinkSpec(name string) (filament.SinkSpec, error) {
-	entry, err := r.sink(name)
+func (r *remote) SinkSpec(ctx context.Context, name string) (filament.SinkSpec, error) {
+	entry, err := r.sink(ctx, name)
 	return entry.spec, err
 }
 
-func (r *remote) SourceContracts(name string) (filament.SourceContracts, error) {
-	entry, err := r.source(name)
+func (r *remote) SourceContracts(ctx context.Context, name string) (filament.SourceContracts, error) {
+	entry, err := r.source(ctx, name)
 	return entry.contracts, err
 }
 
-func (r *remote) SinkContracts(name string) (filament.SinkContracts, error) {
-	entry, err := r.sink(name)
+func (r *remote) SinkContracts(ctx context.Context, name string) (filament.SinkContracts, error) {
+	entry, err := r.sink(ctx, name)
 	return entry.contracts, err
 }
 

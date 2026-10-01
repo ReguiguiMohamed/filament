@@ -15,13 +15,13 @@ var ErrConfigure = errors.New("connector rejected configuration")
 // Catalog is everything the control binaries need from connectors: the specs
 // that drive the UI and validation, the driver facts the compiler reads, and
 // the live inspection calls that reach the connected system. A
-// local Catalog wraps the registries; a remote one forwards to a connector
-// host so the API never links a driver.
+// local Catalog wraps the registries; a remote one forwards to the worker
+// serving it so the API never links a driver.
 type Catalog interface {
-	SourceSpecs() ([]ConnectorSpec, error)
-	SinkSpecs() ([]SinkSpec, error)
-	SourceSpec(name string) (ConnectorSpec, error)
-	SinkSpec(name string) (SinkSpec, error)
+	SourceSpecs(ctx context.Context) ([]ConnectorSpec, error)
+	SinkSpecs(ctx context.Context) ([]SinkSpec, error)
+	SourceSpec(ctx context.Context, name string) (ConnectorSpec, error)
+	SinkSpec(ctx context.Context, name string) (SinkSpec, error)
 
 	// PlanReplicationStream asks a streaming source to plan its consumer.
 	// Sources that do not plan streams return ErrUnsupported.
@@ -29,8 +29,8 @@ type Catalog interface {
 
 	// SourceContracts and SinkContracts report which optional execution
 	// contracts a driver implements.
-	SourceContracts(name string) (SourceContracts, error)
-	SinkContracts(name string) (SinkContracts, error)
+	SourceContracts(ctx context.Context, name string) (SourceContracts, error)
+	SinkContracts(ctx context.Context, name string) (SinkContracts, error)
 
 	// Validate runs the connector's pure config validation.
 	Validate(ctx context.Context, kind ConnectorKind, name string, cfg Config) error
@@ -83,19 +83,19 @@ type ConnectorPair struct {
 }
 
 // PairOf loads both ends of a route from the catalog.
-func PairOf(catalog Catalog, source, sink string) (ConnectorPair, error) {
+func PairOf(ctx context.Context, catalog Catalog, source, sink string) (ConnectorPair, error) {
 	var pair ConnectorPair
 	var err error
-	if pair.Source, err = catalog.SourceSpec(source); err != nil {
+	if pair.Source, err = catalog.SourceSpec(ctx, source); err != nil {
 		return pair, err
 	}
-	if pair.SourceContracts, err = catalog.SourceContracts(source); err != nil {
+	if pair.SourceContracts, err = catalog.SourceContracts(ctx, source); err != nil {
 		return pair, err
 	}
-	if pair.Sink, err = catalog.SinkSpec(sink); err != nil {
+	if pair.Sink, err = catalog.SinkSpec(ctx, sink); err != nil {
 		return pair, err
 	}
-	pair.SinkContracts, err = catalog.SinkContracts(sink)
+	pair.SinkContracts, err = catalog.SinkContracts(ctx, sink)
 	return pair, err
 }
 
