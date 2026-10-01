@@ -11,6 +11,11 @@ export enum PipelineCanvasNodeType {
   PLACEHOLDER = "PLACEHOLDER",
 }
 
+export enum PipelineCanvasView {
+  CANVAS = "canvas",
+  ROUTES = "routes",
+}
+
 export interface PipelineCanvasNodeTableInfo {
   name: Resource["name"];
   isConnected: boolean;

@@ -55,7 +55,11 @@ import {
   mapPipelineVersionToCanvasState,
 } from "@/pages/pipelines/canvas/graph/serialize";
 import { usePipelineCanvasConnections } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasConnections";
-import { usePipelineCanvasValidation } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasValidation";
+import {
+  type PipelineCanvasValidationIssue,
+  PipelineCanvasValidationIssueKind,
+  usePipelineCanvasValidation,
+} from "@/pages/pipelines/canvas/hooks/usePipelineCanvasValidation";
 import { PipelineCanvasPanelTab } from "@/pages/pipelines/canvas/panel/types";
 import {
   usePipelineCanvasActions,
@@ -195,9 +199,19 @@ const PipelineLayoutNavbar = () => {
   const { issues, isPending: isValidatingCanvas, isError } = usePipelineCanvasValidation();
   const saveIssues = useMemo(
     () => [
-      ...graphConflicts.map((message) => ({ message })),
+      ...graphConflicts.map<PipelineCanvasValidationIssue>((message) => ({
+        kind: PipelineCanvasValidationIssueKind.GRAPH,
+        message,
+      })),
       ...issues,
-      ...(isError ? [{ message: "Unable to validate this pipeline." }] : []),
+      ...(isError
+        ? [
+            {
+              kind: PipelineCanvasValidationIssueKind.GRAPH,
+              message: "Unable to validate this pipeline.",
+            },
+          ]
+        : []),
     ],
     [graphConflicts, issues, isError],
   );
@@ -357,13 +371,16 @@ const PipelineLayoutNavbar = () => {
 
       <FlexWrapper alignItems={AlignItems.CENTER} gap={FlexGap.MEDIUM} shrink={0}>
         {isPreview && (
-          <Button
-            label="Back to latest"
-            icon={ArrowUUpLeftIcon}
-            variant={ButtonVariant.TERTIARY}
-            size={ButtonSize.SMALL}
-            onClick={() => handlePreviewVersionChange(null)}
-          />
+          <>
+            <Button
+              label="Back to latest"
+              icon={ArrowUUpLeftIcon}
+              variant={ButtonVariant.TERTIARY}
+              size={ButtonSize.SMALL}
+              onClick={() => handlePreviewVersionChange(null)}
+            />
+            <Chip label={`Version ${previewVersion}`} variant={ChipVariant.ERROR} />
+          </>
         )}
         {!isPreview && hasUnsavedChanges && (
           <Text size={TextSize.BODY_SM} variant={TextVariant.WARNING}>
