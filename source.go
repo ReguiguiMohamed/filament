@@ -245,14 +245,14 @@ type ReplicationStreamCleaner interface {
 const ReplicationField = "replication"
 
 // ReplicationFor reports the mode a connection's config selects: CDC when
-// the source declares ReplicationField and the config sets it to cdc.
-// Sources without the field are always standard.
+// the config sets ReplicationField to cdc and the source declares a CDC read
+// policy. A source without that capability is always standard.
 func ReplicationFor(spec ConnectorSpec, cfg Config) ReplicationMode {
 	if cfg.String(ReplicationField) != string(ReplicationCDC) {
 		return ReplicationStandard
 	}
-	for _, field := range spec.Config.Fields {
-		if field.Name == ReplicationField {
+	for _, policy := range spec.SourcePolicies {
+		if policy.Mode == ModeCDC {
 			return ReplicationCDC
 		}
 	}

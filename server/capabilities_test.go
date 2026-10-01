@@ -33,10 +33,6 @@ func (leverSource) Spec() filament.ConnectorSpec {
 			filament.IngestionCDCMerge,
 		),
 		Resources: filament.ResourceCapabilities{Discoverable: true},
-		Config: filament.ConfigSchema{Fields: []filament.ConfigField{{
-			Name: filament.ReplicationField, Type: filament.FieldEnum, Default: string(filament.ReplicationStandard),
-			Enum: []filament.EnumOption{{Value: string(filament.ReplicationStandard)}, {Value: string(filament.ReplicationCDC)}},
-		}}},
 	}
 }
 

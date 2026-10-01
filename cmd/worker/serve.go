@@ -15,8 +15,6 @@ import (
 	"github.com/galaxy-io/filament/cmd/internal/boot"
 	"github.com/galaxy-io/filament/cmd/internal/connectors"
 	"github.com/galaxy-io/filament/cmd/internal/health"
-	"github.com/galaxy-io/filament/cmd/internal/logger"
-	"github.com/galaxy-io/filament/cmd/internal/otel"
 	"github.com/galaxy-io/filament/eventbus"
 	"github.com/galaxy-io/filament/internal/modules/engine"
 	"github.com/galaxy-io/filament/internal/modules/streamsupervisor"
@@ -36,30 +34,26 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 	if err != nil {
 		return err
 	}
-	lg, err := logger.New()
-	if err != nil {
-		return err
-	}
-	log := lg.With(filament.Field{Key: "component", Value: "worker-host"})
-	_, _, otelShutdown, err := otel.FromEnv(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		flushCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_ = otelShutdown(flushCtx)
-	}()
-
+	// The executor boots the full dependency set, telemetry included; a
+	// catalog-only host needs telemetry alone.
+	var log filament.Logger
 	var checks []health.Check
 	if execute {
-		executorChecks, closeExecutor, err := startExecutor(ctx, sources)
+		deps, executorChecks, closeExecutor, err := startExecutor(ctx, sources)
 		if err != nil {
 			return err
 		}
 		defer closeExecutor()
-		checks = executorChecks
+		log, checks = deps.Log, executorChecks
+	} else {
+		lg, _, _, closeTelemetry, err := boot.Telemetry(ctx)
+		if err != nil {
+			return err
+		}
+		defer closeTelemetry()
+		log = lg
 	}
+	log = log.With(filament.Field{Key: "component", Value: "worker-host"})
 	mux := http.NewServeMux()
 	healthState := health.New(2*time.Second, checks...)
 	healthState.Mount(mux)
@@ -97,29 +91,29 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 }
 
 // startExecutor mounts the engine over the datastore and event bus and
-// supervises continuous attempts in this process. It returns the readiness
-// checks the executor adds and a close that cancels in-flight work, then
-// releases everything in order.
-func startExecutor(parent context.Context, sources filament.SourceRegistry) ([]health.Check, func(), error) {
+// supervises continuous attempts in this process. It returns the booted
+// dependencies, the readiness checks the executor adds, and a close that
+// cancels in-flight work, then releases everything in order.
+func startExecutor(parent context.Context, sources filament.SourceRegistry) (boot.Deps, []health.Check, func(), error) {
 	ctx, cancel := context.WithCancel(parent)
 	deps, closeDeps, err := boot.FromEnv(ctx)
 	if err != nil {
 		cancel()
-		return nil, nil, err
+		return boot.Deps{}, nil, nil, err
 	}
 	deps.Sources = sources
 	bus, closeBus, err := boot.Bus()
 	if err != nil {
 		cancel()
 		closeDeps()
-		return nil, nil, err
+		return boot.Deps{}, nil, nil, err
 	}
 	h, err := boot.Mount(ctx, deps, bus, engine.New())
 	if err != nil {
 		cancel()
 		closeBus()
 		closeDeps()
-		return nil, nil, err
+		return boot.Deps{}, nil, nil, err
 	}
 	streams := streamsupervisor.New(runner.Deps{
 		Bus: bus, DataStore: deps.Store, StreamStore: deps.StreamStore, Secrets: deps.Secrets,
@@ -132,7 +126,7 @@ func startExecutor(parent context.Context, sources filament.SourceRegistry) ([]h
 		}
 		return nil
 	}}
-	return checks, func() {
+	return deps, checks, func() {
 		cancel()
 		streams.Close()
 		_ = h.Close()

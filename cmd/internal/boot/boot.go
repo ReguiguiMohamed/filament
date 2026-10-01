@@ -47,12 +47,13 @@ type Deps struct {
 // The event bus is deliberately separate (Bus) so binaries can start health
 // listeners before the connect wait.
 func FromEnv(ctx context.Context) (Deps, func(), error) {
-	lg, err := logger.New()
+	lg, metrics, tracer, closeTelemetry, err := Telemetry(ctx)
 	if err != nil {
 		return Deps{}, nil, err
 	}
 	store, err := persistence.FromEnv(ctx)
 	if err != nil {
+		closeTelemetry()
 		return Deps{}, nil, err
 	}
 	var streamStore filament.ContinuousRunStore
@@ -68,27 +69,36 @@ func FromEnv(ctx context.Context) (Deps, func(), error) {
 	secrets, err := secret.FromEnv(ctx, store)
 	if err != nil {
 		closeStore()
-		return Deps{}, nil, err
-	}
-	closeSecrets := func() {
-		if c, ok := secrets.(io.Closer); ok {
-			_ = c.Close()
-		}
-	}
-	metrics, tracer, otelShutdown, err := otel.FromEnv(ctx)
-	if err != nil {
-		closeSecrets()
-		closeStore()
+		closeTelemetry()
 		return Deps{}, nil, err
 	}
 	shutdown := func() {
-		flushCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_ = otelShutdown(flushCtx)
-		closeSecrets()
+		closeTelemetry()
+		if c, ok := secrets.(io.Closer); ok {
+			_ = c.Close()
+		}
 		closeStore()
 	}
 	return Deps{Log: lg, Store: store, StreamStore: streamStore, Secrets: secrets, Metrics: metrics, Tracer: tracer}, shutdown, nil
+}
+
+// Telemetry builds the logger and otel providers alone, for a process that
+// needs no datastore. The returned close flushes otel.
+func Telemetry(ctx context.Context) (filament.Logger, filament.Metrics, filament.Tracer, func(), error) {
+	lg, err := logger.New()
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	metrics, tracer, otelShutdown, err := otel.FromEnv(ctx)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	flush := func() {
+		flushCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = otelShutdown(flushCtx)
+	}
+	return lg, metrics, tracer, flush, nil
 }
 
 // RemoteCatalog reaches the connector host at CATALOG_URL, for binaries that

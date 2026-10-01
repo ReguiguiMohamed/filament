@@ -14,6 +14,7 @@ import (
 
 	"github.com/galaxy-io/filament"
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
+	"github.com/galaxy-io/filament/catalog"
 	"github.com/galaxy-io/filament/internal/compile"
 )
 
@@ -28,13 +29,13 @@ func (a *Server) CreateConnection(ctx context.Context, req *connect.Request[inge
 	tenant := string(tenantID)
 	schema, err := a.schemaFor(req.Msg.GetKind(), req.Msg.GetConnector())
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, connectorArgumentError(err)
 	}
 	connector := req.Msg.GetConnector()
 	if req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE {
 		spec, err := a.catalog.SourceSpec(connector)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+			return nil, connectorArgumentError(err)
 		}
 		// Persist the concrete identity when a catalog default alias was used.
 		connector = spec.Name
@@ -105,7 +106,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 	}
 	schema, err := a.schemaFor(in.GetKind(), in.GetConnector())
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, connectorArgumentError(err)
 	}
 	cfg := structMap(in.GetConfig())
 	refs := cloneStrings(in.GetSecretRefs())
@@ -133,7 +134,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 	if stored.Kind == filament.ConnectorKindSource {
 		spec, err := a.catalog.SourceSpec(stored.Connector)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+			return nil, connectorArgumentError(err)
 		}
 		before := filament.ReplicationFor(spec, filament.NewConfig(stored.Config))
 		after := filament.ReplicationFor(spec, filament.NewConfig(cfg))
@@ -224,6 +225,16 @@ func (a *Server) ListConnections(ctx context.Context, req *connect.Request[inges
 		out[i] = a.connectionForResponse(c)
 	}
 	return connect.NewResponse(&ingestionv1.ListConnectionsResponse{Connections: out, Pagination: paginationOf(req.Msg.GetPagination(), options, total)}), nil
+}
+
+// connectorArgumentError reports a request that names a connector the catalog
+// does not have as a bad argument, and lets any other catalog failure keep
+// its own code so a host outage is not mistaken for user error.
+func connectorArgumentError(err error) error {
+	if errors.Is(err, filament.ErrNotFound) {
+		return connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	return catalog.ConnectError(err)
 }
 
 func (a *Server) connectionForResponse(conn filament.Connection) *ingestionv1.Connection {

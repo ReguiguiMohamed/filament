@@ -92,7 +92,7 @@ func TestCheckpointCoverageFor(t *testing.T) {
 }
 
 func TestReplicationFor(t *testing.T) {
-	aware := ConnectorSpec{Config: ConfigSchema{Fields: []ConfigField{{Name: ReplicationField, Type: FieldEnum}}}}
+	aware := ConnectorSpec{SourcePolicies: SourcePolicies(IngestionCDCAppend)}
 	if got := ReplicationFor(aware, NewConfig(map[string]any{"replication": "cdc"})); got != ReplicationCDC {
 		t.Fatalf("got %q, want cdc", got)
 	}
@@ -100,7 +100,7 @@ func TestReplicationFor(t *testing.T) {
 		t.Fatalf("got %q, want standard", got)
 	}
 	if got := ReplicationFor(ConnectorSpec{}, NewConfig(map[string]any{"replication": "cdc"})); got != ReplicationStandard {
-		t.Fatalf("source without the field: got %q, want standard", got)
+		t.Fatalf("source without a CDC policy: got %q, want standard", got)
 	}
 }
 

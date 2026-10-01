@@ -100,13 +100,13 @@ func (a *Server) GetConnector(_ context.Context, req *connect.Request[ingestionv
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
 		sourceSpec, err := a.catalog.SourceSpec(req.Msg.GetConnector())
 		if err != nil {
-			return nil, connect.NewError(connect.CodeNotFound, err)
+			return nil, catalog.ConnectError(err)
 		}
 		spec = sourceSpecToProto(sourceSpec)
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
 		sinkSpec, err := a.catalog.SinkSpec(req.Msg.GetConnector())
 		if err != nil {
-			return nil, connect.NewError(connect.CodeNotFound, err)
+			return nil, catalog.ConnectError(err)
 		}
 		spec = sinkSpecToProto(sinkSpec)
 	default:
@@ -146,7 +146,7 @@ func (a *Server) ValidateConfig(ctx context.Context, req *connect.Request[ingest
 	}
 	schema, err := a.schemaFor(req.Msg.GetKind(), req.Msg.GetConnector())
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, err)
+		return nil, catalog.ConnectError(err)
 	}
 	canonicalizeConnectionConfig(schema, config, nil)
 	cfg := filament.NewConfig(config)
