@@ -33,7 +33,7 @@ const (
 	callTimeout = 30 * time.Second
 )
 
-// Remote returns a Catalog that forwards to the connector host at baseURL, so
+// Remote returns a Catalog that forwards to the worker serving it at baseURL, so
 // the caller links no driver. Specs and contracts are fetched once and
 // cached; every other call is one RPC under the caller's deadline. A bare
 // host:port, as some platforms inject, is taken as plain HTTP.

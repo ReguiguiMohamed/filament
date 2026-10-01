@@ -40,7 +40,7 @@ server mode="": migrate
       AUTH_UI_ORIGIN="${AUTH_UI_ORIGIN:-http://localhost:5173}" \
       GOWORK=off go run .
 
-# run the worker host locally: it answers the API server's connector calls and executes runs (defaults match docker-compose.yaml; env overrides)
+# run the worker long-lived: it answers the API server's connector calls and executes runs (defaults match docker-compose.yaml; env overrides)
 worker:
     cd cmd/worker && \
       PERSISTENCE_DSN="${PERSISTENCE_DSN:-postgresql://filament:filament@localhost:5432/filament?sslmode=disable}" \
@@ -49,7 +49,7 @@ worker:
       NATS_SUBJECTS="${NATS_SUBJECTS:-ingestion.v1.>}" \
       ENCRYPTION_KEY="${ENCRYPTION_KEY:-2y4Ou1wAxZ3tReU064W61mal5sXl/2ymtS022pbizws=}" \
       WORKER_ADDR="${WORKER_ADDR:-:8082}" \
-      GOWORK=off go run . -serve -execute
+      GOWORK=off go run . -catalog -execute
 
 # run the control plane locally; runs execute in `just worker` (defaults match docker-compose.yaml; env overrides)
 control-plane:
@@ -67,7 +67,7 @@ control-plane:
 ui:
     cd ui && pnpm install && pnpm dev
 
-# run the full app: worker host, control plane, API server, UI; `just dev zitadel|keycloak` turns auth on
+# run the full app: worker, control plane, API server, UI; `just dev zitadel|keycloak` turns auth on
 dev mode="": migrate
     #!/usr/bin/env bash
     set -euo pipefail

@@ -18,7 +18,7 @@ data:
   DISPATCH_MODE: {{ .Values.controlPlane.dispatch.mode | quote }}
 
   # Connectors
-  CATALOG_URL: "http://{{ include "filament.connectors.fullname" . }}:{{ .Values.connectors.service.port }}"
+  CATALOG_URL: "http://{{ include "filament.catalog.fullname" . }}:{{ .Values.catalog.service.port }}"
 
   # Health
   HEALTH_ADDR: ":{{ .Values.controlPlane.health.port }}"

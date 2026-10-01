@@ -2,7 +2,7 @@
 // the ConnectRPC surface and the embedded web UI, persists pipeline and run
 // submissions, and publishes run.requested facts for the control plane to
 // dispatch. With -migrate it runs datastore migrations and exits. It links no
-// connector driver; connector calls go to the connector host at CATALOG_URL.
+// connector driver; connector calls go to the catalog at CATALOG_URL.
 package main
 
 import (

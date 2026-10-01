@@ -101,7 +101,7 @@ func Telemetry(ctx context.Context) (filament.Logger, filament.Metrics, filament
 	return lg, metrics, tracer, flush, nil
 }
 
-// RemoteCatalog reaches the connector host at CATALOG_URL, for binaries that
+// RemoteCatalog reaches the catalog at CATALOG_URL, for binaries that
 // link no driver.
 func RemoteCatalog() (filament.Catalog, error) {
 	url := os.Getenv("CATALOG_URL")

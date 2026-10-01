@@ -1,7 +1,7 @@
 // Command control-plane runs Filament's orchestration loop: it fires due
 // schedules, dispatches requested runs to workers per DISPATCH_MODE, and folds
 // worker-emitted facts back into Postgres through tracker. It links no
-// connector driver; the scheduler's connector questions go to the connector
+// connector driver; the scheduler's connector questions go to the catalog
 // host at CATALOG_URL.
 package main
 

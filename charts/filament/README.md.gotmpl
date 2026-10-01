@@ -91,14 +91,14 @@ helm upgrade --install filament \
   {{- end }}
 {{- end }}
 
-## Connector host parameters
+## Catalog parameters
 
-The connector host answers every connector call for the server, so the server image carries no drivers. It runs the worker image and ServiceAccount set under `controlPlane.dispatch.worker` and receives no runtime Secret.
+The catalog answers every connector call for the server and control plane, so neither image carries a driver. It runs the worker image and ServiceAccount set under `controlPlane.dispatch.worker`, receives no runtime Secret, and is reached over plain HTTP inside the cluster.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 {{- range .Values }}
-  {{- if hasPrefix "connectors." .Key }}
+  {{- if hasPrefix "catalog." .Key }}
 | {{ .Key }} | {{ .Type }} | {{ if .Default }}{{ .Default }}{{ else }}{{ .AutoDefault }}{{ end }} | {{ if .Description }}{{ .Description }}{{ else }}{{ .AutoDescription }}{{ end }} |
   {{- end }}
 {{- end }}

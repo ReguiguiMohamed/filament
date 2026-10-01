@@ -13,7 +13,7 @@ import (
 	"github.com/galaxy-io/filament/api/catalog/v1/catalogv1connect"
 )
 
-// Handler serves a Catalog over ConnectRPC. A connector host mounts it so the
+// Handler serves a Catalog over ConnectRPC. A worker mounts it so the
 // control binaries can reach the drivers it carries.
 func Handler(catalog filament.Catalog, opts ...connect.HandlerOption) (string, http.Handler) {
 	return catalogv1connect.NewCatalogServiceHandler(handler{catalog: catalog}, opts...)

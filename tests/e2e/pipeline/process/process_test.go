@@ -67,11 +67,11 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 
 	runCommand(t, ctx, serverBinary, []string{"-migrate"}, commonEnv)
 	t.Log("migrated persistence database")
-	// Neither control binary links a driver. The worker host answers the
-	// server's connector calls, and a second worker host executes runs.
-	catalogHost := startManagedProcess(t, workerBinary, []string{"-serve"}, []string{"WORKER_ADDR=" + catalogAddr, "LOG_LEVEL=DEBUG"})
+	// Neither control binary links a driver. One worker answers the server's
+	// connector calls, and a second worker executes runs.
+	catalogHost := startManagedProcess(t, workerBinary, []string{"-catalog"}, []string{"WORKER_ADDR=" + catalogAddr, "LOG_LEVEL=DEBUG"})
 	waitForHealth(t, ctx, catalogHost, "http://"+catalogAddr+"/readyz")
-	t.Log("connector host is ready")
+	t.Log("catalog is ready")
 	server := startManagedProcess(t, serverBinary, nil, append(commonEnv, "SERVER_ADDR="+serverAddr, "CATALOG_URL=http://"+catalogAddr))
 	waitForHealth(t, ctx, server, "http://"+serverAddr+"/readyz")
 	t.Log("server is ready")

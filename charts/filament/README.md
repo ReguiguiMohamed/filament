@@ -97,16 +97,16 @@ helm upgrade --install filament \
 | server.serviceAccount.annotations | object | `{}` | Annotations for the chart-created server ServiceAccount, e.g. an IRSA role ARN. |
 | server.serviceAccount.name | string | `""` | Existing ServiceAccount name for the server. When set, the chart does not create one. |
 
-## Connector host parameters
+## Catalog parameters
 
-The connector host answers every connector call for the server, so the server image carries no drivers. It runs the worker image and ServiceAccount set under `controlPlane.dispatch.worker` and receives no runtime Secret.
+The catalog answers every connector call for the server and control plane, so neither image carries a driver. It runs the worker image and ServiceAccount set under `controlPlane.dispatch.worker`, receives no runtime Secret, and is reached over plain HTTP inside the cluster.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| connectors.logLevel | string | `"INFO"` | Minimum connector host log level. Valid values: INFO, DEBUG, TRACE. |
-| connectors.replicas | int | `1` | Number of connector host replicas. The host is stateless. |
-| connectors.resources | object | `{}` (See [values.yaml]) | Connector host resource requests and limits. |
-| connectors.service.port | int | `8080` | Connector host service and container port. |
+| catalog.logLevel | string | `"INFO"` | Minimum catalog log level. Valid values: INFO, DEBUG, TRACE. |
+| catalog.replicas | int | `1` | Number of catalog replicas. The catalog is stateless. |
+| catalog.resources | object | `{}` (See [values.yaml]) | Catalog resource requests and limits. |
+| catalog.service.port | int | `8080` | Catalog service and container port. |
 
 ## Control plane parameters
 
@@ -124,12 +124,12 @@ The connector host answers every connector call for the server, so the server im
 | controlPlane.dispatch.worker.heartbeatSeconds | int | `30` | Interval in seconds between worker heartbeats, stored in the worker ConfigMap as `HEARTBEAT_SECONDS`. Empty uses the worker's own default. |
 | controlPlane.dispatch.worker.image.pullPolicy | string | `"IfNotPresent"` | Worker image pull policy. |
 | controlPlane.dispatch.worker.image.pullSecrets | list | `[]` | Image pull secrets for dispatched worker Jobs. |
-| controlPlane.dispatch.worker.image.repository | string | `"ghcr.io/galaxy-io/filament/worker"` | Worker image repository used for dispatched Jobs and the connector host. |
+| controlPlane.dispatch.worker.image.repository | string | `"ghcr.io/galaxy-io/filament/worker"` | Worker image repository used for dispatched Jobs and the catalog. |
 | controlPlane.dispatch.worker.image.tag | string | `""` (defaults to chart appVersion) | Worker image tag. |
 | controlPlane.dispatch.worker.logLevel | string | `"INFO"` | Minimum worker log level. Valid values: INFO, DEBUG, TRACE. |
 | controlPlane.dispatch.worker.restartPolicy | string | `"Never"` | Restart policy for dispatched worker Jobs. |
 | controlPlane.dispatch.worker.serviceAccount.annotations | object | `{}` | Annotations for the chart-created worker ServiceAccount, e.g. an IRSA role ARN. |
-| controlPlane.dispatch.worker.serviceAccount.name | string | `""` | Existing ServiceAccount name for dispatched worker Jobs and the connector host. When set, the chart does not create one. |
+| controlPlane.dispatch.worker.serviceAccount.name | string | `""` | Existing ServiceAccount name for dispatched worker Jobs and the catalog. When set, the chart does not create one. |
 | controlPlane.dispatch.worker.terminationGraceSeconds | int | `30` | Worker Job termination grace period in seconds. |
 | controlPlane.enabled | bool | `true` | Deploy the Filament control plane. |
 | controlPlane.health.port | int | `8081` | Port the control plane serves `/livez`, `/startupz`, and `/readyz` on, stored in the ConfigMap as `HEALTH_ADDR` and used for the container port and probes. |

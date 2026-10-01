@@ -1,24 +1,24 @@
-{{/* The connector host is the worker image in serve mode. It carries every
-     driver so the server carries none, and it receives no runtime Secret:
-     each call brings its own config. */}}
+{{/* The catalog is the worker image answering connector calls. It carries
+     every driver so the server carries none, and it receives no runtime
+     Secret: each call brings its own config. */}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "filament.connectors.fullname" . }}
+  name: {{ include "filament.catalog.fullname" . }}
   namespace: {{ include "filament.namespace" . }}
   labels:
-    {{- include "filament.connectors.labels" . | nindent 4 }}
+    {{- include "filament.catalog.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.connectors.replicas }}
+  replicas: {{ .Values.catalog.replicas }}
   selector:
     matchLabels:
-      {{- include "filament.connectors.selectorLabels" . | nindent 6 }}
+      {{- include "filament.catalog.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/connectors-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/catalog-configmap.yaml") . | sha256sum }}
       labels:
-        {{- include "filament.connectors.selectorLabels" . | nindent 8 }}
+        {{- include "filament.catalog.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "filament.worker.serviceAccountName" . }}
       automountServiceAccountToken: false
@@ -33,10 +33,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: connectors
+        - name: catalog
           image: {{ .Values.controlPlane.dispatch.worker.image.repository }}:{{ .Values.controlPlane.dispatch.worker.image.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.controlPlane.dispatch.worker.image.pullPolicy }}
-          args: ["-serve"]
+          args: ["-catalog"]
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -44,7 +44,7 @@ spec:
               drop: ["ALL"]
           ports:
             - name: http
-              containerPort: {{ .Values.connectors.service.port }}
+              containerPort: {{ .Values.catalog.service.port }}
               protocol: TCP
           startupProbe:
             httpGet:
@@ -68,6 +68,6 @@ spec:
             timeoutSeconds: 3
           envFrom:
             - configMapRef:
-                name: {{ include "filament.connectors.fullname" . }}
+                name: {{ include "filament.catalog.fullname" . }}
           resources:
-            {{- toYaml .Values.connectors.resources | nindent 12 }}
+            {{- toYaml .Values.catalog.resources | nindent 12 }}

@@ -24,18 +24,18 @@ import (
 
 const shutdownTimeout = 10 * time.Second
 
-// serve runs the worker as a long-lived host, the one process that carries
-// every driver. With -serve it answers catalog calls for the control
-// binaries, which needs no datastore or bus. With -execute it also consumes
-// requested runs from the event bus and executes them, the way a dispatched
-// Job would, for deployments without Kubernetes.
+// serve runs the worker long-lived, as the one process that carries every
+// driver. With -catalog it answers connector calls for the control binaries,
+// which needs no datastore or bus. With -execute it consumes requested runs
+// from the event bus and executes them, the way a dispatched Job would, for
+// deployments without Kubernetes.
 func serve(ctx context.Context, hostCatalog, execute bool) error {
 	sources, err := connectors.SourcesFromEnv()
 	if err != nil {
 		return err
 	}
 	// The executor boots the full dependency set, telemetry included; a
-	// catalog-only host needs telemetry alone.
+	// catalog-only worker needs telemetry alone.
 	var log filament.Logger
 	var checks []health.Check
 	if execute {
@@ -53,7 +53,7 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 		defer closeTelemetry()
 		log = lg
 	}
-	log = log.With(filament.Field{Key: "component", Value: "worker-host"})
+	log = log.With(filament.Field{Key: "component", Value: "worker"})
 	mux := http.NewServeMux()
 	healthState := health.New(2*time.Second, checks...)
 	healthState.Mount(mux)
@@ -62,12 +62,12 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 	}
 
 	addr := workerAddress()
-	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(mux, "worker-host"), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second}
+	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(mux, "worker"), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second}
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.ListenAndServe() }()
 	healthState.MarkStarted()
-	log.Info("worker host started",
-		filament.Field{Key: "event.name", Value: "worker_host.started"},
+	log.Info("worker started",
+		filament.Field{Key: "event.name", Value: "worker.started"},
 		filament.Field{Key: "address", Value: addr},
 		filament.Field{Key: "catalog", Value: hostCatalog},
 		filament.Field{Key: "execute", Value: execute},
@@ -79,10 +79,10 @@ func serve(ctx context.Context, hostCatalog, execute bool) error {
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
-		return fmt.Errorf("worker host listener: %w", err)
+		return fmt.Errorf("worker listener: %w", err)
 	case <-ctx.Done():
-		log.Info("worker host stopping",
-			filament.Field{Key: "event.name", Value: "worker_host.stopping"})
+		log.Info("worker stopping",
+			filament.Field{Key: "event.name", Value: "worker.stopping"})
 		healthState.MarkStopping()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()

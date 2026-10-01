@@ -1,6 +1,6 @@
 // Command worker executes one already-persisted Filament run. It is the one
-// binary that links every connector driver. With -serve or -execute it runs
-// as a long-lived host instead: -serve answers catalog calls for the control
+// binary that links every connector driver. With -catalog or -execute it
+// runs long-lived instead: -catalog answers connector calls for the control
 // binaries, -execute consumes requested runs from the event bus for
 // deployments without Kubernetes.
 package main
@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	hostCatalog := flag.Bool("serve", false, "run as a long-lived host answering connector catalog calls")
+	hostCatalog := flag.Bool("catalog", false, "run as a long-lived worker answering connector catalog calls")
 	execute := flag.Bool("execute", false, "run as a long-lived host executing requested runs from the event bus")
 	flag.Parse()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "filament.connectors.fullname" . }}
+  name: {{ include "filament.catalog.fullname" . }}
   namespace: {{ include "filament.namespace" . }}
 data:
   # Listener
-  WORKER_ADDR: ":{{ .Values.connectors.service.port }}"
+  WORKER_ADDR: ":{{ .Values.catalog.service.port }}"
 
   # Observability
-  LOG_LEVEL: {{ .Values.connectors.logLevel | quote }}
+  LOG_LEVEL: {{ .Values.catalog.logLevel | quote }}
   {{- with .Values.observability.otel.endpoint }}
-  OTEL_SERVICE_NAME: {{ include "filament.connectors.fullname" $ | quote }}
+  OTEL_SERVICE_NAME: {{ include "filament.catalog.fullname" $ | quote }}
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ . | quote }}
   {{- with $.Values.observability.otel.protocol }}
   OTEL_EXPORTER_OTLP_PROTOCOL: {{ . | quote }}
