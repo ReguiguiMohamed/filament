@@ -172,7 +172,7 @@ func (h handler) Validate(ctx context.Context, req *connect.Request[catalogv1.Va
 	if err != nil {
 		return nil, err
 	}
-	failure, err := verdict(h.catalog.Validate(ctx, kind, req.Msg.GetName(), cfg))
+	failure, err := Verdict(h.catalog.Validate(ctx, kind, req.Msg.GetName(), cfg))
 	if err != nil {
 		return nil, err
 	}
@@ -188,20 +188,23 @@ func (h handler) TestConnection(ctx context.Context, req *connect.Request[catalo
 	if err != nil {
 		return nil, err
 	}
-	failure, err := verdict(h.catalog.TestConnection(ctx, kind, req.Msg.GetName(), cfg))
+	failure, err := Verdict(h.catalog.TestConnection(ctx, kind, req.Msg.GetName(), cfg))
 	if err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&catalogv1.TestConnectionResponse{Failure: failure}), nil
 }
 
-// verdict splits a connector's answer from a failed call: an unknown connector
-// is an error, anything else the connector said is the verdict.
-func verdict(err error) (string, error) {
+// Verdict splits a Validate or TestConnection result into what the connector
+// said about the config and a call that never got an answer. An unknown
+// connector and a failed remote call are errors; anything else is the
+// connector's own verdict, empty when it accepted.
+func Verdict(err error) (string, error) {
+	var remote *connect.Error
 	switch {
 	case err == nil:
 		return "", nil
-	case errors.Is(err, filament.ErrNotFound):
+	case errors.Is(err, filament.ErrNotFound), errors.As(err, &remote):
 		return "", ConnectError(err)
 	default:
 		return err.Error(), nil

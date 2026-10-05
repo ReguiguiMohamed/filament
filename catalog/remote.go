@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/galaxy-io/filament"
 	catalogv1 "github.com/galaxy-io/filament/api/catalog/v1"
@@ -26,8 +27,8 @@ const (
 	// snapshot before the host is asked again, so an outage costs one
 	// timeout per interval rather than one per call.
 	describeRetry = 5 * time.Second
-	// describeTimeout bounds a spec fetch beyond any caller deadline, since
-	// one refresh serves every waiting caller.
+	// describeTimeout bounds a spec fetch. The fetch is shared by every
+	// waiting caller, so it runs detached from any one caller's deadline.
 	describeTimeout = 5 * time.Second
 	// callTimeout bounds a live call whose caller set no deadline, such as
 	// the scheduler compiling on its process context.
@@ -35,8 +36,9 @@ const (
 )
 
 // Remote returns a Catalog that forwards to the worker serving it at baseURL, so
-// the caller links no driver. Specs and contracts are fetched once and
-// cached; every other call is one RPC under the caller's deadline. A bare
+// the caller links no driver. Specs and contracts are served from a cached
+// listing that refreshes in the background; every other call is one RPC under
+// the caller's deadline. A bare
 // host:port, as some platforms inject, is taken as plain HTTP.
 func Remote(baseURL string, opts ...connect.ClientOption) filament.Catalog {
 	if !strings.Contains(baseURL, "://") {
@@ -47,7 +49,11 @@ func Remote(baseURL string, opts ...connect.ClientOption) filament.Catalog {
 
 type remote struct {
 	client catalogv1connect.CatalogServiceClient
+	// flight shares one in-flight request among concurrent callers.
+	flight singleflight.Group
 
+	// mu guards the snapshot pointer and its name maps. It is never held
+	// across a network call.
 	mu       sync.Mutex
 	snapshot *snapshot
 }
@@ -84,8 +90,9 @@ func fromConnect(err error) error {
 }
 
 // snapshot is one Describe of the host: the listing as listed, plus each
-// name's concrete spec and contracts. A name the listing lacks is asked for
-// individually once and remembered either way for the snapshot's life.
+// name's concrete spec and contracts. The listing never changes once
+// published. The name maps grow as unlisted names are looked up, and are
+// guarded by remote.mu.
 type snapshot struct {
 	at          time.Time
 	sources     []filament.ConnectorSpec
@@ -105,24 +112,61 @@ type sinkEntry struct {
 	contracts filament.SinkContracts
 }
 
-// described returns the current snapshot, refreshing it when stale. A failed
-// refresh keeps serving the last snapshot: the specs are still true of the
-// worker that comes back. A caller that gave up does not hold the others
-// back. Callers hold r.mu.
-func (r *remote) described(ctx context.Context) (*snapshot, error) {
-	if r.snapshot != nil && time.Since(r.snapshot.at) < describeTTL {
-		return r.snapshot, nil
+// shared runs fn once for every concurrent caller of key and waits for it
+// under ctx. The call itself is detached, so one caller giving up does not
+// fail the others, and no lock is held across the network.
+func (r *remote) shared(ctx context.Context, key string, fn func(context.Context) (any, error)) (any, error) {
+	result := r.flight.DoChan(key, func() (any, error) {
+		callCtx, cancel := context.WithTimeout(context.Background(), describeTimeout)
+		defer cancel()
+		return fn(callCtx)
+	})
+	select {
+	case res := <-result:
+		return res.Val, res.Err
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	ctx, cancel := context.WithTimeout(ctx, describeTimeout)
-	defer cancel()
+}
+
+// described returns the current snapshot. A fresh one is returned as is. A
+// stale one is returned too, with a refresh started behind it, so lookups
+// never wait on the worker once a first snapshot exists. Only the very first
+// lookup waits, and concurrent first lookups share one request.
+func (r *remote) described(ctx context.Context) (*snapshot, error) {
+	r.mu.Lock()
+	snap := r.snapshot
+	fresh := snap != nil && time.Since(snap.at) < describeTTL
+	r.mu.Unlock()
+	if fresh {
+		return snap, nil
+	}
+	if snap != nil {
+		r.flight.DoChan("describe", func() (any, error) {
+			callCtx, cancel := context.WithTimeout(context.Background(), describeTimeout)
+			defer cancel()
+			return r.refresh(callCtx)
+		})
+		return snap, nil
+	}
+	fetched, err := r.shared(ctx, "describe", r.refresh)
+	if err != nil {
+		return nil, err
+	}
+	return fetched.(*snapshot), nil
+}
+
+// refresh fetches the listing and publishes it. A failed refresh keeps the
+// last snapshot and backs off before the worker is asked again: the specs
+// are still true of the worker that comes back.
+func (r *remote) refresh(ctx context.Context) (any, error) {
 	resp, err := r.client.Describe(ctx, connect.NewRequest(&catalogv1.DescribeRequest{}))
 	if err != nil {
+		r.mu.Lock()
 		if r.snapshot != nil {
-			if !errors.Is(err, context.Canceled) {
-				r.snapshot.at = time.Now().Add(describeRetry - describeTTL)
-			}
-			return r.snapshot, nil
+			r.snapshot.at = time.Now().Add(describeRetry - describeTTL)
 		}
+		r.mu.Unlock()
 		return nil, fromConnect(err)
 	}
 	next := &snapshot{at: time.Now(), sourceNames: map[string]sourceEntry{}, sinkNames: map[string]sinkEntry{}, missing: map[string]error{}}
@@ -153,83 +197,64 @@ func (r *remote) described(ctx context.Context) (*snapshot, error) {
 		}
 		next.sourceNames[name] = entry
 	}
+	r.mu.Lock()
 	r.snapshot = next
+	r.mu.Unlock()
 	return next, nil
 }
 
-// describeOne asks the worker for a name the listing does not carry.
-func (r *remote) describeOne(ctx context.Context, kind catalogv1.Kind, name string) (*catalogv1.Connector, error) {
-	ctx, cancel := context.WithTimeout(ctx, describeTimeout)
-	defer cancel()
-	resp, err := r.client.Describe(ctx, connect.NewRequest(&catalogv1.DescribeRequest{Kind: kind, Name: name}))
+// lookup answers one name from the snapshot. A name the listing lacks is
+// asked for individually, outside the lock, and remembered either way for
+// the snapshot's life.
+func lookup[E any](ctx context.Context, r *remote, kind catalogv1.Kind, name string, names func(*snapshot) map[string]E, decode func(*catalogv1.Connector) (E, error)) (E, error) {
+	var zero E
+	snap, err := r.described(ctx)
 	if err != nil {
-		return nil, fromConnect(err)
+		return zero, err
 	}
-	if len(resp.Msg.GetConnectors()) != 1 {
-		return nil, fmt.Errorf("catalog: describe %q returned %d connectors", name, len(resp.Msg.GetConnectors()))
+	key := kind.String() + "\x00" + name
+	r.mu.Lock()
+	entry, ok := names(snap)[name]
+	missing, missed := snap.missing[key]
+	r.mu.Unlock()
+	if ok {
+		return entry, nil
 	}
-	return resp.Msg.GetConnectors()[0], nil
+	if missed {
+		return zero, missing
+	}
+	fetched, err := r.shared(ctx, key, func(ctx context.Context) (any, error) {
+		resp, err := r.client.Describe(ctx, connect.NewRequest(&catalogv1.DescribeRequest{Kind: kind, Name: name}))
+		if err != nil {
+			return nil, fromConnect(err)
+		}
+		if len(resp.Msg.GetConnectors()) != 1 {
+			return nil, fmt.Errorf("catalog: describe %q returned %d connectors", name, len(resp.Msg.GetConnectors()))
+		}
+		return decode(resp.Msg.GetConnectors()[0])
+	})
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if errors.Is(err, filament.ErrNotFound) {
+		snap.missing[key] = err
+	}
+	if err != nil {
+		return zero, err
+	}
+	entry = fetched.(E)
+	names(snap)[name] = entry
+	return entry, nil
 }
 
 func (r *remote) source(ctx context.Context, name string) (sourceEntry, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	snap, err := r.described(ctx)
-	if err != nil {
-		return sourceEntry{}, err
-	}
-	if entry, ok := snap.sourceNames[name]; ok {
-		return entry, nil
-	}
-	if err, ok := snap.missing["source\x00"+name]; ok {
-		return sourceEntry{}, err
-	}
-	connector, err := r.describeOne(ctx, catalogv1.Kind_KIND_SOURCE, name)
-	if errors.Is(err, filament.ErrNotFound) {
-		snap.missing["source\x00"+name] = err
-	}
-	if err != nil {
-		return sourceEntry{}, err
-	}
-	entry, err := decodeSource(connector)
-	if err != nil {
-		return sourceEntry{}, err
-	}
-	snap.sourceNames[name] = entry
-	return entry, nil
+	return lookup(ctx, r, catalogv1.Kind_KIND_SOURCE, name, func(s *snapshot) map[string]sourceEntry { return s.sourceNames }, decodeSource)
 }
 
 func (r *remote) sink(ctx context.Context, name string) (sinkEntry, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	snap, err := r.described(ctx)
-	if err != nil {
-		return sinkEntry{}, err
-	}
-	if entry, ok := snap.sinkNames[name]; ok {
-		return entry, nil
-	}
-	if err, ok := snap.missing["sink\x00"+name]; ok {
-		return sinkEntry{}, err
-	}
-	connector, err := r.describeOne(ctx, catalogv1.Kind_KIND_SINK, name)
-	if errors.Is(err, filament.ErrNotFound) {
-		snap.missing["sink\x00"+name] = err
-	}
-	if err != nil {
-		return sinkEntry{}, err
-	}
-	entry, err := decodeSink(connector)
-	if err != nil {
-		return sinkEntry{}, err
-	}
-	snap.sinkNames[name] = entry
-	return entry, nil
+	return lookup(ctx, r, catalogv1.Kind_KIND_SINK, name, func(s *snapshot) map[string]sinkEntry { return s.sinkNames }, decodeSink)
 }
 
 func (r *remote) SourceSpecs(ctx context.Context) ([]filament.ConnectorSpec, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	snap, err := r.described(ctx)
 	if err != nil {
 		return nil, err
@@ -238,8 +263,6 @@ func (r *remote) SourceSpecs(ctx context.Context) ([]filament.ConnectorSpec, err
 }
 
 func (r *remote) SinkSpecs(ctx context.Context) ([]filament.SinkSpec, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	snap, err := r.described(ctx)
 	if err != nil {
 		return nil, err

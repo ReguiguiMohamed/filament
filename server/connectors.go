@@ -153,21 +153,37 @@ func (a *Server) ValidateConfig(ctx context.Context, req *connect.Request[ingest
 	if err := validateConfigSchema(schema, cfg); err != nil {
 		return connect.NewResponse(schemaValidationError(err)), nil
 	}
-	if err := a.catalog.Validate(ctx, kind, req.Msg.GetConnector(), cfg); err != nil {
-		return connect.NewResponse(validationError(err.Error())), nil
+	// A connector's verdict is the response; a call that never reached the
+	// connector is an error, so an outage is not shown as a bad config.
+	verdict, err := catalog.Verdict(a.catalog.Validate(ctx, kind, req.Msg.GetConnector(), cfg))
+	if err == nil && verdict == "" {
+		verdict, err = catalog.Verdict(a.catalog.TestConnection(ctx, kind, req.Msg.GetConnector(), cfg))
 	}
-	if err := a.catalog.TestConnection(ctx, kind, req.Msg.GetConnector(), cfg); err != nil {
-		return connect.NewResponse(validationError(err.Error())), nil
+	if err != nil {
+		return nil, err
+	}
+	if verdict != "" {
+		return connect.NewResponse(validationError(verdict)), nil
 	}
 	return connect.NewResponse(&ingestionv1.ValidateConfigResponse{Valid: true}), nil
 }
 
+// validateConnectionConnectorConfig runs the connector's pure validation on a
+// config about to be stored. A rejected config is an invalid argument; a call
+// that never reached the connector keeps its own code.
 func (a *Server) validateConnectionConnectorConfig(ctx context.Context, kind ingestionv1.ConnectorKind, connector string, cfg filament.Config) error {
 	k := connectionKindFromProto(kind)
 	if k == filament.ConnectorKindUnspecified {
-		return fmt.Errorf("connector kind is required")
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("connector kind is required"))
 	}
-	return a.catalog.Validate(ctx, k, connector, cfg)
+	verdict, err := catalog.Verdict(a.catalog.Validate(ctx, k, connector, cfg))
+	if err != nil {
+		return connectorArgumentError(err)
+	}
+	if verdict != "" {
+		return connect.NewError(connect.CodeInvalidArgument, errors.New(verdict))
+	}
+	return nil
 }
 
 // DiscoverResources configures the source and lists its selectable resources.

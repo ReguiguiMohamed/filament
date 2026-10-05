@@ -58,7 +58,7 @@ func (a *Server) CreateConnection(ctx context.Context, req *connect.Request[inge
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	if err := a.validateConnectionConnectorConfig(ctx, req.Msg.GetKind(), req.Msg.GetConnector(), filament.NewConfig(effective)); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, err
 	}
 
 	id := uuid.NewString()
@@ -129,7 +129,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	if err := a.validateConnectionConnectorConfig(ctx, in.GetKind(), in.GetConnector(), filament.NewConfig(effective)); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, err
 	}
 	if stored.Kind == filament.ConnectorKindSource {
 		spec, err := a.catalog.SourceSpec(ctx, stored.Connector)
