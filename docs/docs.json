@@ -116,6 +116,7 @@
           "pages/guides/concepts/overview",
           "pages/guides/concepts/architecture",
           "pages/guides/concepts/replication-modes",
+          "pages/guides/concepts/streaming",
           "pages/guides/concepts/integrity-and-checkpoints",
           "pages/guides/concepts/runs-and-recovery"
         ]
@@ -148,6 +149,8 @@
               "pages/connectors/sources/nats",
               "pages/connectors/sources/apollo",
               "pages/connectors/sources/attio",
+              "pages/connectors/sources/fhir",
+              "pages/connectors/sources/fxmacrodata",
               "pages/connectors/sources/github",
               "pages/connectors/sources/gong",
               "pages/connectors/sources/granola",
@@ -193,6 +196,7 @@
               "pages/connectors/building-a-connector/writing-a-source",
               "pages/connectors/building-a-connector/writing-a-sink",
               "pages/connectors/building-a-connector/optional-interfaces",
+              "pages/connectors/building-a-connector/streaming",
               "pages/connectors/building-a-connector/http-manifests"
             ]
           }
