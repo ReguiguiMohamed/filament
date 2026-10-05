@@ -5,7 +5,8 @@ description: "Configure the server, control plane, and workers"
 
 The server, control plane, and worker read configuration from environment
 variables. A deployment must give all three the same datastore, event bus, and
-secret-provider settings. The Helm chart renders these variables from chart
+secret-provider settings, and point the server and control plane at a worker
+serving the connector catalog. The Helm chart renders these variables from chart
 values; other platforms set them directly.
 
 This page does not cover the `filament` CLI, which uses a YAML configuration
@@ -15,17 +16,15 @@ file.
 
 The server, control plane, and worker read the variables in this section.
 
-### Private HTTP manifests
+### Connector catalog
 
 | Variable | Default | Description |
 |---|---|---|
-| `HTTP_MANIFESTS_DIR` | unset | Directory containing private `<connector>/registry.json` files and API-version manifest folders. Adds private versions and can change default aliases; collisions with concrete bundled registrations fail startup. |
+| `CATALOG_URL` | — | **Required.** URL of a worker started with `-catalog`. The Helm chart sets it to the catalog Service |
 
-Provide the same catalog to the server, control plane, and all workers. Files
-are loaded once at startup; missing, empty, or invalid configured directories
-stop startup. The variable does not mount or distribute files. See
-[private catalog setup](/pages/connectors/building-a-connector/http-manifests#load-a-private-catalog-at-startup)
-for the directory structure and override behavior.
+The server and control plane carry no connector drivers. Every connector call,
+from listing connectors to testing a connection, goes to the worker at this
+URL. Only the server and control plane read it; the worker serves it.
 
 ### Datastore
 
@@ -50,7 +49,7 @@ different hosts.
 | `NATS_TTL_SECONDS` | `604800` | Maximum message age in seconds. Set to `0` to disable age-based expiration |
 
 <Note>
-`DISPATCH_MODE=inproc` changes where runs execute; it does not replace the
+`DISPATCH_MODE=worker` changes where runs execute; it does not replace the
 event bus.
 </Note>
 
@@ -143,14 +142,15 @@ coordinating schedules and runs.
 | Variable | Default | Description |
 |---|---|---|
 | `HEALTH_ADDR` | `:8081` | Listen address for `/livez`, `/startupz`, and `/readyz` |
-| `DISPATCH_MODE` | `kubernetes` | Run execution mode: `kubernetes` or `inproc` |
+| `DISPATCH_MODE` | `kubernetes` | Run execution mode: `kubernetes` or `worker` |
 | `REAPER_INTERVAL_SECONDS` | `60` | Interval between stale-run sweeps in Kubernetes mode |
 | `REAPER_STALE_AFTER_SECONDS` | `300` | Time without a worker heartbeat before a running run is failed |
 
 In `kubernetes` mode, the control plane creates a worker Job for each run and
-uses the reaper to detect workers that stop reporting heartbeats. In `inproc`
-mode, runs execute inside the control-plane process. There are no worker Jobs,
-heartbeats, or reaper.
+uses the reaper to detect workers that stop reporting heartbeats. In `worker`
+mode, the control plane dispatches nothing; a long-lived worker started with
+`-execute` consumes requested runs from the event bus. There are no worker
+Jobs, heartbeats, or reaper.
 
 Pipeline webhooks run automatically in the control plane and standalone app,
 using the existing datastore and secrets provider. Standalone uses environment
@@ -180,15 +180,37 @@ sets them from its `controlPlane.dispatch` values.
 
 ## Worker
 
+The worker is the one image that carries the connector drivers. Without flags
+it executes one run and exits, the way the Kubernetes dispatcher launches it.
+With `-catalog` or `-execute` it runs long-lived: `-catalog` answers the
+server's and control plane's connector calls, and `-execute` consumes
+requested runs from the event bus. One process may do both.
+
 | Variable | Default | Description |
 |---|---|---|
-| `TENANT_ID` | — | **Required.** Tenant that owns the run |
-| `RUN_ID` | — | **Required.** Persisted run to execute |
+| `TENANT_ID` | — | **Required** for a single run. Tenant that owns the run |
+| `RUN_ID` | — | **Required** for a single run. Persisted run to execute |
 | `HEARTBEAT_SECONDS` | `30` | Interval between worker heartbeats |
+| `WORKER_ADDR` | `:8080` | Listen address for the catalog and health endpoints of a long-lived worker |
 
 The Kubernetes dispatcher injects `TENANT_ID` and `RUN_ID`. The worker loads
 the remaining shared settings from its Secret and ConfigMap. Invalid or
-non-positive `HEARTBEAT_SECONDS` values use the 30-second default.
+non-positive `HEARTBEAT_SECONDS` values use the 30-second default. A worker
+started with `-catalog` alone needs no datastore or event bus.
+
+### Private HTTP manifests
+
+| Variable | Default | Description |
+|---|---|---|
+| `HTTP_MANIFESTS_DIR` | unset | Directory containing private `<connector>/registry.json` files and API-version manifest folders. Adds private versions and can change default aliases; collisions with concrete bundled registrations fail startup. |
+
+Only the worker reads this variable; the server and control plane take their
+catalog from the worker at `CATALOG_URL`. Provide the same directory to the
+catalog worker and every worker that executes runs. Files are loaded once at
+startup; missing, empty, or invalid configured directories stop startup. The
+variable does not mount or distribute files. See
+[private catalog setup](/pages/connectors/building-a-connector/http-manifests#load-a-private-catalog-at-startup)
+for the directory structure and override behavior.
 
 ## Standalone
 

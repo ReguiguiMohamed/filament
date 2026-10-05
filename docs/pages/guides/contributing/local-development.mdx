@@ -48,9 +48,10 @@ day.
 |---|---|
 | `just infra` | Start PostgreSQL and NATS via Compose (`down` stops, `volumes` also drops data) |
 | `just migrate` | Run datastore migrations against the local database |
-| `just dev` | Control plane + server in the background, wait for `:8080/startupz` and `:8081/startupz`, then the UI |
+| `just dev` | Worker + control plane + server in the background, wait for `:8080`, `:8081`, and `:8082/startupz`, then the UI |
 | `just server` | API server alone (runs `migrate` first) |
-| `just control-plane` | Control plane alone, with `DISPATCH_MODE=inproc` |
+| `just worker` | Long-lived worker alone on `:8082`, serving the connector catalog and executing runs |
+| `just control-plane` | Control plane alone, with `DISPATCH_MODE=worker` |
 | `just ui` | Vite dev server on `:5173`, proxying the API to `:8080` |
 | `just gen` | Regenerate protobuf/ConnectRPC stubs (`buf generate`) and sqlc code |
 | `just ui-dist` | Build the UI bundle the server embeds |

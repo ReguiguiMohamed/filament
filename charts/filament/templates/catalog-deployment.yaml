@@ -71,3 +71,11 @@ spec:
                 name: {{ include "filament.catalog.fullname" . }}
           resources:
             {{- toYaml .Values.catalog.resources | nindent 12 }}
+          # Drivers that stage to disk use os.TempDir; the root filesystem is
+          # read-only, so /tmp is the one writable path, as in worker Jobs.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

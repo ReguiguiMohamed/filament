@@ -197,14 +197,14 @@ func (h handler) TestConnection(ctx context.Context, req *connect.Request[catalo
 
 // Verdict splits a Validate or TestConnection result into what the connector
 // said about the config and a call that never got an answer. An unknown
-// connector and a failed remote call are errors; anything else is the
-// connector's own verdict, empty when it accepted.
+// connector, a host without the route, and a failed remote call are errors;
+// anything else is the connector's own verdict, empty when it accepted.
 func Verdict(err error) (string, error) {
 	var remote *connect.Error
 	switch {
 	case err == nil:
 		return "", nil
-	case errors.Is(err, filament.ErrNotFound), errors.As(err, &remote):
+	case errors.Is(err, filament.ErrNotFound), errors.Is(err, filament.ErrUnsupported), errors.As(err, &remote):
 		return "", ConnectError(err)
 	default:
 		return err.Error(), nil

@@ -79,11 +79,11 @@ with versioned keys that older workers cannot resolve.
 
 ## Load a private catalog at startup
 
-Set `HTTP_MANIFESTS_DIR` to a directory on the server's filesystem to load
+Set `HTTP_MANIFESTS_DIR` to a directory on the worker's filesystem to load
 private manifests without rebuilding the binary:
 
 ```sh
-HTTP_MANIFESTS_DIR=/etc/filament/manifests ./server
+HTTP_MANIFESTS_DIR=/etc/filament/manifests ./worker -catalog
 ```
 
 The directory contains connector folders directly, using the same registry and
@@ -115,9 +115,11 @@ empty, or invalid directory fails startup. Files are read and validated once;
 restart the process to pick up changes. A bad catalog is not partially registered.
 The process-wide bundled registry is left unchanged.
 
-In a split deployment, configure the directory on the server, control plane,
-and every worker. Each must receive the same files. The setting does not copy
-files between machines or mount volumes into worker pods;
+In a split deployment, configure the directory on the worker serving the
+catalog and on every worker that executes runs. Each must receive the same
+files. The server and control plane carry no drivers and take their catalog
+from the worker, so the setting does nothing there. It does not copy files
+between machines or mount volumes into worker pods;
 provision the files in each container or filesystem before startup. Private here
 means deployment-local, not tenant-specific: registered sources appear in the
 normal connector catalog for that deployment. Keep credentials in connection
