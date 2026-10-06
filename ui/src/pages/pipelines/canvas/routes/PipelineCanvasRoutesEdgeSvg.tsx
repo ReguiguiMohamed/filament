@@ -1,7 +1,6 @@
 import { styled } from "@linaria/react";
 
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import {
   PIPELINE_CANVAS_ROUTES_EDGE_DASH_ARRAY,
@@ -11,7 +10,7 @@ import {
 import type { PipelineCanvasRoute } from "@/pages/pipelines/canvas/routes/types";
 import { getPipelineCanvasRouteEdgeGeometry } from "@/pages/pipelines/canvas/routes/utils";
 
-const EdgeSvg = withTheme(styled.svg<PropsWithTheme>`
+const EdgeSvg = styled.svg`
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -23,20 +22,20 @@ const EdgeSvg = withTheme(styled.svg<PropsWithTheme>`
   line,
   path {
     fill: none;
-    stroke: ${({ theme }) => theme.color.border.primary};
+    stroke: ${t.color.border.primary};
     stroke-width: 1;
-    transition: stroke 100ms ease;
+    transition: stroke ${t.duration.fast};
   }
 
   &[data-selected="true"] line,
   &[data-selected="true"] path {
-    stroke: ${({ theme }) => theme.color.background.galaxy};
+    stroke: ${t.color.solid.primary.background};
     stroke-width: 2;
   }
 
   &[data-running="true"] line,
   &[data-running="true"] path {
-    stroke: ${({ theme }) => theme.color.background.galaxy};
+    stroke: ${t.color.solid.primary.background};
     stroke-width: 2;
     stroke-dasharray: ${PIPELINE_CANVAS_ROUTES_EDGE_DASH_ARRAY};
     animation: pipeline-canvas-table-edge-dash ${PIPELINE_CANVAS_ROUTES_EDGE_DASH_DURATION} linear
@@ -55,7 +54,7 @@ const EdgeSvg = withTheme(styled.svg<PropsWithTheme>`
       animation: none;
     }
   }
-`);
+`;
 
 interface PipelineCanvasRoutesEdgeSvgProps {
   groupIndex: PipelineCanvasRoute["groupIndex"];

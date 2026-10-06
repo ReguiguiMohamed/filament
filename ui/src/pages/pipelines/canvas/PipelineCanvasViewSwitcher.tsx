@@ -1,5 +1,8 @@
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SwitcherInput, { type SwitcherInputItem } from "@galaxy-io/dls/inputs/SwitcherInput";
+import ToggleInput, {
+  ToggleInputSize,
+  ToggleInputVariant,
+  type ToggleOption,
+} from "@galaxy-io/dls/inputs/ToggleInput";
 
 import {
   PIPELINE_CANVAS_VIEW_TO_ICON_MAP,
@@ -11,19 +14,22 @@ import { PipelineCanvasView } from "@/pages/pipelines/canvas/types";
 const PipelineCanvasViewSwitcher = () => {
   const { view, setView } = usePipelineCanvasSelection();
 
-  const items: SwitcherInputItem[] = Object.values(PipelineCanvasView).map((candidate) => ({
-    id: candidate,
-    label: PIPELINE_CANVAS_VIEW_TO_LABEL_MAP[candidate],
-    icon: PIPELINE_CANVAS_VIEW_TO_ICON_MAP[candidate],
-    onClick: () => setView(candidate),
-  }));
+  const items: ToggleOption<PipelineCanvasView>[] = Object.values(PipelineCanvasView).map(
+    (candidate) => ({
+      id: candidate,
+      label: PIPELINE_CANVAS_VIEW_TO_LABEL_MAP[candidate],
+      icon: PIPELINE_CANVAS_VIEW_TO_ICON_MAP[candidate],
+    }),
+  );
 
   return (
-    <SwitcherInput
-      items={items}
-      selectedId={view}
-      size={InputSize.MEDIUM}
-      variant={InputVariant.TERTIARY}
+    <ToggleInput
+      ariaLabel="View"
+      options={items}
+      value={view}
+      onChange={setView}
+      size={ToggleInputSize.MEDIUM}
+      variant={ToggleInputVariant.TERTIARY}
     />
   );
 };

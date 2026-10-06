@@ -1,5 +1,5 @@
-import FlexWrapper, { FlexDirection } from "@galaxy-io/dls/containers/FlexWrapper";
-import HorizontalDivider from "@galaxy-io/dls/dividers/HorizontalDivider";
+import Divider from "@galaxy-io/dls/layout/Divider";
+import Flex, { AlignItems, FlexDirection } from "@galaxy-io/dls/layout/Flex";
 
 import {
   usePipelineTransformFieldsEnvironment,
@@ -14,7 +14,7 @@ const PipelineTransformFields = () => {
   const hasSteps = (resource: string) => (stepsByResource.get(resource)?.length ?? 0) > 0;
 
   return (
-    <FlexWrapper direction={FlexDirection.COLUMN} fillWidth>
+    <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} fillWidth>
       {resources.map((resource, index) => (
         <PipelineTransformFieldsResourceSteps
           key={resource}
@@ -24,11 +24,11 @@ const PipelineTransformFields = () => {
       ))}
       {draft?.id === null && (
         <>
-          {resources.some(hasSteps) && <HorizontalDivider />}
+          {resources.some(hasSteps) && <Divider />}
           <PipelineTransformFieldsStepCard draft={draft} />
         </>
       )}
-    </FlexWrapper>
+    </Flex>
   );
 };
 

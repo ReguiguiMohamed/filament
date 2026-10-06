@@ -1,6 +1,8 @@
 import type { JsonObject, JsonValue } from "@bufbuild/protobuf";
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 
+import type { SelectOption } from "@galaxy-io/dls/inputs/SelectInput";
+
 import type { Connection } from "@/gen/ingestion/v1/connections_pb";
 import type { Resource, ResourceColumn } from "@/gen/ingestion/v1/connectors_pb";
 import type {
@@ -127,4 +129,14 @@ export interface PipelineTransformFieldsStepHandle {
   ref: (element: HTMLElement | null) => void;
   attributes: DraggableAttributes;
   listeners: DraggableSyntheticListeners;
+}
+
+export interface TransformSelectEntry<T> {
+  option: SelectOption;
+  payload: T;
+}
+
+export interface TransformSelectModel<T> {
+  options: SelectOption[];
+  payloadById: Map<SelectOption["id"], T>;
 }

@@ -5,8 +5,8 @@ import { CaretDownIcon, DotsSixVerticalIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
 import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { FOCUS_RING, INTERACTIVE_RESET } from "@galaxy-io/dls/styles/mixins";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 import Rotate from "@galaxy-io/dls/transform/Rotate";
 
 import {
@@ -22,8 +22,6 @@ import PipelineTransformFieldsRow, {
 import type { PipelineTransformFieldsStepHandle } from "@/pages/pipelines/components/transform/types";
 
 const CARET_ROTATION_DEG = -180;
-const CARET_ROTATION_SPEED = 0.2;
-
 const Header = styled.div<{ $isClickable: boolean; $isOpen: boolean }>`
   width: 100%;
   min-width: 0;
@@ -33,39 +31,32 @@ const Header = styled.div<{ $isClickable: boolean; $isOpen: boolean }>`
   cursor: ${({ $isClickable }) => ($isClickable ? "pointer" : "default")};
 `;
 
-const Handle = withTheme(styled.button<PropsWithTheme>`
+const Handle = styled.button`
+  ${INTERACTIVE_RESET}
+  ${FOCUS_RING}
   display: flex;
   align-items: center;
   justify-content: center;
   width: ${TRANSFORM_HANDLE}px;
   height: ${TRANSFORM_ACTION}px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
+  border-radius: ${t.radius.md};
 
-  background-color: transparent;
-  color: inherit;
   cursor: grab;
-  transition: background-color 100ms ease;
+  transition: background-color ${t.duration.fast};
 
   &:hover {
-    background-color: ${({ theme }) => theme.color.background.tertiary};
+    background-color: ${t.color.background.hovered};
   }
 
   &:active {
     cursor: grabbing;
   }
 
-  &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.color.border.selected};
-    outline-offset: -2px;
-  }
-
   &:disabled {
     background-color: transparent;
     cursor: default;
   }
-`);
+`;
 
 const stopPropagation = (event: MouseEvent) => event.stopPropagation();
 
@@ -103,7 +94,7 @@ const PipelineTransformFieldsStepHeader = ({
       }
       action={
         onToggle ? (
-          <Rotate isRotated={isOpen} deg={CARET_ROTATION_DEG} speed={CARET_ROTATION_SPEED}>
+          <Rotate isRotated={isOpen} deg={CARET_ROTATION_DEG}>
             <Button
               icon={CaretDownIcon}
               variant={ButtonVariant.TERTIARY}
@@ -113,6 +104,7 @@ const PipelineTransformFieldsStepHeader = ({
                 onToggle();
               }}
               ariaLabel={isOpen ? "Collapse" : "Expand"}
+              tooltip={isOpen ? "Collapse" : "Expand"}
             />
           </Rotate>
         ) : undefined

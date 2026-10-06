@@ -2,8 +2,8 @@ import { useMemo } from "react";
 
 import { styled } from "@linaria/react";
 
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { HAIRLINE_WIDTH } from "@galaxy-io/dls/styles/mixins";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import type { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 import type { ConnectorSpec } from "@/gen/ingestion/v1/connectors_pb";
@@ -29,24 +29,24 @@ export const EmptyGraphicGhostTile = styled.div`
   opacity: 0.3;
 `;
 
-export const EmptyGraphicGhostTileFallback = withTheme(styled.div<PropsWithTheme>`
+export const EmptyGraphicGhostTileFallback = styled.div`
   width: 24px;
   height: 24px;
 
-  background-color: ${({ theme }) => theme.color.background.secondary};
+  background-color: ${t.color.background.secondary};
 
-  border: 0.5px solid ${({ theme }) => theme.color.border.primary};
-  border-radius: 4px;
-`);
+  border: ${HAIRLINE_WIDTH} solid ${t.color.border.primary};
+  border-radius: ${t.radius.md};
+`;
 
-export const EmptyGraphicGhostBar = withTheme(styled.div<PropsWithTheme<{ $width: number }>>`
+export const EmptyGraphicGhostBar = styled.div<{ $width: number }>`
   width: ${({ $width }) => $width}px;
   height: 12px;
 
-  background-color: ${({ theme }) => theme.color.background.secondary};
+  background-color: ${t.color.background.secondary};
 
-  border-radius: 4px;
-`);
+  border-radius: ${t.radius.sm};
+`;
 
 const shuffleConnectors = (specs: ConnectorSpec[]) => {
   const shuffled = [...specs];

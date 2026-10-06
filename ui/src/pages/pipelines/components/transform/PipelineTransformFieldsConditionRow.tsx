@@ -2,14 +2,16 @@ import type { ReactNode } from "react";
 
 import { styled } from "@linaria/react";
 
-import FlexWrapper, { FlexDirection, FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
+import Flex, { AlignItems, FlexDirection } from "@galaxy-io/dls/layout/Flex";
 
 import {
   TRANSFORM_CONDITION_STACK_WIDTH,
   TRANSFORM_GAP,
-  TRANSFORM_SELECT_ERROR_MARK,
 } from "@/pages/pipelines/components/transform/constants";
 import {
   getCompatibleTransformFunctions,
@@ -92,10 +94,8 @@ const PipelineTransformFieldsConditionRow = ({
     fn && !operators.some((candidate) => candidate.name === fn.name)
       ? [...operators, fn]
       : operators;
-  const operatorOptions: SelectInputOption[] = [
-    ...(columnType === "bool"
-      ? [{ id: DIRECT_OPERATOR_ID, label: "is true", value: DIRECT_OPERATOR_ID }]
-      : []),
+  const operatorOptions: SelectOption[] = [
+    ...(columnType === "bool" ? [{ id: DIRECT_OPERATOR_ID, label: "is true" }] : []),
     ...listed.map((candidate) => {
       const option = createTransformFunctionOption(candidate);
       return { ...option, label: lowerFirst(option.label) };
@@ -139,24 +139,25 @@ const PipelineTransformFieldsConditionRow = ({
       gutter={gutter}
       action={action}
     >
-      <FlexWrapper direction={FlexDirection.COLUMN} gap={FlexGap.SMALL} fillWidth>
+      <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} gap={8} fillWidth>
         <PipelineTransformFieldsLeaf
           expr={root}
           onChange={setColumn}
-          placeholder="Choose a column"
+          placeholder="Choose a column..."
           isColumnOnly
           isError={editor.errors.has(call ? getTransformInputPath(path, call) : path)}
         />
         <OperatorValue>
           <SelectInput
+            ariaLabel="Operator"
             options={operatorOptions}
-            value={operatorOptions.find((option) => option.id === selectedOperatorId) ?? null}
-            onChange={(option) => setOperator(option.id)}
-            onReset={() => onChange(root)}
-            placeholder="Choose an operator"
-            variant={InputVariant.TERTIARY}
-            size={InputSize.MEDIUM}
-            error={call && editor.errors.has(path) ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+            value={selectedOperatorId || null}
+            onChange={(id) => (id === null ? onChange(root) : setOperator(id))}
+            isClearable
+            placeholder="Choose an operator..."
+            variant={SelectInputVariant.TERTIARY}
+            size={SelectInputSize.MEDIUM}
+            isError={call !== undefined && editor.errors.has(path)}
             isDisabled={editor.isDisabled || column === undefined}
             fillWidth
           />
@@ -164,7 +165,7 @@ const PipelineTransformFieldsConditionRow = ({
             <PipelineTransformFieldsLeaf
               expr={value}
               onChange={setValue}
-              placeholder="Value"
+              placeholder="Value..."
               logicalTypes={getTransformArgumentTypes(fn, 1, columnType)}
               isLiteralOnly={valueSpec.isLiteral}
               isColumnOnly={valueSpec.isColumn}
@@ -173,7 +174,7 @@ const PipelineTransformFieldsConditionRow = ({
             />
           )}
         </OperatorValue>
-      </FlexWrapper>
+      </Flex>
     </PipelineTransformFieldsRow>
   );
 };

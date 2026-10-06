@@ -1,13 +1,19 @@
 import { XIcon } from "@phosphor-icons/react";
 
-import Input, { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput from "@galaxy-io/dls/inputs/SelectInput";
-import TextInput from "@galaxy-io/dls/inputs/TextInput";
-
+import Button, { ButtonVariant } from "@galaxy-io/dls/buttons/Button";
 import {
-  TRANSFORM_LITERAL_KIND_TO_ICON_MAP,
-  TRANSFORM_SELECT_ERROR_MARK,
-} from "@/pages/pipelines/components/transform/constants";
+  INPUT_SIZE_TO_BUTTON_SIZE_MAP,
+  InputSize,
+  InputVariant,
+} from "@galaxy-io/dls/inputs/Input";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+} from "@galaxy-io/dls/inputs/SelectInput";
+import TextInput from "@galaxy-io/dls/inputs/TextInput";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
+
+import { TRANSFORM_LITERAL_KIND_TO_ICON_MAP } from "@/pages/pipelines/components/transform/constants";
 import { isTransformIntegerOnly } from "@/pages/pipelines/components/transform/grammar/catalog";
 import { usePipelineTransformFieldsEditor } from "@/pages/pipelines/components/transform/PipelineTransformFieldsProvider";
 import {
@@ -39,19 +45,36 @@ const PipelineTransformFieldsLiteral = ({
   onClear,
 }: PipelineTransformFieldsLiteralProps) => {
   const { isDisabled } = usePipelineTransformFieldsEditor();
-  const trailing = onClear ? { icon: XIcon, onClick: onClear } : undefined;
+  const trailing = onClear ? (
+    <Button
+      icon={XIcon}
+      ariaLabel="Clear value"
+      tooltip="Clear value"
+      variant={ButtonVariant.TERTIARY}
+      size={INPUT_SIZE_TO_BUTTON_SIZE_MAP[InputSize.SMALL]}
+      isDisabled={isDisabled}
+      onClick={onClear}
+    />
+  ) : undefined;
+
+  const handleBooleanChange = (id: string | null) => {
+    if (id !== null) onChange({ ...expr, value: id });
+    else if (onClear) onClear();
+    else onChange({ ...expr, value: null });
+  };
 
   if (expr.literalKind === TransformLiteralKind.BOOLEAN) {
     return (
       <SelectInput
+        ariaLabel="Value"
         options={BOOLEAN_OPTIONS}
-        value={BOOLEAN_OPTIONS.find((option) => option.id === expr.value) ?? null}
-        onChange={(option) => onChange({ ...expr, value: option.id })}
-        onReset={onClear ?? (() => onChange({ ...expr, value: null }))}
+        value={expr.value}
+        onChange={handleBooleanChange}
+        isClearable
         placeholder={placeholder}
-        variant={InputVariant.TERTIARY}
-        size={InputSize.MEDIUM}
-        error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+        variant={SelectInputVariant.TERTIARY}
+        size={SelectInputSize.MEDIUM}
+        isError={isError}
         isDisabled={isDisabled}
         fillWidth
       />
@@ -64,19 +87,19 @@ const PipelineTransformFieldsLiteral = ({
         ? null
         : getTransformNumberError(expr.value, isTransformIntegerOnly(logicalTypes));
     return (
-      <Input<string>
-        type="text"
-        parse={(value) => value}
+      <TextInput
+        ariaLabel="Value"
+        inputMode="decimal"
         value={expr.value ?? ""}
         onChange={(value) => onChange({ ...expr, value: value === "" ? null : value })}
         placeholder={placeholder}
-        leading={{ icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.NUMBER] }}
+        icon={TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.NUMBER]}
         trailing={trailing}
         isError={isError || numberError !== null}
         variant={InputVariant.TERTIARY}
         size={InputSize.MEDIUM}
         isDisabled={isDisabled}
-        isMonospace
+        family={FontFamily.MONO}
         fillWidth
       />
     );
@@ -84,10 +107,11 @@ const PipelineTransformFieldsLiteral = ({
 
   return (
     <TextInput
+      ariaLabel="Value"
       value={expr.value ?? ""}
       onChange={(value) => onChange({ ...expr, value })}
       placeholder={placeholder}
-      leading={{ icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.STRING] }}
+      icon={TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.STRING]}
       trailing={trailing}
       isError={isError}
       variant={InputVariant.TERTIARY}

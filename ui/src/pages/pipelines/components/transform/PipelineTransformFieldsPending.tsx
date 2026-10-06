@@ -1,12 +1,9 @@
 import { Fragment } from "react";
 
-import FlexWrapper, {
-  AlignItems,
-  FlexDirection,
-  JustifyContent,
-} from "@galaxy-io/dls/containers/FlexWrapper";
-import HorizontalDivider from "@galaxy-io/dls/dividers/HorizontalDivider";
-import TextShimmer from "@galaxy-io/dls/text/TextShimmer";
+import Skeleton, { SkeletonSize } from "@galaxy-io/dls/feedback/Skeleton";
+import Box from "@galaxy-io/dls/layout/Box";
+import Divider from "@galaxy-io/dls/layout/Divider";
+import Flex, { AlignItems, FlexDirection, JustifyContent } from "@galaxy-io/dls/layout/Flex";
 
 import {
   TRANSFORM_ACTION,
@@ -19,33 +16,37 @@ import PipelineTransformFieldsRow, {
 
 const PENDING_ROW_WIDTHS = ["60%", "45%"];
 const PENDING_HANDLE_SIZE = 16;
-const PENDING_LINE_HEIGHT = 14;
 
 const PipelineTransformFieldsPending = () => (
-  <FlexWrapper direction={FlexDirection.COLUMN} fillWidth>
+  <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} fillWidth>
     {PENDING_ROW_WIDTHS.map((width, index) => (
       <Fragment key={width}>
-        {index > 0 && <HorizontalDivider />}
-        <FlexWrapper
-          padding={`${TRANSFORM_HEADER_PADDING_Y}px ${TRANSFORM_HEADER_PADDING_X}px`}
+        {index > 0 && <Divider />}
+        <Flex
+          alignItems={AlignItems.START}
+          padding={[TRANSFORM_HEADER_PADDING_Y, TRANSFORM_HEADER_PADDING_X]}
           fillWidth
         >
           <PipelineTransformFieldsRow
             variant={PipelineTransformFieldsRowVariant.HEADER}
             gutter={
-              <FlexWrapper justifyContent={JustifyContent.CENTER} fillWidth>
-                <TextShimmer height={PENDING_HANDLE_SIZE} width={PENDING_HANDLE_SIZE} />
-              </FlexWrapper>
+              <Flex alignItems={AlignItems.START} justifyContent={JustifyContent.CENTER} fillWidth>
+                <Box width={PENDING_HANDLE_SIZE}>
+                  <Skeleton size={SkeletonSize.SMALL} />
+                </Box>
+              </Flex>
             }
           >
-            <FlexWrapper alignItems={AlignItems.CENTER} height={TRANSFORM_ACTION}>
-              <TextShimmer height={PENDING_LINE_HEIGHT} width={width} />
-            </FlexWrapper>
+            <Flex alignItems={AlignItems.CENTER} height={TRANSFORM_ACTION}>
+              <Box width={width}>
+                <Skeleton size={SkeletonSize.SMALL} />
+              </Box>
+            </Flex>
           </PipelineTransformFieldsRow>
-        </FlexWrapper>
+        </Flex>
       </Fragment>
     ))}
-  </FlexWrapper>
+  </Flex>
 );
 
 export default PipelineTransformFieldsPending;

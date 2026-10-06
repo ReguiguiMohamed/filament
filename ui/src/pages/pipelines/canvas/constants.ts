@@ -2,7 +2,8 @@ import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { FlowArrowIcon, PlusIcon, TreeStructureIcon } from "@phosphor-icons/react";
 import { type HandleType, Position } from "@xyflow/react";
 
-import { ChipVariant } from "@galaxy-io/dls/chips/Chip";
+import type { Space } from "@galaxy-io/dls/theme/enums";
+import type { PaletteColor } from "@galaxy-io/dls/theme/tokens/types";
 
 import { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 
@@ -60,10 +61,10 @@ export const CONNECTOR_KIND_TO_XYFLOW_POSITION_MAP: Record<ConnectorKind, Positi
   [ConnectorKind.SINK]: Position.Left,
 };
 
-export const CONNECTOR_KIND_TO_CHIP_VARIANT_MAP: Record<ConnectorKind, ChipVariant> = {
-  [ConnectorKind.UNSPECIFIED]: ChipVariant.LIME,
-  [ConnectorKind.SOURCE]: ChipVariant.LIME,
-  [ConnectorKind.SINK]: ChipVariant.PINK,
+export const CONNECTOR_KIND_TO_CHIP_COLOR_MAP: Record<ConnectorKind, PaletteColor> = {
+  [ConnectorKind.UNSPECIFIED]: "lime",
+  [ConnectorKind.SOURCE]: "lime",
+  [ConnectorKind.SINK]: "pink",
 };
 
 export const CONNECTOR_KIND_TO_NORMALIZED_KIND_MAP: Record<ConnectorKind, ConnectorKind> = {
@@ -106,4 +107,4 @@ export const PIPELINE_CANVAS_VIEW_TO_ICON_MAP: Record<PipelineCanvasView, Phosph
   [PipelineCanvasView.ROUTES]: FlowArrowIcon,
 };
 
-export const PIPELINE_CANVAS_VIEW_SWITCHER_INSET = 12;
+export const PIPELINE_CANVAS_VIEW_SWITCHER_INSET: Space = 12;

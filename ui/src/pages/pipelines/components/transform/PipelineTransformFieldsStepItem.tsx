@@ -1,9 +1,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { styled } from "@linaria/react";
 
-import HorizontalDivider from "@galaxy-io/dls/dividers/HorizontalDivider";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import Divider from "@galaxy-io/dls/layout/Divider";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import {
   usePipelineTransformFieldsActions,
@@ -17,19 +16,17 @@ import {
   TransformStepKind,
 } from "@/pages/pipelines/components/transform/types";
 
-const Slot = withTheme(styled.div<
-  PropsWithTheme<{ $transform: string; $transition: string; $isDragging: boolean }>
->`
+const Slot = styled.div<{ $transform: string; $transition: string; $isDragging: boolean }>`
   position: relative;
   z-index: ${({ $isDragging }) => ($isDragging ? 1 : "auto")};
   width: 100%;
   min-width: 0;
 
-  background-color: ${({ theme, $isDragging }) =>
-    $isDragging ? theme.color.background.secondary : "transparent"};
+  background-color: ${({ $isDragging }) =>
+    $isDragging ? t.color.background.hovered : "transparent"};
   transform: ${({ $transform }) => $transform};
   transition: ${({ $transition }) => $transition};
-`);
+`;
 
 interface PipelineTransformFieldsStepItemProps {
   step: TransformStep;
@@ -64,7 +61,7 @@ const PipelineTransformFieldsStepItem = ({
       $transition={transition ?? "none"}
       $isDragging={isDragging}
     >
-      {hasDivider && <HorizontalDivider />}
+      {hasDivider && <Divider />}
       {draft?.id === step.id ? (
         <PipelineTransformFieldsStepCard draft={draft} handle={handle} />
       ) : (

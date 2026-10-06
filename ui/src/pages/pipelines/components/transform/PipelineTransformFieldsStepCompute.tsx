@@ -91,6 +91,7 @@ const PipelineTransformFieldsStepCompute = ({
               gutter="as"
             >
               <TextInput
+                ariaLabel="Output column"
                 value={output.name}
                 onChange={(name) => setOutput(index, { ...output, name })}
                 placeholder={

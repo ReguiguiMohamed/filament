@@ -43,7 +43,7 @@ const PipelineTransformFieldsArgument = ({
     <PipelineTransformFieldsLeaf
       expr={expr}
       onChange={onChange}
-      placeholder={spec?.isColumn ? "Choose a column" : undefined}
+      placeholder={spec?.isColumn ? "Choose a column..." : undefined}
       logicalTypes={expectedTypes}
       isLiteralOnly={spec?.isLiteral}
       isColumnOnly={spec?.isColumn}

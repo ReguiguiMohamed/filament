@@ -1,5 +1,5 @@
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, { FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 
 import {
   createTransformChainExpr,
@@ -60,7 +60,7 @@ const PipelineTransformFieldsNested = ({
           />
         }
       >
-        <FlexWrapper gap={FlexGap.SMALL} fillWidth>
+        <Flex alignItems={AlignItems.START} gap={8} fillWidth>
           <FlexItem grow={1} basis={0} minWidth={0}>
             <PipelineTransformFieldsFunctionPicker
               input={chain.root}
@@ -90,7 +90,7 @@ const PipelineTransformFieldsNested = ({
               isError={editor.errors.has(paths.root)}
             />
           </FlexItem>
-        </FlexWrapper>
+        </Flex>
       </PipelineTransformFieldsRow>
       <PipelineTransformFieldsChain
         chain={chain}

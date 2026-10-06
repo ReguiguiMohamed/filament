@@ -13,8 +13,9 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 
-import { useTheme, withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { HAIRLINE_WIDTH } from "@galaxy-io/dls/styles/mixins";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
+import { useGalaxyTheme } from "@galaxy-io/dls/theme/useGalaxyTheme";
 
 import "@xyflow/react/dist/style.css";
 
@@ -71,7 +72,7 @@ const PIPELINE_EDGE_TYPE_TO_COMPONENT_MAP: Record<
   [PIPELINE_CANVAS_EDGE_TYPE]: PipelineCanvasEdge,
 };
 
-const FlowWrapper = withTheme(styled.div<PropsWithTheme>`
+const FlowWrapper = styled.div`
   height: 100%;
 
   .react-flow__pane {
@@ -89,15 +90,15 @@ const FlowWrapper = withTheme(styled.div<PropsWithTheme>`
     margin: 0;
     width: 160px;
     height: 92px;
-    background-color: ${({ theme }) => theme.color.background.base};
-    border: 0.5px solid ${({ theme }) => theme.color.border.primary};
-    border-radius: 6px;
+    background-color: ${t.color.background.base};
+    border: ${HAIRLINE_WIDTH} solid ${t.color.border.primary};
+    border-radius: ${t.radius.lg};
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-`);
+`;
 
 const ViewSwitcherOverlay = styled.div`
   position: absolute;
@@ -107,7 +108,7 @@ const ViewSwitcherOverlay = styled.div`
 `;
 
 const PipelineCanvasFlow = () => {
-  const theme = useTheme();
+  const { theme } = useGalaxyTheme();
   const state = usePipelineCanvasState();
   const { applyNodeChanges, applyEdgeChanges, connect } = usePipelineCanvasActions();
   const isReadOnly = usePipelineCanvasReadOnly();
@@ -227,10 +228,12 @@ const PipelineCanvasFlow = () => {
         <MiniMap
           nodeColor={(node) => {
             if (node.type === PipelineCanvasNodeType.PLACEHOLDER) return "transparent";
-            return node.selected ? theme.color.background.galaxy : theme.color.background.tertiary;
+            return node.selected
+              ? theme.color.solid.primary.background
+              : theme.color.background.tertiary;
           }}
           nodeStrokeColor={(node) =>
-            node.selected ? theme.color.background.galaxy : theme.color.border.primary
+            node.selected ? theme.color.solid.primary.background : theme.color.border.primary
           }
           nodeStrokeWidth={1}
           bgColor={theme.color.background.base}

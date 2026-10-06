@@ -1,8 +1,6 @@
-import { createElement } from "react";
-
 import { match } from "ts-pattern";
 
-import type { SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import type { SelectOption } from "@galaxy-io/dls/inputs/SelectInput";
 
 import type { Resource, ResourceColumn } from "@/gen/ingestion/v1/connectors_pb";
 import type { TransformFunction } from "@/gen/ingestion/v1/transformations_pb";
@@ -31,7 +29,6 @@ import {
   getTransformOutputName,
   isTransformOutputInPlace,
 } from "@/pages/pipelines/components/transform/grammar/serialize";
-import PipelineTransformFieldsOptionIcon from "@/pages/pipelines/components/transform/PipelineTransformFieldsOptionIcon";
 import {
   type PipelineTransformFieldsDraft,
   type PipelineTransformFieldsEditor,
@@ -46,6 +43,8 @@ import {
   type TransformLeafExpr,
   type TransformLiteralExpr,
   TransformLiteralKind,
+  type TransformSelectEntry,
+  type TransformSelectModel,
   type TransformStep,
   TransformStepKind,
 } from "@/pages/pipelines/components/transform/types";
@@ -302,8 +301,6 @@ export const getTransformTypeSummary = (
       ? getTransformExprType(output.expr, getTransformOutputPath(output, isMatchingRows), editor)
       : undefined;
   const isChanged = outputType !== undefined && columnType !== "" && columnType !== outputType;
-  // A compute step whose expression has no type yet shows nothing rather than
-  // its subject's type, which reads as the result.
   const typeSummary =
     output && outputType === undefined
       ? ""
@@ -319,28 +316,22 @@ export const getTransformTypeSummary = (
   return { typeSummary, warning };
 };
 
-export const filterTransformOptions = (
-  term: string,
-  options: SelectInputOption[],
-): SelectInputOption[] =>
-  options.filter((option) => option.label.toLowerCase().includes(term.toLowerCase()));
+export const createTransformFunctionOption = (fn: TransformFunction): SelectOption => ({
+  id: fn.name,
+  label: fn.displayName || fn.name,
+  icon: TRANSFORM_FUNCTION_TO_ICON_MAP.get(fn.name),
+});
 
-export const createTransformFunctionOption = (fn: TransformFunction): SelectInputOption => {
-  const icon = TRANSFORM_FUNCTION_TO_ICON_MAP.get(fn.name);
-  return {
-    id: fn.name,
-    label: fn.displayName || fn.name,
-    value: fn.name,
-    icon: icon ? createElement(PipelineTransformFieldsOptionIcon, { icon }) : undefined,
-  };
-};
-
-export const createTransformBooleanOptions = (): SelectInputOption[] =>
+export const createTransformBooleanOptions = (): SelectOption[] =>
   ["true", "false"].map((value) => ({
     id: value,
     label: value,
-    value: { kind: TransformExprKind.LITERAL, literalKind: TransformLiteralKind.BOOLEAN, value },
-    icon: createElement(PipelineTransformFieldsOptionIcon, {
-      icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.BOOLEAN],
-    }),
+    icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.BOOLEAN],
   }));
+
+export const createTransformSelectModel = <T>(
+  entries: TransformSelectEntry<T>[],
+): TransformSelectModel<T> => ({
+  options: entries.map((entry) => entry.option),
+  payloadById: new Map(entries.map((entry) => [entry.option.id, entry.payload])),
+});

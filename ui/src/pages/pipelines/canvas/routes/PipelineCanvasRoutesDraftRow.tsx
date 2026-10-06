@@ -5,15 +5,20 @@ import { styled } from "@linaria/react";
 import { CheckIcon, XIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, { AlignItems } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import { InputSize } from "@galaxy-io/dls/inputs/Input";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
 import TextInput from "@galaxy-io/dls/inputs/TextInput";
+import Box from "@galaxy-io/dls/layout/Box";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
+import { HAIRLINE_WIDTH } from "@galaxy-io/dls/styles/mixins";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
-import { TooltipPosition } from "@galaxy-io/dls/tooltip/Tooltip";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 import Widget, { WidgetVariant } from "@galaxy-io/dls/widget/Widget";
 
 import { ConnectorKind, ReadMode, WriteMode } from "@/gen/ingestion/v1/common_pb";
@@ -40,7 +45,7 @@ import {
   PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH,
 } from "@/pages/pipelines/canvas/routes/constants";
 import type { PipelineCanvasRoutesDraftState } from "@/pages/pipelines/canvas/routes/hooks/usePipelineCanvasRoutesDraft";
-import type { CanvasEdge, CanvasNode } from "@/pages/pipelines/canvas/types";
+import type { CanvasEdge } from "@/pages/pipelines/canvas/types";
 import { getEdgeResourceStatuses, hasSiblingIncrementalRead } from "@/pages/pipelines/canvas/utils";
 import {
   getCompatibleWriteModes,
@@ -50,8 +55,6 @@ import {
   getWriteModeSelectOptions,
 } from "@/pages/pipelines/components/resource/utils";
 import PipelineTransformFieldsIssuesChip from "@/pages/pipelines/components/transform/PipelineTransformFieldsIssuesChip";
-
-import { isSearchMatch } from "@/utils/search";
 
 const RowWrapper = styled.div`
   height: ${PIPELINE_CANVAS_ROUTES_DRAFT_ROW_HEIGHT}px;
@@ -84,16 +87,16 @@ const CenterSlot = styled.div`
   justify-content: center;
 `;
 
-const DraftLine = withTheme(styled.div<PropsWithTheme>`
+const DraftLine = styled.div`
   position: absolute;
   left: -${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
   right: -${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
   top: 50%;
 
-  border-top: 1px dashed ${({ theme }) => theme.color.border.primary};
-`);
+  border-top: ${HAIRLINE_WIDTH} dashed ${t.color.border.primary};
+`;
 
-const ControlsGroup = withTheme(styled.div<PropsWithTheme>`
+const ControlsGroup = styled.div`
   position: relative;
   z-index: 1;
   flex-shrink: 0;
@@ -102,12 +105,9 @@ const ControlsGroup = withTheme(styled.div<PropsWithTheme>`
   align-items: center;
   gap: ${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
 
-  background-color: ${({ theme }) => theme.color.background.secondary};
-  border-radius: 5px;
-`);
-
-const searchOptions = (term: string, options: SelectInputOption[]) =>
-  options.filter((option) => isSearchMatch(term, option.label));
+  background-color: ${t.color.background.secondary};
+  border-radius: ${t.radius.md};
+`;
 
 interface PipelineCanvasRoutesDraftRowProps {
   draftState: PipelineCanvasRoutesDraftState;
@@ -145,17 +145,16 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
     isLoading,
   } = options;
 
-  const resourceOptions = useMemo<SelectInputOption[]>(
-    () => (resourceNames ?? []).map((name) => ({ id: name, label: name, value: name })),
+  const resourceOptions = useMemo<SelectOption[]>(
+    () => (resourceNames ?? []).map((name) => ({ id: name, label: name })),
     [resourceNames],
   );
-  const sinkOptions = useMemo<SelectInputOption[]>(
+  const sinkOptions = useMemo<SelectOption[]>(
     () =>
       sinks.map((sink) => ({
         id: sink.nodeId,
         label: sink.label,
-        value: sink.nodeId,
-        icon: (
+        leading: (
           <ConnectorTile
             connector={sink.connection?.connector ?? ""}
             kind={ConnectorKind.SINK}
@@ -223,142 +222,160 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
 
   return (
     <RowWrapper onKeyDown={handleKeyDown}>
-      <Widget
-        variant={WidgetVariant.SECONDARY}
-        padding={`0 ${PIPELINE_CANVAS_ROUTES_DRAFT_PADDING_X}px`}
-        minWidth="max-content"
-        fillWidth
-        noHover
-      >
-        <FlexWrapper
-          alignItems={AlignItems.CENTER}
-          gap={PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}
-          fillWidth
-          fillHeight
-        >
-          <FlexWrapper
+      <FlexItem grow={1} minWidth="max-content">
+        <Widget variant={WidgetVariant.SECONDARY} isFlush>
+          <Flex
             alignItems={AlignItems.CENTER}
-            gap={8}
-            width={PIPELINE_CANVAS_ROUTES_SOURCE_ISLAND_WIDTH}
-            shrink={0}
+            gap={PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}
+            padding={[0, PIPELINE_CANVAS_ROUTES_DRAFT_PADDING_X]}
+            fillWidth
+            height="100%"
           >
-            <ConnectorTile
-              connector={sourceConnection?.connector ?? ""}
-              kind={ConnectorKind.SOURCE}
-              size={ConnectorTileSize.SMALL}
-              isDeleted={!!sourceConnection?.deletedAt}
-            />
-            <FlexItem shrink={0}>
-              <Text size={TextSize.BODY_SM}>{sourceConnection?.name ?? sourceNodeId}</Text>
-            </FlexItem>
-            <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} isMonospace>
-              /
-            </Text>
-            <FlexItem grow={1} minWidth={0}>
-              {resourceNames ? (
-                <SelectInput
-                  options={resourceOptions}
-                  value={resourceOptions.find((option) => option.id === resource) ?? null}
-                  onChange={(option) => draftState.setResource(option.value as string)}
-                  onSearch={searchOptions}
-                  placeholder="Resource"
-                  size={InputSize.MEDIUM}
-                  isDisabled={draft.isResourceLocked}
-                  fillWidth
-                />
-              ) : (
-                <TextInput
-                  value={resource}
-                  onChange={draftState.setResource}
-                  placeholder="orders.>"
-                  size={InputSize.MEDIUM}
-                  isDisabled={draft.isResourceLocked}
-                  autoFocus
-                  fillWidth
-                />
-              )}
-            </FlexItem>
-          </FlexWrapper>
-          <EdgeArea>
-            <DraftLine />
-            <ControlsGroup>
-              {hasReadLevers && (
-                <SelectInput
-                  options={readModeSelectOptions}
-                  value={readModeSelectOptions.find((option) => option.value === readMode) ?? null}
-                  onChange={(option) =>
-                    draftState.setConfig({ readMode: option.value as ReadMode })
-                  }
-                  variant={InputVariant.TERTIARY}
-                  size={InputSize.SMALL}
-                  placeholder="Read mode"
-                  width={PIPELINE_CANVAS_ROUTES_READ_MODE_SELECT_WIDTH}
-                  isDisabled={isLoading}
-                />
-              )}
-              {hasCursorSelect && (
-                <SelectInput
-                  options={cursorSelectOptions}
-                  value={cursorSelectOptions.find((option) => option.value === cursor) ?? null}
-                  onChange={(option) => draftState.setConfig({ cursor: option.value as string })}
-                  variant={InputVariant.TERTIARY}
-                  size={InputSize.SMALL}
-                  placeholder="Cursor"
-                  width={PIPELINE_CANVAS_ROUTES_CURSOR_SELECT_WIDTH}
-                  isDisabled={isLoading}
-                />
-              )}
-            </ControlsGroup>
-            <CenterSlot>
-              <PipelineTransformFieldsIssuesChip
-                issues={blockingStatuses.map((status) => status.message)}
-                warnings={statuses
-                  .filter((status) => !status.isBlocking)
-                  .map((status) => status.message)}
-                position={TooltipPosition.TOP}
+            <Flex
+              alignItems={AlignItems.CENTER}
+              gap={8}
+              width={PIPELINE_CANVAS_ROUTES_SOURCE_ISLAND_WIDTH}
+              shrink={0}
+            >
+              <ConnectorTile
+                connector={sourceConnection?.connector ?? ""}
+                kind={ConnectorKind.SOURCE}
+                size={ConnectorTileSize.SMALL}
+                isDeleted={!!sourceConnection?.deletedAt}
               />
-            </CenterSlot>
-            <ControlsGroup>
+              <FlexItem shrink={0}>
+                <Text size={TextSize.BODY_SM}>{sourceConnection?.name ?? sourceNodeId}</Text>
+              </FlexItem>
+              <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} family={FontFamily.MONO}>
+                /
+              </Text>
+              <FlexItem grow={1} minWidth={0}>
+                {resourceNames ? (
+                  <SelectInput
+                    ariaLabel="Resource"
+                    options={resourceOptions}
+                    value={resource || null}
+                    onChange={(id) => {
+                      if (id !== null) draftState.setResource(id);
+                    }}
+                    isSearchable
+                    placeholder="Resource..."
+                    size={SelectInputSize.MEDIUM}
+                    isDisabled={draft.isResourceLocked}
+                    fillWidth
+                  />
+                ) : (
+                  <TextInput
+                    ariaLabel="Resource"
+                    value={resource}
+                    onChange={draftState.setResource}
+                    placeholder="orders.>"
+                    size={InputSize.MEDIUM}
+                    isDisabled={draft.isResourceLocked}
+                    autoFocus
+                    fillWidth
+                  />
+                )}
+              </FlexItem>
+            </Flex>
+            <EdgeArea>
+              <DraftLine />
+              <ControlsGroup>
+                {hasReadLevers && (
+                  <Box width={PIPELINE_CANVAS_ROUTES_READ_MODE_SELECT_WIDTH}>
+                    <SelectInput
+                      ariaLabel="Read mode"
+                      fillWidth
+                      options={readModeSelectOptions}
+                      value={String(readMode)}
+                      onChange={(id) => {
+                        if (id !== null) draftState.setConfig({ readMode: Number(id) as ReadMode });
+                      }}
+                      variant={SelectInputVariant.TERTIARY}
+                      size={SelectInputSize.SMALL}
+                      placeholder="Read mode..."
+                      isDisabled={isLoading}
+                    />
+                  </Box>
+                )}
+                {hasCursorSelect && (
+                  <Box width={PIPELINE_CANVAS_ROUTES_CURSOR_SELECT_WIDTH}>
+                    <SelectInput
+                      ariaLabel="Cursor"
+                      fillWidth
+                      options={cursorSelectOptions}
+                      value={cursor || null}
+                      onChange={(id) => {
+                        if (id !== null) draftState.setConfig({ cursor: id });
+                      }}
+                      variant={SelectInputVariant.TERTIARY}
+                      size={SelectInputSize.SMALL}
+                      placeholder="Cursor..."
+                      isDisabled={isLoading}
+                    />
+                  </Box>
+                )}
+              </ControlsGroup>
+              <CenterSlot>
+                <PipelineTransformFieldsIssuesChip
+                  issues={blockingStatuses.map((status) => status.message)}
+                  warnings={statuses
+                    .filter((status) => !status.isBlocking)
+                    .map((status) => status.message)}
+                />
+              </CenterSlot>
+              <ControlsGroup>
+                <Box width={PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH}>
+                  <SelectInput
+                    ariaLabel="Write mode"
+                    fillWidth
+                    options={writeModeSelectOptions}
+                    value={String(writeMode)}
+                    onChange={(id) => {
+                      if (id !== null) draftState.setConfig({ writeMode: Number(id) as WriteMode });
+                    }}
+                    variant={SelectInputVariant.TERTIARY}
+                    size={SelectInputSize.SMALL}
+                    placeholder="Write mode..."
+                    isDisabled={isLoading}
+                  />
+                </Box>
+              </ControlsGroup>
+            </EdgeArea>
+            <Box width={PIPELINE_CANVAS_ROUTES_SINK_ISLAND_WIDTH}>
               <SelectInput
-                options={writeModeSelectOptions}
-                value={writeModeSelectOptions.find((option) => option.value === writeMode) ?? null}
-                onChange={(option) =>
-                  draftState.setConfig({ writeMode: option.value as WriteMode })
-                }
-                variant={InputVariant.TERTIARY}
-                size={InputSize.SMALL}
-                placeholder="Write mode"
-                width={PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH}
-                isDisabled={isLoading}
+                ariaLabel="Sink"
+                fillWidth
+                options={sinkOptions}
+                value={draft.sinkId || null}
+                onChange={(id) => {
+                  if (id !== null) draftState.setSinkId(id);
+                }}
+                placeholder="Sink..."
+                size={SelectInputSize.MEDIUM}
+                isDisabled={sinkOptions.length <= 1}
               />
-            </ControlsGroup>
-          </EdgeArea>
-          <SelectInput
-            options={sinkOptions}
-            value={sinkOptions.find((option) => option.id === draft.sinkId) ?? null}
-            onChange={(option) => draftState.setSinkId(option.value as CanvasNode["id"])}
-            placeholder="Sink"
-            size={InputSize.MEDIUM}
-            width={PIPELINE_CANVAS_ROUTES_SINK_ISLAND_WIDTH}
-            isDisabled={sinkOptions.length <= 1}
-          />
-          <Button
-            icon={XIcon}
-            ariaLabel="Cancel"
-            variant={ButtonVariant.TERTIARY}
-            size={ButtonSize.SMALL}
-            onClick={draftState.close}
-          />
-          <Button
-            icon={CheckIcon}
-            ariaLabel="Add route"
-            variant={ButtonVariant.PRIMARY_ALT}
-            size={ButtonSize.SMALL}
-            onClick={handleAdd}
-            isDisabled={!draftState.canAdd || isLoading || blockingStatuses.length > 0}
-          />
-        </FlexWrapper>
-      </Widget>
+            </Box>
+            <Button
+              icon={XIcon}
+              ariaLabel="Cancel"
+              tooltip="Cancel"
+              variant={ButtonVariant.TERTIARY}
+              size={ButtonSize.SMALL}
+              onClick={draftState.close}
+            />
+            <Button
+              icon={CheckIcon}
+              ariaLabel="Add route"
+              tooltip="Add route"
+              variant={ButtonVariant.PRIMARY}
+              size={ButtonSize.SMALL}
+              onClick={handleAdd}
+              isDisabled={!draftState.canAdd || isLoading || blockingStatuses.length > 0}
+            />
+          </Flex>
+        </Widget>
+      </FlexItem>
     </RowWrapper>
   );
 };

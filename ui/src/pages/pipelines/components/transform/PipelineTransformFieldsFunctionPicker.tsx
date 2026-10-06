@@ -1,12 +1,11 @@
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+} from "@galaxy-io/dls/inputs/SelectInput";
 
 import type { TransformFunction } from "@/gen/ingestion/v1/transformations_pb";
 
-import {
-  TRANSFORM_SELECT_ERROR_MARK,
-  TRANSFORM_SELECT_SEARCH_THRESHOLD,
-} from "@/pages/pipelines/components/transform/constants";
+import { TRANSFORM_SELECT_SEARCH_THRESHOLD } from "@/pages/pipelines/components/transform/constants";
 import {
   getTransformFunctionChoices,
   isTransformExprComplete,
@@ -19,10 +18,7 @@ import {
   type TransformExpr,
   TransformExprKind,
 } from "@/pages/pipelines/components/transform/types";
-import {
-  createTransformFunctionOption,
-  filterTransformOptions,
-} from "@/pages/pipelines/components/transform/utils";
+import { createTransformFunctionOption } from "@/pages/pipelines/components/transform/utils";
 
 interface PipelineTransformFieldsFunctionPickerProps {
   input: TransformExpr;
@@ -49,17 +45,18 @@ const PipelineTransformFieldsFunctionPicker = ({
 
   return (
     <SelectInput
+      ariaLabel="Function"
       options={options}
-      value={options.find((option) => option.id === fn) ?? null}
-      onChange={(option) => onChange(option.id)}
-      onReset={() => onChange("")}
-      onSearch={
-        options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD ? filterTransformOptions : undefined
+      value={fn || null}
+      onChange={(id) => onChange(id ?? "")}
+      isClearable
+      isSearchable={
+        !isDisabled && !isInputPending && options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD
       }
-      placeholder={isInputPending ? "Complete the input first" : "Choose a function"}
-      variant={InputVariant.TERTIARY}
-      size={InputSize.MEDIUM}
-      error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+      placeholder={isInputPending ? "Complete the input first..." : "Choose a function..."}
+      variant={SelectInputVariant.TERTIARY}
+      size={SelectInputSize.MEDIUM}
+      isError={isError}
       isDisabled={isDisabled || isInputPending}
       fillWidth
     />

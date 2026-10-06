@@ -1,7 +1,7 @@
 import type { JsonValue } from "@bufbuild/protobuf";
 import type { FitViewOptions } from "@xyflow/react";
 
-import type { Theme } from "@galaxy-io/dls/theme/types";
+import type { Theme } from "@galaxy-io/dls/theme/tokens/types";
 
 import type { EdgeValidation } from "@/gen/ingestion/v1/capabilities_pb";
 import { ReadMode, WriteMode } from "@/gen/ingestion/v1/common_pb";
@@ -196,7 +196,7 @@ export const mapEdgesToStyledEdges = (
     const stroke = isInvalid
       ? theme.color.text.error
       : isRunning || isHighlighted
-        ? theme.color.background.galaxy
+        ? theme.color.solid.primary.background
         : theme.color.border.primary;
 
     return {

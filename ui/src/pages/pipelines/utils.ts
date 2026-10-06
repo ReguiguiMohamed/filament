@@ -62,3 +62,6 @@ export const formatPipelineName = (pipeline: Pipeline, includeDeleted = false): 
   }
   return pipeline.id;
 };
+
+export const isPipelineNameMatch = (typed: string, name: string): boolean =>
+  typed.trim().replace(/->/g, "→") === name.trim();

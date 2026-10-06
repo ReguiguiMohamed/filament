@@ -1,4 +1,4 @@
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 import Text, { TextSize } from "@galaxy-io/dls/text/Text";
 
 import { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
@@ -31,7 +31,7 @@ const PipelineCanvasRoutesSinkIsland = ({
       isDeleted={!!route.sinkConnection?.deletedAt}
     />
     <FlexItem minWidth={0}>
-      <Text size={TextSize.BODY_SM} isEllipsis>
+      <Text size={TextSize.BODY_SM} lineClamp={1}>
         {route.sinkConnection?.name ?? route.edge.target}
       </Text>
     </FlexItem>

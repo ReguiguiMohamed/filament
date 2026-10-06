@@ -13,8 +13,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-import FlexWrapper from "@galaxy-io/dls/containers/FlexWrapper";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
 
 import type { Resource } from "@/gen/ingestion/v1/connectors_pb";
 
@@ -64,13 +65,14 @@ const PipelineTransformFieldsResourceSteps = ({
   return (
     <>
       {resources.length > 1 && (
-        <FlexWrapper
-          padding={`${TRANSFORM_GAP}px ${TRANSFORM_HEADER_PADDING_X}px 0 ${TRANSFORM_BODY_INSET}px`}
+        <Flex
+          alignItems={AlignItems.START}
+          padding={[TRANSFORM_GAP, TRANSFORM_HEADER_PADDING_X, 0, TRANSFORM_BODY_INSET]}
         >
-          <Text size={TextSize.CAPTION} variant={TextVariant.SECONDARY} isMonospace>
+          <Text size={TextSize.CAPTION} variant={TextVariant.SECONDARY} family={FontFamily.MONO}>
             {resource}
           </Text>
-        </FlexWrapper>
+        </Flex>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext

@@ -1,4 +1,4 @@
-import type { SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import type { SelectOption } from "@galaxy-io/dls/inputs/SelectInput";
 
 import { ReadMode, WriteMode } from "@/gen/ingestion/v1/common_pb";
 import type { Resource, ResourceColumn } from "@/gen/ingestion/v1/connectors_pb";
@@ -12,14 +12,14 @@ import {
   PipelineResourceStatusField,
 } from "@/pages/pipelines/components/resource/types";
 
-export const getReadModeSelectOptions = (modes: ReadMode[]): SelectInputOption[] =>
-  modes.map((mode) => ({ id: String(mode), label: READ_MODE_TO_LABEL_MAP[mode], value: mode }));
+export const getReadModeSelectOptions = (modes: ReadMode[]): SelectOption[] =>
+  modes.map((mode) => ({ id: String(mode), label: READ_MODE_TO_LABEL_MAP[mode] }));
 
-export const getWriteModeSelectOptions = (modes: WriteMode[]): SelectInputOption[] =>
-  modes.map((mode) => ({ id: String(mode), label: WRITE_MODE_TO_LABEL_MAP[mode], value: mode }));
+export const getWriteModeSelectOptions = (modes: WriteMode[]): SelectOption[] =>
+  modes.map((mode) => ({ id: String(mode), label: WRITE_MODE_TO_LABEL_MAP[mode] }));
 
-export const getCursorSelectOptions = (columns: ResourceColumn[]): SelectInputOption[] =>
-  columns.map((column) => ({ id: column.name, label: column.name, value: column.name }));
+export const getCursorSelectOptions = (columns: ResourceColumn[]): SelectOption[] =>
+  columns.map((column) => ({ id: column.name, label: column.name }));
 
 export const getCompatibleWriteModes = (
   writeModes: WriteMode[],

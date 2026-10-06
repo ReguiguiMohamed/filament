@@ -2,80 +2,78 @@ import { styled } from "@linaria/react";
 import { FunctionIcon, WarningIcon } from "@phosphor-icons/react";
 import pluralize from "pluralize";
 
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, {
-  AlignItems,
-  FlexDirection,
-  JustifyContent,
-} from "@galaxy-io/dls/containers/FlexWrapper";
 import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
+import Flex, { AlignItems, FlexDirection, JustifyContent } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
+import { FOCUS_RING, HAIRLINE_WIDTH, INTERACTIVE_RESET } from "@galaxy-io/dls/styles/mixins";
 import Text, { TextSize, TextVariant, TextWeight } from "@galaxy-io/dls/text/Text";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import {
   type PipelineCanvasValidationIssue,
   PipelineCanvasValidationIssueKind,
 } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasValidation";
 
-const MAX_ISSUES_IN_TOOLTIP = 3;
+const MAX_VISIBLE_SAVE_ISSUES = 3;
 
-const PipelineLayoutNavbarSaveIssueRow = withTheme(styled.div<
-  PropsWithTheme<{ $isClickable: boolean }>
->`
+const PipelineLayoutNavbarSaveIssueRow = styled.button`
+  ${INTERACTIVE_RESET}
+  ${FOCUS_RING}
   width: 100%;
 
-  padding: 6px;
+  padding: 8px;
 
   display: flex;
   align-items: center;
 
-  border: 0.5px solid ${({ theme }) => theme.color.border.primary};
-  border-radius: 4px;
+  border: ${HAIRLINE_WIDTH} solid ${t.color.border.primary};
+  border-radius: ${t.radius.lg};
 
-  background-color: ${({ theme }) => theme.color.background.primary};
+  background-color: ${t.color.background.primary};
+  transition: background-color ${t.duration.fast};
 
-  cursor: ${({ $isClickable }) => ($isClickable ? "pointer" : "default")};
-
-  &:hover {
-    background-color: ${({ theme, $isClickable }) =>
-      $isClickable ? theme.color.background.secondary : theme.color.background.primary};
+  &:hover:not(:disabled) {
+    background-color: ${t.color.background.hovered};
   }
-`);
+
+  &:disabled {
+    cursor: default;
+  }
+`;
 
 interface PipelineLayoutNavbarSaveIssuesProps {
   issues: PipelineCanvasValidationIssue[];
   onSelectResource: (edgeId: string) => void;
 }
 
-// Lists what blocks Save: one row per invalid resource, then any graph-level
-// problem, capped with a "+N more" line.
 const PipelineLayoutNavbarSaveIssues = ({
   issues,
   onSelectResource,
 }: PipelineLayoutNavbarSaveIssuesProps) => {
-  const hidden = issues.length - MAX_ISSUES_IN_TOOLTIP;
+  const hidden = issues.length - MAX_VISIBLE_SAVE_ISSUES;
   return (
-    <FlexWrapper
+    <Flex
       direction={FlexDirection.COLUMN}
       alignItems={AlignItems.CENTER}
       gap={4}
-      minWidth="240px"
-      maxWidth="320px"
+      padding={8}
+      minWidth={240}
+      maxWidth={320}
     >
-      {issues.slice(0, MAX_ISSUES_IN_TOOLTIP).map(({ edgeId, ...issue }) => (
+      {issues.slice(0, MAX_VISIBLE_SAVE_ISSUES).map(({ edgeId, ...issue }) => (
         <PipelineLayoutNavbarSaveIssueRow
           key={`${edgeId ?? ""}|${issue.resource ?? ""}|${issue.message}`}
-          $isClickable={edgeId !== undefined}
+          type="button"
+          disabled={edgeId === undefined}
           onClick={edgeId === undefined ? undefined : () => onSelectResource(edgeId)}
         >
-          <FlexWrapper
+          <Flex
             alignItems={AlignItems.CENTER}
             justifyContent={JustifyContent.SPACE_BETWEEN}
             gap={16}
             fillWidth
           >
-            <FlexWrapper gap={8} alignItems={AlignItems.CENTER} overflow="hidden">
+            <Flex gap={8} alignItems={AlignItems.CENTER} overflow="hidden">
               <Icon
                 component={
                   issue.kind === PipelineCanvasValidationIssueKind.TRANSFORM
@@ -86,29 +84,29 @@ const PipelineLayoutNavbarSaveIssues = ({
                 variant={IconVariant.SECONDARY}
               />
               <FlexItem shrink={1} minWidth={0} overflow="hidden">
-                <Text size={TextSize.BODY_MD} isEllipsis>
+                <Text size={TextSize.BODY_MD} lineClamp={1}>
                   {issue.kind === PipelineCanvasValidationIssueKind.TRANSFORM
                     ? issue.resource
                     : issue.message}
                 </Text>
               </FlexItem>
-            </FlexWrapper>
+            </Flex>
             {issue.invalidSteps !== undefined && (
               <Text size={TextSize.BODY_SM} weight={TextWeight.MEDIUM} variant={TextVariant.ERROR}>
                 {issue.invalidSteps} {pluralize("issue", issue.invalidSteps)}
               </Text>
             )}
-          </FlexWrapper>
+          </Flex>
         </PipelineLayoutNavbarSaveIssueRow>
       ))}
       {hidden > 0 && (
-        <FlexWrapper padding="6px 0">
+        <Flex alignItems={AlignItems.START} padding={[4, 0]}>
           <Text variant={TextVariant.TERTIARY} size={TextSize.BODY_SM}>
             +{hidden} more {pluralize("issue", hidden)}
           </Text>
-        </FlexWrapper>
+        </Flex>
       )}
-    </FlexWrapper>
+    </Flex>
   );
 };
 
