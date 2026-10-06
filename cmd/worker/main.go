@@ -1,5 +1,6 @@
-// Command worker executes one already-persisted Filament run, or with -serve
-// runs long-lived answering connector calls for the control services.
+// Command worker executes one already-persisted Filament run, or runs
+// long-lived: -serve answers connector calls for the control services and
+// -execute consumes requested runs from the event bus.
 package main
 
 import (
@@ -22,14 +23,15 @@ import (
 
 func main() {
 	serveMode := flag.Bool("serve", false, "run long-lived, answering connector calls for the control services")
+	execute := flag.Bool("execute", false, "run long-lived, executing requested runs from the event bus")
 	flag.Parse()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	var err error
 	switch {
-	case *serveMode && os.Getenv("RUN_ID") != "":
-		err = errors.New("-serve and RUN_ID are exclusive: a run executes in its own process")
-	case *serveMode:
-		err = serve(ctx)
+	case (*serveMode || *execute) && os.Getenv("RUN_ID") != "":
+		err = errors.New("-serve and -execute are exclusive with RUN_ID: a dispatched run executes in its own process")
+	case *serveMode || *execute:
+		err = serve(ctx, *serveMode, *execute)
 	default:
 		err = run(ctx)
 	}

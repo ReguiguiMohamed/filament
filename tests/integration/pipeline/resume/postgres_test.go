@@ -169,18 +169,16 @@ func runResumeScenario(t *testing.T, mode readMode, op gapOp) {
 		startPKs[tbl] = capturePKs(t, ctx, pg.Pool(), tbl)
 	}
 
-	// First sink fails at write 5 (mid-extract); the resume sink is the real typed sink.
-	var firstRun atomic.Bool
-	firstRun.Store(true)
+	// The first run's sink fails at write 5 (mid-extract); failAt is disarmed
+	// before the resume so its sink is the real typed sink. Registration probes
+	// the factory once, so the decision cannot ride on call order.
+	var failAt atomic.Int32
+	failAt.Store(5)
 	sources := registry.NewSources()
 	sources.Register("postgres", func() filament.Source { return pgsource.New() })
 	sinks := registry.NewSinks()
 	sinks.Register("postgres_typed", func() filament.Sink {
-		ts := pgsink.New()
-		if firstRun.CompareAndSwap(true, false) {
-			return testutil.NewFlakySink(ts, 5)
-		}
-		return ts
+		return testutil.NewFlakySink(pgsink.New(), int(failAt.Load()))
 	})
 
 	bus := inproc.New()
@@ -229,6 +227,7 @@ func runResumeScenario(t *testing.T, mode readMode, op gapOp) {
 	qualified := pgx.Identifier{"public", targetTable}.Sanitize()
 	effect := op.run(t, ctx, pg.Pool(), qualified)
 
+	failAt.Store(0)
 	// Re-request the same run id — the resume trigger.
 	if err := events.Emit(ctx, bus, events.RunRequested, events.Envelope{Tenant: "t1", Run: id}, events.RunRequestedEvent{}); err != nil {
 		t.Fatalf("re-request run: %v", err)

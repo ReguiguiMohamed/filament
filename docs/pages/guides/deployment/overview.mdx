@@ -33,11 +33,17 @@ coordinating schedules and runs.
 pipeline, and run requests and persists them through the configured datastore.
 
 **Control plane** manages schedules and coordinates runs. With Kubernetes
-dispatch it creates worker Jobs and tracks their progress. With `inproc`
-dispatch it executes runs inside the control-plane process.
+dispatch it creates worker Jobs and tracks their progress. With worker dispatch
+it leaves execution to a long-lived worker.
+
+**Worker** is the one process that links connector drivers. A persistent
+worker answers the server's connector calls: specs, config checks, discovery,
+and column inspection. The same image executes runs, either as a Job per run
+or as a long-lived process.
 
 The server and control plane coordinate through the datastore and event bus;
-they do not call each other directly.
+they do not call each other directly. Both call the persistent worker for
+anything that needs a connector.
 
 ## Where runs execute
 
@@ -46,9 +52,9 @@ The control plane's `DISPATCH_MODE` determines where runs execute:
 - `kubernetes`, the default, creates one worker Job per run. Each run receives
   its own container and resource configuration. Workers report heartbeats, and
   the reaper fails runs whose heartbeats become stale.
-- `inproc` executes runs inside the control-plane process. It requires no
-  worker service, but every run shares the control plane's CPU and memory.
-  Railway and Render deployments use this mode.
+- `worker` dispatches nothing. A long-lived worker started with `-execute`
+  consumes requested runs from the event bus; every run shares that worker's
+  CPU and memory. Deployments without Kubernetes use this mode.
 
 Both modes use the same runner; dispatch changes where it runs, not how a
 pipeline behaves.

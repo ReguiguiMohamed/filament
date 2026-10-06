@@ -27,9 +27,10 @@ import (
 const processTenantID = "00000000-0000-0000-0000-000000000000"
 
 // TestPipelineAcrossRealProcesses is the black-box deployment boundary: a
-// compiled API server and control-plane communicate only through containerized
-// Postgres and NATS. Runs are deliberately submitted while the control-plane is
-// stopped, then consumed after restart through its durable NATS subscription.
+// compiled API server, control-plane and worker communicate only through
+// containerized Postgres and NATS. Runs are deliberately submitted while the
+// executing worker is stopped, then consumed after restart through its durable
+// NATS subscription.
 func TestPipelineAcrossRealProcesses(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
 	defer cancel()
@@ -73,14 +74,20 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 	waitForHealth(t, ctx, server, "http://"+serverAddr+"/readyz")
 	t.Log("server is ready")
 
-	// Start once before any requests so JetStream creates the durable dispatch
-	// consumer, then stop it. The following submission must remain queued.
 	control := startManagedProcess(t, controlBinary, nil, append(commonEnv,
-		"DISPATCH_MODE=inproc", "HEALTH_ADDR="+controlAddr,
+		"DISPATCH_MODE=worker", "WORKER_URL=http://"+workerAddr, "HEALTH_ADDR="+controlAddr,
 	))
 	waitForHealth(t, ctx, control, "http://"+controlAddr+"/readyz")
-	control.stop(t)
-	t.Log("primed durable control-plane consumers and stopped control-plane")
+	t.Log("control-plane is ready")
+
+	// Under worker dispatch a long-lived worker executes runs. Start it once
+	// before any requests so JetStream creates its durable consumer, then stop
+	// it. The following submission must remain queued.
+	executorAddr := freeAddress(t)
+	executor := startManagedProcess(t, workerBinary, []string{"-execute"}, append(commonEnv, "WORKER_ADDR="+executorAddr))
+	waitForHealth(t, ctx, executor, "http://"+executorAddr+"/readyz")
+	executor.stop(t)
+	t.Log("primed durable executor consumers and stopped executor")
 
 	httpClient := &http.Client{Timeout: 15 * time.Second}
 	api := ingestionv1connect.NewIngestionServiceClient(httpClient, "http://"+serverAddr)
@@ -117,18 +124,16 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 	firstRun := submitRemoteRun(t, ctx, api, pipelineID, "process-run-1")
 	assertRemoteRunStatus(t, ctx, api, firstRun, ingestionv1.RunStatus_RUN_STATUS_REQUESTED)
 	t.Logf("submitted queued run %s", firstRun)
-	controlAddr = freeAddress(t)
-	control = startManagedProcess(t, controlBinary, nil, append(commonEnv,
-		"DISPATCH_MODE=inproc", "HEALTH_ADDR="+controlAddr,
-	))
-	waitForHealth(t, ctx, control, "http://"+controlAddr+"/readyz")
+	executorAddr = freeAddress(t)
+	executor = startManagedProcess(t, workerBinary, []string{"-execute"}, append(commonEnv, "WORKER_ADDR="+executorAddr))
+	waitForHealth(t, ctx, executor, "http://"+executorAddr+"/readyz")
 	waitForRemoteRun(t, ctx, api, firstRun)
-	t.Logf("completed queued run %s after control-plane restart", firstRun)
+	t.Logf("completed queued run %s after executor restart", firstRun)
 	assertProcessRows(t, ctx, destination, []string{
 		"1|Ada|2026-08-01 12:34:56.123456",
 		"2|Grace|2026-08-02 01:02:03.000004",
 	})
-	control.stop(t)
+	executor.stop(t)
 
 	if _, err := source.Pool().Exec(ctx, `
 		UPDATE process_rows SET name='Ada Lovelace', updated_at='2026-08-03 00:00:00.000001+00' WHERE id=1;
@@ -140,13 +145,11 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 	secondRun := submitRemoteRun(t, ctx, api, pipelineID, "process-run-2")
 	assertRemoteRunStatus(t, ctx, api, secondRun, ingestionv1.RunStatus_RUN_STATUS_REQUESTED)
 	t.Logf("submitted second queued run %s", secondRun)
-	controlAddr = freeAddress(t)
-	control = startManagedProcess(t, controlBinary, nil, append(commonEnv,
-		"DISPATCH_MODE=inproc", "HEALTH_ADDR="+controlAddr,
-	))
-	waitForHealth(t, ctx, control, "http://"+controlAddr+"/readyz")
+	executorAddr = freeAddress(t)
+	executor = startManagedProcess(t, workerBinary, []string{"-execute"}, append(commonEnv, "WORKER_ADDR="+executorAddr))
+	waitForHealth(t, ctx, executor, "http://"+executorAddr+"/readyz")
 	waitForRemoteRun(t, ctx, api, secondRun)
-	t.Logf("completed second queued run %s after control-plane restart", secondRun)
+	t.Logf("completed second queued run %s after executor restart", secondRun)
 	assertProcessRows(t, ctx, destination, []string{
 		"1|Ada Lovelace|2026-08-03 00:00:00.000001",
 		"3|Linus|2026-08-03 00:00:00.000002",

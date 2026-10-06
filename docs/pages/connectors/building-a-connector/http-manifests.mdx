@@ -79,11 +79,13 @@ with versioned keys that older workers cannot resolve.
 
 ## Load a private catalog at startup
 
-Set `HTTP_MANIFESTS_DIR` to a directory on the server's filesystem to load
-private manifests without rebuilding the binary:
+Set `HTTP_MANIFESTS_DIR` to a directory on the worker's filesystem to load
+private manifests without rebuilding the binary. Every worker needs it: the
+persistent worker that answers connector calls and the workers that execute
+runs.
 
 ```sh
-HTTP_MANIFESTS_DIR=/etc/filament/manifests ./server
+HTTP_MANIFESTS_DIR=/etc/filament/manifests ./worker -serve
 ```
 
 The directory contains connector folders directly, using the same registry and

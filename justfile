@@ -40,11 +40,16 @@ server mode="": migrate
       WORKER_URL="${WORKER_URL:-http://localhost:8082}" \
       GOWORK=off go run .
 
-# run the persistent worker locally, answering the server's connector calls
+# run the persistent worker locally: answers connector calls and executes runs
 worker:
     cd cmd/worker && \
+      PERSISTENCE_DSN="${PERSISTENCE_DSN:-postgresql://filament:filament@localhost:5432/filament?sslmode=disable}" \
+      NATS_URL="${NATS_URL:-nats://localhost:4222}" \
+      NATS_STREAM="${NATS_STREAM:-EVENTBUS}" \
+      NATS_SUBJECTS="${NATS_SUBJECTS:-ingestion.v1.>}" \
+      ENCRYPTION_KEY="${ENCRYPTION_KEY:-2y4Ou1wAxZ3tReU064W61mal5sXl/2ymtS022pbizws=}" \
       WORKER_ADDR="${WORKER_ADDR:-:8082}" \
-      GOWORK=off go run . -serve
+      GOWORK=off go run . -serve -execute
 
 # run the control plane locally (defaults match docker-compose.yaml; env overrides)
 control-plane:
@@ -53,7 +58,8 @@ control-plane:
       NATS_URL="${NATS_URL:-nats://localhost:4222}" \
       NATS_STREAM="${NATS_STREAM:-EVENTBUS}" \
       NATS_SUBJECTS="${NATS_SUBJECTS:-ingestion.v1.>}" \
-      DISPATCH_MODE="${DISPATCH_MODE:-inproc}" \
+      DISPATCH_MODE="${DISPATCH_MODE:-worker}" \
+      WORKER_URL="${WORKER_URL:-http://localhost:8082}" \
       ENCRYPTION_KEY="${ENCRYPTION_KEY:-2y4Ou1wAxZ3tReU064W61mal5sXl/2ymtS022pbizws=}" \
       GOWORK=off go run .
 
