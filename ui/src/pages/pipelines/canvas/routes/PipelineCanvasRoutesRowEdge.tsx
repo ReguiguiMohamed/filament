@@ -88,6 +88,7 @@ const PipelineCanvasRoutesRowEdge = ({
           <Chip
             label={getPipelineCanvasRouteTransformLabel(route.transformStepCount)}
             icon={FunctionIcon}
+            color="blue"
             size={ChipSize.SMALL}
             isPill
           />

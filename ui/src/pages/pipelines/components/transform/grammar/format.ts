@@ -21,6 +21,8 @@ export enum TransformSummaryPartKind {
   VERB = "verb",
   COLUMN = "column",
   OUTPUT = "output",
+  REMOVED = "removed",
+  VALUE = "value",
 }
 
 export interface TransformSummaryPart {
@@ -51,6 +53,14 @@ const output = (name: string): TransformSummaryPart => ({
   kind: TransformSummaryPartKind.OUTPUT,
   text: name,
 });
+const removed = (name: string): TransformSummaryPart => ({
+  kind: TransformSummaryPartKind.REMOVED,
+  text: name,
+});
+const value = (literal: string): TransformSummaryPart => ({
+  kind: TransformSummaryPartKind.VALUE,
+  text: literal,
+});
 const ELLIPSIS = text("…");
 
 const joinParts = (parts: TransformSummaryPart[]): TransformSummaryPart[] =>
@@ -66,6 +76,15 @@ const joinParts = (parts: TransformSummaryPart[]): TransformSummaryPart[] =>
     }
     return merged;
   }, []);
+
+const markWrittenColumn = (parts: TransformSummaryPart[], name: string): TransformSummaryPart[] => {
+  const index = parts.findIndex(
+    (part) => part.kind === TransformSummaryPartKind.COLUMN && part.text === name,
+  );
+  return index === -1
+    ? parts
+    : parts.map((part, slot) => (slot === index ? output(part.text) : part));
+};
 
 const withSeparator = (
   items: TransformSummaryPart[][],
@@ -96,8 +115,8 @@ export const formatTransformExpr = (
   match(expr)
     .with({ kind: TransformExprKind.EMPTY }, () => [ELLIPSIS])
     .with({ kind: TransformExprKind.COLUMN }, ({ name }) => [column(name)])
-    .with({ kind: TransformExprKind.LITERAL }, ({ literalKind, value }) => [
-      value === null ? ELLIPSIS : text(formatLiteral(literalKind, value)),
+    .with({ kind: TransformExprKind.LITERAL }, ({ literalKind, value: literal }) => [
+      literal === null ? ELLIPSIS : value(formatLiteral(literalKind, literal)),
     ])
     .with({ kind: TransformExprKind.CALL }, (call) => {
       const fn = functionsByName.get(call.fn);
@@ -156,7 +175,7 @@ export const formatTransformStep = (
         verb("Drop"),
         text(" "),
         ...withSeparator(
-          names.map((name) => [column(name || "…")]),
+          names.map((name) => [name ? removed(name) : ELLIPSIS]),
           " and ",
         ),
       ]),
@@ -166,10 +185,11 @@ export const formatTransformStep = (
       const outputs = compute.outputs.map((entry) => {
         const rootVerb = TRANSFORM_EXPR_KIND_TO_VERB_MAP[entry.expr.kind];
         const head = rootVerb === undefined ? [] : [verb(rootVerb), text(" ")];
-        const named = isTransformOutputInPlace(entry, isMatchingRows)
-          ? []
-          : [text(" as "), output(getTransformOutputName(entry, isMatchingRows))];
-        return [...head, ...formatTransformExpr(entry.expr, functionsByName), ...named];
+        const outputName = getTransformOutputName(entry, isMatchingRows);
+        const expr = formatTransformExpr(entry.expr, functionsByName);
+        return isTransformOutputInPlace(entry, isMatchingRows)
+          ? [...head, ...markWrittenColumn(expr, outputName)]
+          : [...head, ...expr, text(" as "), output(outputName)];
       });
       const where = compute.where
         ? [text(" on rows where "), ...formatTransformExpr(compute.where, functionsByName)]

@@ -56,6 +56,7 @@ export const TRANSFORM_GUTTER = 36;
 export const TRANSFORM_COND_GUTTER = 56;
 export const TRANSFORM_ACTION = 32;
 export const TRANSFORM_ADD_ROW = 24;
+export const TRANSFORM_MARKER_SIZE = 14;
 export const TRANSFORM_GAP: Space = 8;
 export const TRANSFORM_BOX_PAD: Space = 8;
 export const TRANSFORM_HEADER_PADDING_X: Space = 12;

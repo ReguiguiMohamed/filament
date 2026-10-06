@@ -60,7 +60,7 @@ const PipelineTransformFieldsStepFooter = ({
         <Button
           icon={TrashIcon}
           variant={ButtonVariant.SECONDARY}
-          size={ButtonSize.MEDIUM}
+          size={ButtonSize.SMALL}
           onClick={onDelete}
           isDisabled={isDisabled}
           ariaLabel="Delete step"
@@ -70,11 +70,11 @@ const PipelineTransformFieldsStepFooter = ({
       <Button
         label="Cancel"
         variant={ButtonVariant.SECONDARY}
-        size={ButtonSize.MEDIUM}
+        size={ButtonSize.SMALL}
         onClick={onCancel}
         isDisabled={isDisabled}
       />
-      <Button label="Save" size={ButtonSize.MEDIUM} onClick={onSave} isDisabled={isSaveDisabled} />
+      <Button label="Save" size={ButtonSize.SMALL} onClick={onSave} isDisabled={isSaveDisabled} />
     </Flex>
   </Flex>
 );

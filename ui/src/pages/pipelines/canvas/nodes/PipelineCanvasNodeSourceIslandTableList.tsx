@@ -1,10 +1,9 @@
-import { FunctionIcon } from "@phosphor-icons/react";
 import { Position } from "@xyflow/react";
 
 import Skeleton from "@galaxy-io/dls/feedback/Skeleton";
-import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
 import Box from "@galaxy-io/dls/layout/Box";
 import Flex, { AlignItems, JustifyContent } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
 import { FontFamily } from "@galaxy-io/dls/theme/enums";
 
@@ -17,6 +16,7 @@ import { LayoutSize } from "@/layouts/types";
 import { PIPELINE_CANVAS_NODE_TABLE_LIST_SHIMMER_COUNT } from "@/pages/pipelines/canvas/nodes/constants";
 import PipelineCanvasNodeHandle from "@/pages/pipelines/canvas/nodes/PipelineCanvasNodeHandle";
 import type { PipelineCanvasNodeTableInfo } from "@/pages/pipelines/canvas/types";
+import PipelineTransformFieldsMarker from "@/pages/pipelines/components/transform/PipelineTransformFieldsMarker";
 
 const TableListShimmer = () => (
   <>
@@ -36,21 +36,17 @@ const TableListRow = ({ table }: { table: PipelineCanvasNodeTableInfo }) => (
     gap={4}
     minWidth={0}
   >
-    <Text
-      size={TextSize.BODY_SM}
-      variant={table.isConnected ? TextVariant.PRIMARY : TextVariant.TERTIARY}
-      family={FontFamily.MONO}
-      lineClamp={1}
-    >
-      {table.name}
-    </Text>
-    {table.hasTransform && (
-      <Icon
-        component={FunctionIcon}
-        size={14}
-        variant={table.isInvalid ? IconVariant.ERROR : IconVariant.SECONDARY}
-      />
-    )}
+    <FlexItem grow={1} minWidth={0}>
+      <Text
+        size={TextSize.BODY_SM}
+        variant={table.isConnected ? TextVariant.PRIMARY : TextVariant.TERTIARY}
+        family={FontFamily.MONO}
+        lineClamp={1}
+      >
+        {table.name}
+      </Text>
+    </FlexItem>
+    {table.hasTransform && <PipelineTransformFieldsMarker isInvalid={table.isInvalid} />}
     <PipelineCanvasNodeHandle
       id={table.name}
       kind={ConnectorKind.SOURCE}

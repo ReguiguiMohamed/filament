@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { create } from "@bufbuild/protobuf";
-import { FlowArrowIcon, FunctionIcon, PlusIcon } from "@phosphor-icons/react";
+import { FlowArrowIcon, PlusIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
 import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
@@ -37,6 +37,7 @@ import { getCanvasEdgeResourceLabel } from "@/pages/pipelines/canvas/utils";
 import PipelineResourceCreateForm, {
   type PipelineResourceCreateState,
 } from "@/pages/pipelines/components/resource/PipelineResourceCreateForm";
+import PipelineTransformFieldsMarker from "@/pages/pipelines/components/transform/PipelineTransformFieldsMarker";
 import { usePipelineExecutionMode } from "@/pages/pipelines/hooks/usePipelineExecutionMode";
 
 import { useDiscoverResourcesQuery } from "@/api/queries/connectors";
@@ -176,9 +177,7 @@ const PipelineCanvasPanelResourceSection = ({
                   </Text>
                 </FlexItem>
                 <Flex alignItems={AlignItems.CENTER} gap={8} shrink={0}>
-                  {edge.data?.transform && (
-                    <Icon component={FunctionIcon} variant={IconVariant.SECONDARY} size={14} />
-                  )}
+                  {edge.data?.transform && <PipelineTransformFieldsMarker />}
                   <ConnectorTile
                     connector={sourceConnection?.connector ?? ""}
                     kind={ConnectorKind.SOURCE}

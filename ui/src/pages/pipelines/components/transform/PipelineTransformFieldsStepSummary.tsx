@@ -1,10 +1,12 @@
-import { Fragment } from "react";
+import { Fragment, type ReactElement } from "react";
 
 import { styled } from "@linaria/react";
 import { match } from "ts-pattern";
 
 import Chip, { ChipSize, ChipVariant } from "@galaxy-io/dls/chips/Chip";
 import Span, { SpanVariant } from "@galaxy-io/dls/text/Span";
+import { TextWeight } from "@galaxy-io/dls/text/Text";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import { TRANSFORM_ACTION } from "@/pages/pipelines/components/transform/constants";
@@ -29,7 +31,7 @@ const Sentence = styled.div`
   overflow-wrap: anywhere;
 `;
 
-const ChipSlot = styled.span`
+const ChipSlot = styled.span<{ $isRemoved: boolean }>`
   display: inline-flex;
   align-items: center;
   height: ${TRANSFORM_ACTION}px;
@@ -39,15 +41,28 @@ const ChipSlot = styled.span`
   & span {
     font-family: ${t.font.mono.family};
     letter-spacing: ${t.font.mono.spacing.caption};
+    text-decoration: ${({ $isRemoved }) => ($isRemoved ? "line-through" : "none")};
   }
 `;
 
-const SUMMARY_PART_KIND_TO_CHIP_VARIANT_MAP: Record<
-  TransformSummaryPartKind.COLUMN | TransformSummaryPartKind.OUTPUT,
-  ChipVariant
+type TransformSummaryChipKind =
+  | TransformSummaryPartKind.COLUMN
+  | TransformSummaryPartKind.OUTPUT
+  | TransformSummaryPartKind.REMOVED;
+
+const SUMMARY_PART_KIND_TO_CHIP_MAP: Record<
+  TransformSummaryChipKind,
+  (label: string) => ReactElement
 > = {
-  [TransformSummaryPartKind.COLUMN]: ChipVariant.SECONDARY,
-  [TransformSummaryPartKind.OUTPUT]: ChipVariant.PRIMARY,
+  [TransformSummaryPartKind.COLUMN]: (label) => (
+    <Chip label={label} variant={ChipVariant.TERTIARY} size={ChipSize.SMALL} hasBorder />
+  ),
+  [TransformSummaryPartKind.OUTPUT]: (label) => (
+    <Chip label={label} color="blue" size={ChipSize.SMALL} />
+  ),
+  [TransformSummaryPartKind.REMOVED]: (label) => (
+    <Chip label={label} color="blue" size={ChipSize.SMALL} />
+  ),
 };
 
 interface PipelineTransformFieldsStepSummaryProps {
@@ -61,19 +76,26 @@ const PipelineTransformFieldsStepSummary = ({ step }: PipelineTransformFieldsSte
       <Span>
         {formatTransformStep(step, functionsByName).map((part, index) =>
           match(part.kind)
-            .with(TransformSummaryPartKind.COLUMN, TransformSummaryPartKind.OUTPUT, (kind) => (
+            .with(
+              TransformSummaryPartKind.COLUMN,
+              TransformSummaryPartKind.OUTPUT,
+              TransformSummaryPartKind.REMOVED,
+              (kind) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional
+                <ChipSlot key={index} $isRemoved={kind === TransformSummaryPartKind.REMOVED}>
+                  {SUMMARY_PART_KIND_TO_CHIP_MAP[kind](part.text)}
+                </ChipSlot>
+              ),
+            )
+            .with(TransformSummaryPartKind.VALUE, () => (
               // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional
-              <ChipSlot key={index}>
-                <Chip
-                  label={part.text}
-                  variant={SUMMARY_PART_KIND_TO_CHIP_VARIANT_MAP[kind]}
-                  size={ChipSize.SMALL}
-                />
-              </ChipSlot>
+              <Span key={index} variant={SpanVariant.PRIMARY} family={FontFamily.MONO}>
+                {part.text}
+              </Span>
             ))
             .with(TransformSummaryPartKind.VERB, () => (
               // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional
-              <Span key={index} variant={SpanVariant.PRIMARY}>
+              <Span key={index} variant={SpanVariant.PRIMARY} weight={TextWeight.MEDIUM}>
                 {part.text}
               </Span>
             ))
