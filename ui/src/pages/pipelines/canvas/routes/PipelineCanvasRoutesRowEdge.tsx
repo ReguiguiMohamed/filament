@@ -2,6 +2,7 @@ import { styled } from "@linaria/react";
 import { FunctionIcon } from "@phosphor-icons/react";
 
 import Chip, { ChipSize } from "@galaxy-io/dls/chips/Chip";
+import { FOCUS_RING } from "@galaxy-io/dls/styles/mixins";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import {
@@ -34,7 +35,7 @@ const EdgeArea = styled.div`
 
   &:has([data-edge-hit]:hover) [data-edge]:not([data-selected="true"]) line,
   &:has([data-edge-hit]:hover) [data-edge]:not([data-selected="true"]) path {
-    stroke: ${t.color.text.tertiary};
+    stroke: ${t.color.border.hovered};
   }
 `;
 
@@ -46,7 +47,7 @@ const EdgeHitArea = styled.div`
   height: ${EDGE_HIT_HEIGHT}px;
 
   cursor: pointer;
-  outline: none;
+  ${FOCUS_RING}
 `;
 
 interface PipelineCanvasRoutesRowEdgeProps {
@@ -87,7 +88,6 @@ const PipelineCanvasRoutesRowEdge = ({
           <Chip
             label={getPipelineCanvasRouteTransformLabel(route.transformStepCount)}
             icon={FunctionIcon}
-            color="blue"
             size={ChipSize.SMALL}
             isPill
           />

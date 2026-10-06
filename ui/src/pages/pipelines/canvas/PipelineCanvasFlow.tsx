@@ -13,9 +13,9 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 
-// @dls-migrate usegalaxytheme.useTheme: Removed: read `t` in styles, or `useGalaxyTheme().theme` for hex values in JS.
-import { useTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
+import { HAIRLINE_WIDTH } from "@galaxy-io/dls/styles/mixins";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
+import { useGalaxyTheme } from "@galaxy-io/dls/theme/useGalaxyTheme";
 
 import "@xyflow/react/dist/style.css";
 
@@ -91,8 +91,8 @@ const FlowWrapper = styled.div`
     width: 160px;
     height: 92px;
     background-color: ${t.color.background.base};
-    border: 0.5px solid ${t.color.border.primary};
-    border-radius: 6px;
+    border: ${HAIRLINE_WIDTH} solid ${t.color.border.primary};
+    border-radius: ${t.radius.lg};
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -108,8 +108,7 @@ const ViewSwitcherOverlay = styled.div`
 `;
 
 const PipelineCanvasFlow = () => {
-  // @dls-migrate tokens.dynamic: The codemod only rewrites static token paths: rewrite this theme access by hand.
-  const theme = useTheme();
+  const { theme } = useGalaxyTheme();
   const state = usePipelineCanvasState();
   const { applyNodeChanges, applyEdgeChanges, connect } = usePipelineCanvasActions();
   const isReadOnly = usePipelineCanvasReadOnly();
@@ -229,10 +228,12 @@ const PipelineCanvasFlow = () => {
         <MiniMap
           nodeColor={(node) => {
             if (node.type === PipelineCanvasNodeType.PLACEHOLDER) return "transparent";
-            return node.selected ? theme.color.background.galaxy : theme.color.background.tertiary;
+            return node.selected
+              ? theme.color.solid.primary.background
+              : theme.color.background.tertiary;
           }}
           nodeStrokeColor={(node) =>
-            node.selected ? theme.color.background.galaxy : theme.color.border.primary
+            node.selected ? theme.color.solid.primary.background : theme.color.border.primary
           }
           nodeStrokeWidth={1}
           bgColor={theme.color.background.base}

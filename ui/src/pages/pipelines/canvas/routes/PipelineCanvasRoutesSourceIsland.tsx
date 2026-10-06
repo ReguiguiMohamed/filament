@@ -68,6 +68,7 @@ const PipelineCanvasRoutesSourceIsland = ({
         <Button
           icon={PlusIcon}
           ariaLabel="Route to another sink"
+          tooltip="Route to another sink"
           variant={ButtonVariant.TERTIARY}
           size={ButtonSize.SMALL}
           onClick={(event) => {

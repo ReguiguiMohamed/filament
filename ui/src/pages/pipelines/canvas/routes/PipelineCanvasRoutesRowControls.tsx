@@ -7,7 +7,6 @@ import SelectInput, {
   SelectInputVariant,
 } from "@galaxy-io/dls/inputs/SelectInput";
 import Box from "@galaxy-io/dls/layout/Box";
-import { Placement } from "@galaxy-io/dls/theme/enums";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import { ReadMode, type WriteMode } from "@/gen/ingestion/v1/common_pb";
@@ -36,7 +35,7 @@ const ControlsGroup = styled.div`
   gap: ${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
 
   background-color: ${t.color.background.base};
-  border-radius: 5px;
+  border-radius: ${t.radius.md};
 `;
 
 const CenterSlot = styled.div`
@@ -123,10 +122,10 @@ const PipelineCanvasRoutesRowControls = ({
             <SelectInput
               fillWidth
               options={readModeSelectOptions}
-              /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                readModeSelectOptions.find((option) => option.value === readMode) ?? null
-              }
-              onChange={(option) => handleReadModeChange(option.value as ReadMode)}
+              value={String(readMode)}
+              onChange={(id) => {
+                if (id !== null) handleReadModeChange(Number(id) as ReadMode);
+              }}
               variant={SelectInputVariant.TERTIARY}
               size={SelectInputSize.SMALL}
               placeholder="Read mode"
@@ -139,10 +138,10 @@ const PipelineCanvasRoutesRowControls = ({
             <SelectInput
               fillWidth
               options={cursorSelectOptions}
-              /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                cursorSelectOptions.find((option) => option.value === cursorValue) ?? null
-              }
-              onChange={(option) => handleCursorChange(route.resource, option.value as string)}
+              value={cursorValue || null}
+              onChange={(id) => {
+                if (id !== null) handleCursorChange(route.resource, id);
+              }}
               variant={SelectInputVariant.TERTIARY}
               size={SelectInputSize.SMALL}
               placeholder="Cursor"
@@ -153,11 +152,7 @@ const PipelineCanvasRoutesRowControls = ({
       </ControlsGroup>
       <CenterSlot>
         {children}
-        <PipelineTransformFieldsIssuesChip
-          issues={issues}
-          warnings={warnings}
-          position={Placement.TOP}
-        />
+        <PipelineTransformFieldsIssuesChip issues={issues} warnings={warnings} />
       </CenterSlot>
       <ControlsGroup
         onClick={stopPropagation}
@@ -168,10 +163,10 @@ const PipelineCanvasRoutesRowControls = ({
           <SelectInput
             fillWidth
             options={writeModeSelectOptions}
-            /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-              writeModeSelectOptions.find((option) => option.value === writeMode) ?? null
-            }
-            onChange={(option) => handleWriteModeChange(option.value as WriteMode)}
+            value={String(writeMode)}
+            onChange={(id) => {
+              if (id !== null) handleWriteModeChange(Number(id) as WriteMode);
+            }}
             variant={SelectInputVariant.TERTIARY}
             size={SelectInputSize.SMALL}
             placeholder="Write mode"

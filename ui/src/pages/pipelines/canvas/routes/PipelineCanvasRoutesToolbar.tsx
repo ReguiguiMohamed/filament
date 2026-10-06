@@ -1,19 +1,19 @@
 import { useMemo } from "react";
 
-import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { PlusIcon } from "@phosphor-icons/react";
 import pluralize from "pluralize";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import { InputSize } from "@galaxy-io/dls/inputs/Input";
 import MultiSelectInput, {
   MultiSelectInputSize,
   MultiSelectInputVariant,
 } from "@galaxy-io/dls/inputs/MultiSelectInput";
+import SearchInput from "@galaxy-io/dls/inputs/SearchInput";
 import type { SelectOption } from "@galaxy-io/dls/inputs/SelectInput";
-import TextInput from "@galaxy-io/dls/inputs/TextInput";
 import Box from "@galaxy-io/dls/layout/Box";
 import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
 import FlexItem from "@galaxy-io/dls/layout/FlexItem";
+import Text from "@galaxy-io/dls/text/Text";
 
 import { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 
@@ -29,16 +29,18 @@ import {
 import { usePipelineCanvasRoutesSinks } from "@/pages/pipelines/canvas/routes/hooks/usePipelineCanvasRoutesSinks";
 import type { CanvasNode } from "@/pages/pipelines/canvas/types";
 
+import { LIST_SEARCH_DEBOUNCE_MS } from "@/api/utils";
+
+import { getSelectAllChange, getSelectAllOptions, getSelectAllValue } from "@/utils/select";
+
 interface PipelineCanvasRoutesToolbarProps {
-  search: string;
-  onSearchChange: (search: string) => void;
+  onSearch: (search: string) => void;
   canAddRoute: boolean;
   onAddRoute: () => void;
 }
 
 const PipelineCanvasRoutesToolbar = ({
-  search,
-  onSearchChange,
+  onSearch,
   canAddRoute,
   onAddRoute,
 }: PipelineCanvasRoutesToolbarProps) => {
@@ -50,8 +52,7 @@ const PipelineCanvasRoutesToolbar = ({
       sinks.map((sink) => ({
         id: sink.nodeId,
         label: sink.label,
-        value: sink.nodeId,
-        icon: (
+        leading: (
           <ConnectorTile
             connector={sink.connection?.connector ?? ""}
             kind={ConnectorKind.SINK}
@@ -62,59 +63,54 @@ const PipelineCanvasRoutesToolbar = ({
       })),
     [sinks],
   );
-  const selectedSinkOptions = sinkOptions.filter((option) => sinkIds.includes(option.id));
-  const pinnedOptions = [
-    {
-      id: PIPELINE_CANVAS_ROUTES_SINKS_PINNED_OPTION_ID,
-      label: "All sinks",
-      optionIds: sinkOptions.map((option) => option.id),
-    },
-  ];
+  const selectAll = {
+    id: PIPELINE_CANVAS_ROUTES_SINKS_PINNED_OPTION_ID,
+    label: "All sinks",
+    optionIds: sinkOptions.map((option) => option.id),
+  };
+  const selectedSinkIds = sinkIds.length ? sinkIds : selectAll.optionIds;
 
-  const handleSinksChange = (selected: SelectOption[]) =>
-    setSinkIds(
-      selected.length === sinkOptions.length
-        ? []
-        : selected.map((option) => option.value as CanvasNode["id"]),
-    );
+  const handleSinksChange = (ids: CanvasNode["id"][]) => {
+    const next = getSelectAllChange(selectAll, ids, selectedSinkIds);
+    setSinkIds(next.length === sinkOptions.length ? [] : next);
+  };
 
   return (
     <Flex
       alignItems={AlignItems.CENTER}
       gap={12}
-      /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ padding={`${PIPELINE_CANVAS_VIEW_SWITCHER_INSET}px`}
+      padding={PIPELINE_CANVAS_VIEW_SWITCHER_INSET}
       shrink={0}
       fillWidth
     >
       <PipelineCanvasViewSwitcher />
       <Box width={PIPELINE_CANVAS_ROUTES_SEARCH_WIDTH}>
-        <TextInput
+        <SearchInput
+          debounceMs={LIST_SEARCH_DEBOUNCE_MS}
+          onSearch={onSearch}
+          placeholder="Search resources..."
           fillWidth
-          value={search}
-          onChange={onSearchChange}
-          placeholder="Search resources"
-          icon={MagnifyingGlassIcon}
-          size={InputSize.MEDIUM}
         />
       </Box>
       <Box width={PIPELINE_CANVAS_ROUTES_SINK_FILTER_WIDTH}>
         <MultiSelectInput
           fillWidth
-          options={sinkOptions}
-          /* @dls-migrate multiselectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-            selectedSinkOptions
-          }
+          options={getSelectAllOptions(selectAll, sinkOptions)}
+          pinnedIds={[selectAll.id]}
+          value={getSelectAllValue(selectAll, selectedSinkIds)}
           onChange={handleSinksChange}
           placeholder="Sinks"
           variant={MultiSelectInputVariant.TERTIARY}
           size={MultiSelectInputSize.MEDIUM}
-          /* @dls-migrate multiselectinput.pinnedOptions: Pinned rows are now option ids: pass `pinnedIds`. */ pinnedOptions={
-            pinnedOptions
-          }
-          /* @dls-migrate multiselectinput.renderSelectedText: Merged into `renderValue(options)`. */ renderSelectedText={(
-            selected,
-            placeholder,
-          ) => (selected.length ? pluralize("sink", selected.length, true) : placeholder)}
+          renderValue={(options) => (
+            <Text>
+              {pluralize(
+                "sink",
+                options.filter((option) => option.id !== selectAll.id).length,
+                true,
+              )}
+            </Text>
+          )}
         />
       </Box>
       <FlexItem grow={1} />

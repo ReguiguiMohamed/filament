@@ -15,8 +15,9 @@ import TextInput from "@galaxy-io/dls/inputs/TextInput";
 import Box from "@galaxy-io/dls/layout/Box";
 import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
 import FlexItem from "@galaxy-io/dls/layout/FlexItem";
+import { HAIRLINE_WIDTH } from "@galaxy-io/dls/styles/mixins";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
-import { FontFamily, Placement } from "@galaxy-io/dls/theme/enums";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 import Widget, { WidgetVariant } from "@galaxy-io/dls/widget/Widget";
 
@@ -44,7 +45,7 @@ import {
   PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH,
 } from "@/pages/pipelines/canvas/routes/constants";
 import type { PipelineCanvasRoutesDraftState } from "@/pages/pipelines/canvas/routes/hooks/usePipelineCanvasRoutesDraft";
-import type { CanvasEdge, CanvasNode } from "@/pages/pipelines/canvas/types";
+import type { CanvasEdge } from "@/pages/pipelines/canvas/types";
 import { getEdgeResourceStatuses, hasSiblingIncrementalRead } from "@/pages/pipelines/canvas/utils";
 import {
   getCompatibleWriteModes,
@@ -54,8 +55,6 @@ import {
   getWriteModeSelectOptions,
 } from "@/pages/pipelines/components/resource/utils";
 import PipelineTransformFieldsIssuesChip from "@/pages/pipelines/components/transform/PipelineTransformFieldsIssuesChip";
-
-import { isSearchMatch } from "@/utils/search";
 
 const RowWrapper = styled.div`
   height: ${PIPELINE_CANVAS_ROUTES_DRAFT_ROW_HEIGHT}px;
@@ -94,7 +93,7 @@ const DraftLine = styled.div`
   right: -${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
   top: 50%;
 
-  border-top: 1px dashed ${t.color.border.primary};
+  border-top: ${HAIRLINE_WIDTH} dashed ${t.color.border.primary};
 `;
 
 const ControlsGroup = styled.div`
@@ -107,11 +106,8 @@ const ControlsGroup = styled.div`
   gap: ${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
 
   background-color: ${t.color.background.secondary};
-  border-radius: 5px;
+  border-radius: ${t.radius.md};
 `;
-
-const searchOptions = (term: string, options: SelectOption[]) =>
-  options.filter((option) => isSearchMatch(term, option.label));
 
 interface PipelineCanvasRoutesDraftRowProps {
   draftState: PipelineCanvasRoutesDraftState;
@@ -150,7 +146,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
   } = options;
 
   const resourceOptions = useMemo<SelectOption[]>(
-    () => (resourceNames ?? []).map((name) => ({ id: name, label: name, value: name })),
+    () => (resourceNames ?? []).map((name) => ({ id: name, label: name })),
     [resourceNames],
   );
   const sinkOptions = useMemo<SelectOption[]>(
@@ -158,8 +154,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
       sinks.map((sink) => ({
         id: sink.nodeId,
         label: sink.label,
-        value: sink.nodeId,
-        icon: (
+        leading: (
           <ConnectorTile
             connector={sink.connection?.connector ?? ""}
             kind={ConnectorKind.SINK}
@@ -227,17 +222,12 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
 
   return (
     <RowWrapper onKeyDown={handleKeyDown}>
-      <Box minWidth="max-content">
-        <Widget
-          variant={WidgetVariant.SECONDARY}
-          /* @dls-migrate widget.padding-other: The body inset is fixed at 12px: remove `padding` (use `isFlush` for 0). */ padding={`0 ${PIPELINE_CANVAS_ROUTES_DRAFT_PADDING_X}px`}
-          /* @dls-migrate widget.fillWidth: Grow the card with a `FlexItem` or a `Grid` track. */ fillWidth
-        >
+      <FlexItem grow={1} minWidth="max-content">
+        <Widget variant={WidgetVariant.SECONDARY} isFlush>
           <Flex
             alignItems={AlignItems.CENTER}
-            /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ gap={
-              PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP
-            }
+            gap={PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}
+            padding={[0, PIPELINE_CANVAS_ROUTES_DRAFT_PADDING_X]}
             fillWidth
             height="100%"
           >
@@ -263,13 +253,11 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                 {resourceNames ? (
                   <SelectInput
                     options={resourceOptions}
-                    /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                      resourceOptions.find((option) => option.id === resource) ?? null
-                    }
-                    onChange={(option) => draftState.setResource(option.value as string)}
-                    /* @dls-migrate selectinput.onSearch: Add `isSearchable`; the DLS filters, `onSearch` only receives the term. */ onSearch={
-                      searchOptions
-                    }
+                    value={resource || null}
+                    onChange={(id) => {
+                      if (id !== null) draftState.setResource(id);
+                    }}
+                    isSearchable
                     placeholder="Resource"
                     size={SelectInputSize.MEDIUM}
                     isDisabled={draft.isResourceLocked}
@@ -296,12 +284,10 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                     <SelectInput
                       fillWidth
                       options={readModeSelectOptions}
-                      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                        readModeSelectOptions.find((option) => option.value === readMode) ?? null
-                      }
-                      onChange={(option) =>
-                        draftState.setConfig({ readMode: option.value as ReadMode })
-                      }
+                      value={String(readMode)}
+                      onChange={(id) => {
+                        if (id !== null) draftState.setConfig({ readMode: Number(id) as ReadMode });
+                      }}
                       variant={SelectInputVariant.TERTIARY}
                       size={SelectInputSize.SMALL}
                       placeholder="Read mode"
@@ -314,12 +300,10 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                     <SelectInput
                       fillWidth
                       options={cursorSelectOptions}
-                      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                        cursorSelectOptions.find((option) => option.value === cursor) ?? null
-                      }
-                      onChange={(option) =>
-                        draftState.setConfig({ cursor: option.value as string })
-                      }
+                      value={cursor || null}
+                      onChange={(id) => {
+                        if (id !== null) draftState.setConfig({ cursor: id });
+                      }}
                       variant={SelectInputVariant.TERTIARY}
                       size={SelectInputSize.SMALL}
                       placeholder="Cursor"
@@ -334,7 +318,6 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                   warnings={statuses
                     .filter((status) => !status.isBlocking)
                     .map((status) => status.message)}
-                  position={Placement.TOP}
                 />
               </CenterSlot>
               <ControlsGroup>
@@ -342,12 +325,10 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                   <SelectInput
                     fillWidth
                     options={writeModeSelectOptions}
-                    /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                      writeModeSelectOptions.find((option) => option.value === writeMode) ?? null
-                    }
-                    onChange={(option) =>
-                      draftState.setConfig({ writeMode: option.value as WriteMode })
-                    }
+                    value={String(writeMode)}
+                    onChange={(id) => {
+                      if (id !== null) draftState.setConfig({ writeMode: Number(id) as WriteMode });
+                    }}
                     variant={SelectInputVariant.TERTIARY}
                     size={SelectInputSize.SMALL}
                     placeholder="Write mode"
@@ -360,10 +341,10 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
               <SelectInput
                 fillWidth
                 options={sinkOptions}
-                /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                  sinkOptions.find((option) => option.id === draft.sinkId) ?? null
-                }
-                onChange={(option) => draftState.setSinkId(option.value as CanvasNode["id"])}
+                value={draft.sinkId || null}
+                onChange={(id) => {
+                  if (id !== null) draftState.setSinkId(id);
+                }}
                 placeholder="Sink"
                 size={SelectInputSize.MEDIUM}
                 isDisabled={sinkOptions.length <= 1}
@@ -372,6 +353,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
             <Button
               icon={XIcon}
               ariaLabel="Cancel"
+              tooltip="Cancel"
               variant={ButtonVariant.TERTIARY}
               size={ButtonSize.SMALL}
               onClick={draftState.close}
@@ -379,6 +361,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
             <Button
               icon={CheckIcon}
               ariaLabel="Add route"
+              tooltip="Add route"
               variant={ButtonVariant.PRIMARY}
               size={ButtonSize.SMALL}
               onClick={handleAdd}
@@ -386,7 +369,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
             />
           </Flex>
         </Widget>
-      </Box>
+      </FlexItem>
     </RowWrapper>
   );
 };

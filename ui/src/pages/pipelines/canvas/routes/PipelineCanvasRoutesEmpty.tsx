@@ -1,7 +1,5 @@
 import { FlowArrowIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 
-import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
-
 import EmptyLayout from "@/layouts/EmptyLayout";
 
 interface PipelineCanvasRoutesEmptyProps {
@@ -11,15 +9,15 @@ interface PipelineCanvasRoutesEmptyProps {
 const PipelineCanvasRoutesEmpty = ({ hasRoutes }: PipelineCanvasRoutesEmptyProps) =>
   hasRoutes ? (
     <EmptyLayout
-      icon={<Icon component={MagnifyingGlassIcon} variant={IconVariant.TERTIARY} />}
+      icon={MagnifyingGlassIcon}
       header="No matching resources"
-      message="Try a different search or clear the sink filter."
+      description="Try a different search or clear the sink filter."
     />
   ) : (
     <EmptyLayout
-      icon={<Icon component={FlowArrowIcon} variant={IconVariant.TERTIARY} />}
+      icon={FlowArrowIcon}
       header="No routes"
-      message="Connect a source to a sink to route resources."
+      description="Connect a source to a sink to route resources."
     />
   );
 

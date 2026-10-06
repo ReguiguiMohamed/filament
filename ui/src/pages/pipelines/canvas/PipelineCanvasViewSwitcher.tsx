@@ -14,17 +14,19 @@ import { PipelineCanvasView } from "@/pages/pipelines/canvas/types";
 const PipelineCanvasViewSwitcher = () => {
   const { view, setView } = usePipelineCanvasSelection();
 
-  const items: ToggleOption[] = Object.values(PipelineCanvasView).map((candidate) => ({
-    id: candidate,
-    label: PIPELINE_CANVAS_VIEW_TO_LABEL_MAP[candidate],
-    icon: PIPELINE_CANVAS_VIEW_TO_ICON_MAP[candidate],
-    onClick: () => setView(candidate),
-  }));
+  const items: ToggleOption<PipelineCanvasView>[] = Object.values(PipelineCanvasView).map(
+    (candidate) => ({
+      id: candidate,
+      label: PIPELINE_CANVAS_VIEW_TO_LABEL_MAP[candidate],
+      icon: PIPELINE_CANVAS_VIEW_TO_ICON_MAP[candidate],
+    }),
+  );
 
   return (
     <ToggleInput
       options={items}
       value={view}
+      onChange={setView}
       size={ToggleInputSize.MEDIUM}
       variant={ToggleInputVariant.TERTIARY}
     />

@@ -24,7 +24,7 @@ const EdgeSvg = styled.svg`
     fill: none;
     stroke: ${t.color.border.primary};
     stroke-width: 1;
-    transition: stroke 100ms ease;
+    transition: stroke ${t.duration.fast};
   }
 
   &[data-selected="true"] line,

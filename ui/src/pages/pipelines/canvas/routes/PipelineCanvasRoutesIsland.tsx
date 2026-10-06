@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 
 import { styled } from "@linaria/react";
 
+import { FOCUS_RING, HAIRLINE_WIDTH } from "@galaxy-io/dls/styles/mixins";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import { PIPELINE_CANVAS_ROUTES_ISLAND_HEIGHT } from "@/pages/pipelines/canvas/routes/constants";
@@ -10,7 +11,7 @@ import { getPipelineCanvasRoutesActivateHandler } from "@/pages/pipelines/canvas
 const Island = styled.div<{ $width: number; $isSelected: boolean }>`
   width: ${({ $width }) => $width}px;
   height: ${PIPELINE_CANVAS_ROUTES_ISLAND_HEIGHT}px;
-  padding: 0 10px 0 5px;
+  padding: 0 8px 0 4px;
   flex-shrink: 0;
 
   display: flex;
@@ -19,24 +20,22 @@ const Island = styled.div<{ $width: number; $isSelected: boolean }>`
   min-width: 0;
 
   background-color: ${t.color.background.primary};
-  border: 0.5px solid
+  border: ${HAIRLINE_WIDTH} solid
     ${({ $isSelected }) =>
       $isSelected ? t.color.solid.primary.background : t.color.border.primary};
-  border-radius: 5px;
+  border-radius: ${t.radius.lg};
   outline: ${({ $isSelected }) =>
     $isSelected ? `1px solid ${t.color.solid.primary.background}` : "none"};
   outline-offset: -1px;
 
   cursor: pointer;
-  transition: border-color 100ms ease;
+  transition: border-color ${t.duration.fast};
 
   &:hover:not([data-selected="true"]) {
-    border-color: ${t.color.border.tertiary};
+    border-color: ${t.color.border.hovered};
   }
 
-  &:focus-visible {
-    border-color: ${t.color.solid.primary.background};
-  }
+  ${FOCUS_RING}
 `;
 
 interface PipelineCanvasRoutesIslandProps extends PropsWithChildren {

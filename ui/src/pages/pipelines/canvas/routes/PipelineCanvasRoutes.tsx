@@ -1,9 +1,7 @@
 import { useState } from "react";
 
-import { styled } from "@linaria/react";
-
-import { useDebouncedValue } from "@galaxy-io/dls/hooks/useDebouncedValue";
 import Divider from "@galaxy-io/dls/layout/Divider";
+import Flex, { FlexDirection } from "@galaxy-io/dls/layout/Flex";
 
 import { usePipelineCanvasSelection } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasSelection";
 import PipelineCanvasPanel from "@/pages/pipelines/canvas/panel/PipelineCanvasPanel";
@@ -12,34 +10,23 @@ import { usePipelineCanvasRoutesDraft } from "@/pages/pipelines/canvas/routes/ho
 import PipelineCanvasRoutesList from "@/pages/pipelines/canvas/routes/PipelineCanvasRoutesList";
 import PipelineCanvasRoutesToolbar from "@/pages/pipelines/canvas/routes/PipelineCanvasRoutesToolbar";
 
-import { LIST_SEARCH_DEBOUNCE_MS } from "@/api/utils";
-
-const RoutesWrapper = styled.div`
-  height: 100%;
-
-  display: flex;
-  flex-direction: column;
-`;
-
 const PipelineCanvasRoutes = () => {
   const { sinkIds, showPanel } = usePipelineCanvasSelection();
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, LIST_SEARCH_DEBOUNCE_MS);
-  const { routes, hasRoutes } = usePipelineCanvasRoutes({ search: debouncedSearch, sinkIds });
+  const { routes, hasRoutes } = usePipelineCanvasRoutes({ search, sinkIds });
   const draft = usePipelineCanvasRoutesDraft();
 
   return (
     <>
-      <RoutesWrapper>
+      <Flex direction={FlexDirection.COLUMN} height="100%">
         <PipelineCanvasRoutesToolbar
-          search={search}
-          onSearchChange={setSearch}
+          onSearch={setSearch}
           canAddRoute={draft.canOpen}
           onAddRoute={() => draft.open()}
         />
         <Divider />
         <PipelineCanvasRoutesList routes={routes} hasRoutes={hasRoutes} draftState={draft} />
-      </RoutesWrapper>
+      </Flex>
       {showPanel && <PipelineCanvasPanel />}
     </>
   );
