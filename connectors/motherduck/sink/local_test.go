@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -111,6 +112,59 @@ func TestLocalUpsertIntegration(t *testing.T) {
 	}
 	rows := queryLocal(t, path, `SELECT id, name FROM "main"."events" ORDER BY id`)
 	want := [][]any{{int64(1), "name-1"}, {int64(2), "name-2"}, {int64(3), "name-3"}}
+	if fmt.Sprint(rows) != fmt.Sprint(want) {
+		t.Fatalf("rows = %v, want %v", rows, want)
+	}
+}
+
+func TestLocalUpsertRefusesKeylessTableIntegration(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "keyless.duckdb")
+	schema := integrationSchema()
+	appendPolicy := writePolicy(filament.WriteAppend, nil)
+	initial := openLocalSink(t, ctx, path, "append-run", appendPolicy, 1, schema)
+	applyBatch(t, ctx, initial, integrationBatch(t, schema, "events", 1, 2), appendPolicy)
+	if err := initial.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	policy := writePolicy(filament.WriteUpsert, []string{"id"})
+	sink := newLocal(path)
+	err := sink.Open(ctx, filament.RunSpec{
+		Run:           "upsert-run",
+		Sink:          filament.Ref{Config: map[string]any{"schema": "main"}},
+		Options:       filament.RunOptions{SnapshotParallelism: 1},
+		WritePolicies: map[string]filament.WritePolicy{"events": policy},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sink.Abort(context.Background()) })
+	err = sink.EnsureSchema(ctx, "events", schema)
+	if err == nil || !strings.Contains(err.Error(), "no primary key") {
+		t.Fatalf("EnsureSchema error = %v, want a primary key refusal", err)
+	}
+}
+
+func TestLocalUpsertMergesIntoEvolvedTableIntegration(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "evolved.duckdb")
+	schema := integrationSchema()
+	policy := writePolicy(filament.WriteUpsert, []string{"id"})
+	initial := openLocalSink(t, ctx, path, "upsert-one", policy, 1, schema)
+	applyBatch(t, ctx, initial, integrationBatch(t, schema, "events", 1, 2), policy)
+	if err := initial.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	queryLocal(t, path, `ALTER TABLE "main"."events" ADD COLUMN "extra" VARCHAR`)
+
+	second := openLocalSink(t, ctx, path, "upsert-two", policy, 1, schema)
+	applyBatch(t, ctx, second, integrationBatch(t, schema, "events", 2, 2), policy)
+	if err := second.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	rows := queryLocal(t, path, `SELECT id, name, extra FROM "main"."events" ORDER BY id`)
+	want := [][]any{{int64(1), "name-1", nil}, {int64(2), "name-2", nil}, {int64(3), "name-3", nil}}
 	if fmt.Sprint(rows) != fmt.Sprint(want) {
 		t.Fatalf("rows = %v, want %v", rows, want)
 	}

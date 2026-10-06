@@ -134,7 +134,7 @@ func TestCreateTableDDLForUpsert(t *testing.T) {
 		[]string{"id", "name"}, []string{"id"},
 	)
 	for _, fragment := range []string{
-		`INSERT INTO "warehouse"."main"."events" SELECT * FROM "warehouse"."main"."events__stage_run"`,
+		`INSERT INTO "warehouse"."main"."events" ("id", "name") SELECT "id", "name" FROM "warehouse"."main"."events__stage_run"`,
 		`ON CONFLICT ("id") DO UPDATE SET "name" = excluded."name"`,
 	} {
 		if !strings.Contains(merge, fragment) {

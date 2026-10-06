@@ -34,8 +34,10 @@ concurrent writes.
 Every table is fully qualified as
 `"database"."schema"."table"`. Replace promotes its staging table in a
 transaction. Upsert creates a primary key from the resolved write-policy keys
-and transactionally merges a keyless staging table on commit. Append writes
-directly to the destination.
+and transactionally merges a keyless staging table on commit. An existing
+destination whose primary key does not match those keys, such as a table an
+earlier append run created, is refused when the run starts rather than
+migrated. Append writes directly to the destination.
 
 ## Type mapping
 

@@ -2,7 +2,11 @@ package motherduck
 
 import (
 	"context"
+	"database/sql/driver"
+	"errors"
 	"fmt"
+	"io"
+	"sort"
 	"strings"
 
 	"github.com/galaxy-io/filament"
@@ -93,6 +97,9 @@ func addColumnDDLs(name string, schema rowmodel.Schema) ([]string, error) {
 	return statements, nil
 }
 
+// upsertSQL merges the stage into the target by primary key. Columns are named
+// on both sides because the live table may carry columns the stage lacks or
+// hold them in a different order.
 func upsertSQL(target, stage string, columns, keys []string) string {
 	keySet := make(map[string]struct{}, len(keys))
 	keyIdentifiers := make([]string, len(keys))
@@ -100,15 +107,17 @@ func upsertSQL(target, stage string, columns, keys []string) string {
 		keySet[key] = struct{}{}
 		keyIdentifiers[i] = quoteIdent(key)
 	}
+	identifiers := make([]string, len(columns))
 	sets := make([]string, 0, len(columns)-len(keys))
-	for _, column := range columns {
+	for i, column := range columns {
+		identifiers[i] = quoteIdent(column)
 		if _, key := keySet[column]; key {
 			continue
 		}
-		identifier := quoteIdent(column)
-		sets = append(sets, identifier+" = excluded."+identifier)
+		sets = append(sets, identifiers[i]+" = excluded."+identifiers[i])
 	}
-	statement := "INSERT INTO " + target + " SELECT * FROM " + stage +
+	list := strings.Join(identifiers, ", ")
+	statement := "INSERT INTO " + target + " (" + list + ") SELECT " + list + " FROM " + stage +
 		" ON CONFLICT (" + strings.Join(keyIdentifiers, ", ") + ") DO "
 	if len(sets) == 0 {
 		return statement + "NOTHING"
@@ -188,6 +197,9 @@ func (s *Sink) ensureUpsertTable(
 	if err := s.ensureLiveTable(ctx, conn, resource, target, schema, keys); err != nil {
 		return nil, err
 	}
+	if err := s.verifyPrimaryKey(ctx, conn, resource, keys); err != nil {
+		return nil, err
+	}
 	stage, writeTo, err := s.createStageTable(ctx, conn, resource, schema)
 	if err != nil {
 		return nil, err
@@ -238,6 +250,46 @@ func (s *Sink) createStageTable(
 		return "", "", fmt.Errorf("%s sink: create stage for %q: %w", s.Name(), resource, err)
 	}
 	return stage, writeTo, nil
+}
+
+// verifyPrimaryKey rejects an existing destination whose primary key differs
+// from the policy keys, such as a table an earlier append run created without
+// one. The merge would fail at commit otherwise, so the run is refused up front
+// instead of migrated.
+func (s *Sink) verifyPrimaryKey(ctx context.Context, conn *pooledConnection, resource string, keys []string) error {
+	query := "SELECT constraint_column_names FROM duckdb_constraints() WHERE constraint_type = 'PRIMARY KEY'" +
+		" AND schema_name = " + quoteLiteral(s.schema) + " AND table_name = " + quoteLiteral(resource)
+	if s.database != "" {
+		query += " AND database_name = " + quoteLiteral(s.database)
+	}
+	rows, err := conn.conn.(driver.QueryerContext).QueryContext(ctx, query, nil)
+	if err != nil {
+		return fmt.Errorf("%s sink: inspect primary key for %q: %w", s.Name(), resource, err)
+	}
+	defer func() { _ = rows.Close() }()
+	var got []string
+	values := make([]driver.Value, 1)
+	switch err := rows.Next(values); {
+	case errors.Is(err, io.EOF):
+		return fmt.Errorf("%s sink: table %q has no primary key; upsert needs primary key %v", s.Name(), resource, keys)
+	case err != nil:
+		return fmt.Errorf("%s sink: inspect primary key for %q: %w", s.Name(), resource, err)
+	}
+	names, _ := values[0].([]any)
+	for _, name := range names {
+		got = append(got, fmt.Sprint(name))
+	}
+	want := append([]string(nil), keys...)
+	sort.Strings(got)
+	sort.Strings(want)
+	if strings.Join(got, "\x00") != strings.Join(want, "\x00") {
+		return fmt.Errorf("%s sink: table %q primary key %v must match the write policy keys %v", s.Name(), resource, got, keys)
+	}
+	return nil
+}
+
+func quoteLiteral(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "''") + "'"
 }
 
 func addColumns(ctx context.Context, conn *pooledConnection, table string, schema rowmodel.Schema) error {
