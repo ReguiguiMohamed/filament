@@ -8,6 +8,7 @@ import { PipelineCanvasView } from "@/pages/pipelines/canvas/types";
 
 const PipelineCanvasPageWrapper = styled.div`
   position: relative;
+  isolation: isolate;
   flex: 1;
   min-width: 0;
   height: 100%;

@@ -1,10 +1,12 @@
 import type { PropsWithChildren } from "react";
 
-import { styled } from "@linaria/react";
+import { css } from "@linaria/core";
 import { useNavigate, useParams } from "@tanstack/react-router";
 
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import Flex, { FlexDirection } from "@galaxy-io/dls/layout/Flex";
+import FlexItem, { FlexItemVariant } from "@galaxy-io/dls/layout/FlexItem";
+import { Radius } from "@galaxy-io/dls/theme/enums";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import { PIPELINE_SIDEBAR_WIDTH } from "@/layouts/pipeline/constants";
 import PipelineLayoutNavbar from "@/layouts/pipeline/PipelineLayoutNavbar";
@@ -16,64 +18,9 @@ import { usePipelinePreviewVersion } from "@/pages/pipelines/hooks/usePipelinePr
 
 import { useRouteMatch } from "@/hooks/useRouteMatch";
 
-const LayoutWrapper = withTheme(styled.div<PropsWithTheme>`
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-
-  background-color: ${({ theme }) => theme.color.background.base};
-`);
-
-const LeftColumn = withTheme(styled.div<PropsWithTheme>`
-  width: ${PIPELINE_SIDEBAR_WIDTH}px;
-  height: 100%;
-
-  flex-shrink: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  background-color: ${({ theme }) => theme.color.background.base};
-`);
-
-const RightColumn = styled.div`
-  flex: 1;
-  height: 100%;
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
+const PREVIEW_ISLAND_CSS = css`
+  border-color: ${t.color.border.error};
 `;
-
-const ContentWrapper = withTheme(styled.div<PropsWithTheme>`
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-
-  padding: 0 12px 12px 0;
-
-  display: flex;
-
-  background-color: ${({ theme }) => theme.color.background.base};
-`);
-
-const ContentIsland = withTheme(styled.div<PropsWithTheme<{ $isPreview?: boolean }>>`
-  position: relative;
-
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-
-  background-color: ${({ theme }) => theme.color.background.primary};
-
-  border: 0.5px solid
-    ${({ $isPreview, theme }) =>
-      $isPreview ? theme.color.border.error : theme.color.border.primary};
-  border-radius: 6px;
-
-  overflow: hidden;
-`);
 
 const PipelineLayout = ({ children }: PropsWithChildren) => {
   const navigate = useNavigate();
@@ -103,18 +50,36 @@ const PipelineLayout = ({ children }: PropsWithChildren) => {
   };
 
   return (
-    <LayoutWrapper>
-      <LeftColumn>
+    <Flex fillWidth height="100%">
+      <Flex
+        direction={FlexDirection.COLUMN}
+        width={PIPELINE_SIDEBAR_WIDTH}
+        height="100%"
+        shrink={0}
+      >
         <PipelineLayoutNavbarBackButton />
         <PipelineLayoutSidebar activeItem={getActiveItem()} onItemClick={handleItemClick} />
-      </LeftColumn>
-      <RightColumn>
+      </Flex>
+      <Flex direction={FlexDirection.COLUMN} grow={1} basis={0} height="100%" minWidth={0}>
         <PipelineLayoutNavbar />
-        <ContentWrapper>
-          <ContentIsland $isPreview={isPreview}>{children}</ContentIsland>
-        </ContentWrapper>
-      </RightColumn>
-    </LayoutWrapper>
+        <Flex grow={1} basis={0} fillWidth minHeight={0} padding={[0, 12, 12, 0]}>
+          <FlexItem
+            grow={1}
+            basis={0}
+            fillWidth
+            minHeight={0}
+            position="relative"
+            variant={FlexItemVariant.PRIMARY}
+            hasBorder
+            radius={Radius.LG}
+            overflow="hidden"
+            className={isPreview ? PREVIEW_ISLAND_CSS : undefined}
+          >
+            {children}
+          </FlexItem>
+        </Flex>
+      </Flex>
+    </Flex>
   );
 };
 

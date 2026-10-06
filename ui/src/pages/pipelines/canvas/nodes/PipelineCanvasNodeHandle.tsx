@@ -3,8 +3,8 @@ import type { ComponentProps } from "react";
 import { styled } from "@linaria/react";
 import { Handle, type Position } from "@xyflow/react";
 
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import Flex, { AlignItems, JustifyContent } from "@galaxy-io/dls/layout/Flex";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import type { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 
@@ -16,26 +16,15 @@ import {
 } from "@/pages/pipelines/canvas/nodes/constants";
 import { usePipelineCanvasReadOnly } from "@/pages/pipelines/canvas/providers/canvas/PipelineCanvasProvider";
 
-const HandleSlot = styled.div`
-  width: ${PIPELINE_CANVAS_NODE_HANDLE_SLOT_SIZE}px;
-  height: ${PIPELINE_CANVAS_NODE_HANDLE_SLOT_SIZE}px;
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
 type HandleFlags = { $isConnected?: boolean; $isInvalid?: boolean };
 
 const HandleBase = ({
   $isConnected: _isConnected,
   $isInvalid: _isInvalid,
-  theme: _theme,
   ...props
-}: PropsWithTheme<HandleFlags> & ComponentProps<typeof Handle>) => <Handle {...props} />;
+}: HandleFlags & ComponentProps<typeof Handle>) => <Handle {...props} />;
 
-const StyledHandle = withTheme(styled(HandleBase)<PropsWithTheme<HandleFlags>>`
+const StyledHandle = styled(HandleBase)<HandleFlags>`
   &.react-flow__handle {
     position: relative;
     top: auto;
@@ -47,13 +36,13 @@ const StyledHandle = withTheme(styled(HandleBase)<PropsWithTheme<HandleFlags>>`
     width: ${({ $isConnected }) => ($isConnected ? PIPELINE_CANVAS_NODE_PORT_SIZE_ACTIVE : PIPELINE_CANVAS_NODE_PORT_SIZE_IDLE)}px;
     height: ${({ $isConnected }) => ($isConnected ? PIPELINE_CANVAS_NODE_PORT_SIZE_ACTIVE : PIPELINE_CANVAS_NODE_PORT_SIZE_IDLE)}px;
 
-    background-color: ${({ theme, $isConnected }) =>
-      $isConnected ? "transparent" : theme.color.text.tertiary};
-    border: ${({ theme, $isConnected, $isInvalid }) =>
+    background-color: ${({ $isConnected }) =>
+      $isConnected ? "transparent" : t.color.text.tertiary};
+    border: ${({ $isConnected, $isInvalid }) =>
       $isConnected
-        ? `2px solid ${$isInvalid ? theme.color.text.error : theme.color.background.galaxy}`
+        ? `2px solid ${$isInvalid ? t.color.text.error : t.color.solid.primary.background}`
         : "none"};
-    border-radius: 50%;
+    border-radius: ${t.radius.pill};
 
     transition:
       width 100ms ease,
@@ -64,7 +53,7 @@ const StyledHandle = withTheme(styled(HandleBase)<PropsWithTheme<HandleFlags>>`
     width: ${PIPELINE_CANVAS_NODE_PORT_SIZE_ACTIVE}px;
     height: ${PIPELINE_CANVAS_NODE_PORT_SIZE_ACTIVE}px;
   }
-`);
+`;
 
 interface PipelineCanvasNodeHandleProps {
   id: string;
@@ -84,7 +73,13 @@ const PipelineCanvasNodeHandle = ({
   const isReadOnly = usePipelineCanvasReadOnly();
 
   return (
-    <HandleSlot>
+    <Flex
+      width={PIPELINE_CANVAS_NODE_HANDLE_SLOT_SIZE}
+      height={PIPELINE_CANVAS_NODE_HANDLE_SLOT_SIZE}
+      shrink={0}
+      alignItems={AlignItems.CENTER}
+      justifyContent={JustifyContent.CENTER}
+    >
       <StyledHandle
         id={id}
         type={CONNECTOR_KIND_TO_HANDLE_TYPE_MAP[kind]}
@@ -93,7 +88,7 @@ const PipelineCanvasNodeHandle = ({
         $isConnected={isConnected}
         $isInvalid={isInvalid}
       />
-    </HandleSlot>
+    </Flex>
   );
 };
 

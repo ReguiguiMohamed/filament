@@ -1,7 +1,5 @@
-import { styled } from "@linaria/react";
-
-import { InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, { SelectInputVariant } from "@galaxy-io/dls/inputs/SelectInput";
+import Box from "@galaxy-io/dls/layout/Box";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
 
 import { ReadMode } from "@/gen/ingestion/v1/common_pb";
@@ -11,14 +9,8 @@ import {
   useCreatePipelineModalDispatch,
   useCreatePipelineModalState,
 } from "@/pages/pipelines/components/create/CreatePipelineModalProvider";
-import { CREATE_PIPELINE_MODAL_CURSOR_DROPDOWN_WIDTH } from "@/pages/pipelines/components/create/constants";
 import type { CreatePipelineModalResourceRow } from "@/pages/pipelines/components/create/types";
 import { getCursorSelectOptions } from "@/pages/pipelines/components/resource/utils";
-
-const CellWrapper = styled.div`
-  width: 100%;
-  min-width: 0;
-`;
 
 interface CreatePipelineModalResourcesCursorCellProps {
   row: CreatePipelineModalResourceRow;
@@ -48,29 +40,25 @@ const CreatePipelineModalResourcesCursorCell = ({
 
   const options = getCursorSelectOptions(row.cursorOptions);
 
-  const selectedOption = options.find((option) => option.value === row.cursorField) ?? null;
+  const handleCursorChange = (id: string | null) => {
+    if (id === null) return;
+    dispatch({
+      type: CreatePipelineModalActionType.SET_RESOURCE_CURSOR,
+      payload: { sinkId: activeSinkId, resource: row.name, cursorField: id },
+    });
+  };
 
   return (
-    <CellWrapper>
+    <Box fillWidth minWidth={0}>
       <SelectInput
         options={options}
-        value={selectedOption}
-        onChange={(option) =>
-          dispatch({
-            type: CreatePipelineModalActionType.SET_RESOURCE_CURSOR,
-            payload: {
-              sinkId: activeSinkId,
-              resource: row.name,
-              cursorField: option.value as string,
-            },
-          })
-        }
+        value={row.cursorField || null}
+        onChange={handleCursorChange}
         placeholder="Select a column..."
-        variant={InputVariant.TERTIARY}
-        dropdownWidth={CREATE_PIPELINE_MODAL_CURSOR_DROPDOWN_WIDTH}
+        variant={SelectInputVariant.TERTIARY}
         fillWidth
       />
-    </CellWrapper>
+    </Box>
   );
 };
 
