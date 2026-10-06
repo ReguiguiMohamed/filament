@@ -14,8 +14,8 @@ single-process evaluation deployment.
 | Platform | Run execution | Best for |
 |---|---|---|
 | [Kubernetes](/pages/guides/deployment/kubernetes) | One worker Job per run | Production deployments with isolated, independently configured workers |
-| [Railway](/pages/guides/deployment/railway) | Inside the control-plane service | Simpler deployments on a platform without a Kubernetes Jobs API |
-| [Render](/pages/guides/deployment/render) | Inside the control-plane service | One-click Blueprint deployments with managed PostgreSQL |
+| [Railway](/pages/guides/deployment/railway) | In a long-lived worker service | Simpler deployments on a platform without a Kubernetes Jobs API |
+| [Render](/pages/guides/deployment/render) | In a long-lived worker service | One-click Blueprint deployments with managed PostgreSQL |
 | [DigitalOcean](/pages/guides/deployment/digitalocean) | Inside the standalone service | One-click testing and evaluation with ephemeral state |
 
 Kubernetes, Railway, and Render run the server and control plane as separate

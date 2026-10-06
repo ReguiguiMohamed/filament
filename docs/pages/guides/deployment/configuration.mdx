@@ -191,6 +191,12 @@ datastore nor event bus. With `-execute` it runs long-lived and executes
 requested runs from the event bus, for deployments without Kubernetes. The two
 flags combine; neither combines with `RUN_ID`.
 
+With `-serve`, `/readyz` reports whether connector serving is available. This
+also applies to `-serve -execute`: a datastore or event-bus outage does not remove
+the connector service from its Service endpoints. An execution-only worker's
+readiness checks its datastore and event bus. Both modes report not ready before
+startup completes and during shutdown.
+
 | Variable | Default | Description |
 |---|---|---|
 | `TENANT_ID` | — | **Required** for a dispatched run. Tenant that owns the run |
