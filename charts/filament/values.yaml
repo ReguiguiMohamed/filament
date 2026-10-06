@@ -161,6 +161,11 @@ worker:
   service:
     # -- Persistent worker service and container port.
     port: 8080
+  networkPolicy:
+    # -- Restrict persistent worker ingress to this release's server and control plane. Requires a network plugin that enforces NetworkPolicy.
+    enabled: true
+    # -- Additional ingress rules for the persistent worker, passed through verbatim.
+    extraIngress: []
   # -- Persistent worker resource requests and limits.
   # @default -- `{}` (See [values.yaml])
   resources: {}

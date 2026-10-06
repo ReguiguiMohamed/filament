@@ -5,8 +5,10 @@
 package convert
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/galaxy-io/filament"
@@ -483,12 +485,21 @@ func StructMap(s *structpb.Struct) map[string]any {
 	return s.AsMap()
 }
 
-// StructFromMap encodes a config map; nil is an empty Struct.
+// StructFromMap encodes JSON-compatible config values, including typed slices
+// and structs with JSON field names. Nil is an empty Struct.
 func StructFromMap(m map[string]any) (*structpb.Struct, error) {
 	if m == nil {
-		m = map[string]any{}
+		return &structpb.Struct{}, nil
 	}
-	return structpb.NewStruct(m)
+	raw, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	out := new(structpb.Struct)
+	if err := protojson.Unmarshal(raw, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // ValueToProto encodes one default value; nil and unrepresentable values are

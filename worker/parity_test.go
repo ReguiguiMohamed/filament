@@ -2,9 +2,11 @@ package worker_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -89,4 +91,92 @@ func TestRemoteMatchesLocal(t *testing.T) {
 	if _, err := remote.PlanReplicationStream(ctx, "sample", filament.ReplicationStreamPlanningRequest{Config: filament.NewConfig(nil)}); !errors.Is(err, filament.ErrUnsupported) {
 		t.Fatalf("source without a planner: got %v, want ErrUnsupported", err)
 	}
+}
+
+func TestRemotePlansMatchLocal(t *testing.T) {
+	local := worker.Local(registry.DefaultSources, registry.DefaultSinks)
+	mux := http.NewServeMux()
+	mux.Handle(worker.Handler(local))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	remote := worker.Remote(srv.URL)
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		source    string
+		config    map[string]any
+		resources []string
+	}{
+		{
+			name:   "Kafka topics",
+			source: "kafka",
+			config: map[string]any{"brokers": []string{"localhost:9092"}, "topics": []string{"payments", "orders"}},
+		},
+		{
+			name:   "NATS subjects",
+			source: "nats",
+			config: map[string]any{"url": "nats://localhost:4222", "subjects": []string{"payments.>", "orders.>"}},
+		},
+		{
+			name:   "NATS stream bindings",
+			source: "nats",
+			config: map[string]any{
+				"url": "nats://localhost:4222",
+				"streams": []map[string]any{
+					{"stream": "PAYMENTS", "consumer": "payments-filament"},
+					{"stream": "ORDERS", "consumer": "orders-filament"},
+				},
+			},
+			resources: []string{"ORDERS"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := filament.ReplicationStreamPlanningRequest{
+				SourceConnectionID:  "source",
+				ReplicationStreamID: "stream",
+				Config:              filament.NewConfig(tt.config),
+				Resources:           tt.resources,
+			}
+			want, err := local.PlanReplicationStream(ctx, tt.source, req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := remote.PlanReplicationStream(ctx, tt.source, req)
+			if err != nil {
+				t.Fatalf("remote plan: %v", err)
+			}
+			if normalized := normalizePlan(t, want); !reflect.DeepEqual(got, normalized) {
+				t.Fatalf("remote plan = %#v, want %#v", got, normalized)
+			}
+			source, err := registry.DefaultSources.Resolve(tt.source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			planner := source.(filament.ReplicationStreamPlanner)
+			if _, err := planner.BindReplicationStream(req.Config.Raw(), filament.ReplicationStream{
+				ID:             req.ReplicationStreamID,
+				ConsumerName:   got.ConsumerName,
+				ConsumerConfig: got.ConsumerConfig,
+			}); err != nil {
+				t.Fatalf("bind remote plan: %v", err)
+			}
+		})
+	}
+}
+
+// normalizePlan compares config content independently of the protobuf encoder;
+// JSON decoding restores typed slices and bindings as generic lists and objects.
+func normalizePlan(t *testing.T, plan filament.ReplicationStreamPlan) filament.ReplicationStreamPlan {
+	t.Helper()
+	raw, err := json.Marshal(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var normalized filament.ReplicationStreamPlan
+	if err := json.Unmarshal(raw, &normalized); err != nil {
+		t.Fatal(err)
+	}
+	return normalized
 }

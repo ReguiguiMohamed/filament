@@ -53,14 +53,13 @@ func serve(ctx context.Context, serveConnectors, execute bool) error {
 	}
 	log = log.With(filament.Field{Key: "component", Value: "worker"})
 
-	mux := http.NewServeMux()
-	healthState := health.New(2*time.Second, checks...)
-	healthState.Mount(mux)
+	var connectorWorker filament.Worker
 	if serveConnectors {
-		mux.Handle(worker.Handler(worker.Local(sources, registry.DefaultSinks)))
+		connectorWorker = worker.Local(sources, registry.DefaultSinks)
 	}
+	handler, healthState := workerHandler(connectorWorker, checks...)
 	addr := workerAddress()
-	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(mux, "worker"), ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(handler, "worker"), ReadHeaderTimeout: 10 * time.Second}
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.ListenAndServe() }()
 	healthState.MarkStarted()
@@ -85,6 +84,21 @@ func serve(ctx context.Context, serveConnectors, execute bool) error {
 		defer cancel()
 		return srv.Shutdown(shutdownCtx)
 	}
+}
+
+// workerHandler keeps connector-serving readiness independent of executor
+// dependencies. Execution-only workers retain their dependency checks.
+func workerHandler(connectorWorker filament.Worker, checks ...health.Check) (http.Handler, *health.State) {
+	if connectorWorker != nil {
+		checks = nil
+	}
+	mux := http.NewServeMux()
+	state := health.New(2*time.Second, checks...)
+	state.Mount(mux)
+	if connectorWorker != nil {
+		mux.Handle(worker.Handler(connectorWorker))
+	}
+	return mux, state
 }
 
 // startExecutor mounts the engine over the datastore and event bus and

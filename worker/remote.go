@@ -158,11 +158,14 @@ func (r *remote) refresh(ctx context.Context) (*snapshot, error) {
 		next.sinks[spec.Name] = spec
 	}
 	// A lookup by alias answers with the concrete spec, as the registry does.
+	resolved := make(map[string]filament.ConnectorSpec, len(next.sources))
 	for name, spec := range next.sources {
 		if target, ok := next.sources[spec.AliasTarget]; ok && spec.AliasTarget != "" {
-			next.sources[name] = target
+			spec = target
 		}
+		resolved[name] = spec
 	}
+	next.sources = resolved
 	r.mu.Lock()
 	r.snapshot = next
 	r.mu.Unlock()
