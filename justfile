@@ -146,7 +146,7 @@ _each cmd:
 format mode="fix": (go-format mode) (ui-format mode) (proto-format mode)
 
 # run all linters; `just lint check` runs without fixing
-lint mode="fix": (go-lint mode) (ui-lint mode)
+lint mode="fix": (go-lint mode) (ui-lint mode) proto-lint
 
 # gofumpt + goimports across every Go module (settings in .golangci.yaml)
 go-format mode="fix": (_each ("GOWORK=off golangci-lint fmt " + (if mode == "check" { "--diff " } else { "" }) + "./..."))

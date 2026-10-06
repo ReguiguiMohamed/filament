@@ -2,12 +2,18 @@ syntax = "proto3";
 
 package catalog.v1;
 
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "ingestion/v1/common.proto";
+import "ingestion/v1/connectors.proto";
+
 // CatalogService is the internal surface a connector host serves so the
 // control binaries never link a driver. It mirrors the filament.Catalog
 // interface and is not part of the public API.
 //
-// Fields named *_json carry the JSON encoding of the matching Go value. Both
-// ends are always the same build, so the Go types are the schema.
+// Specs and plans are this package's own messages: they carry the planning
+// facts the public ConnectorSpec omits. Discovered resources and columns are
+// the public ingestion.v1 messages, passed through to the UI as they are.
 service CatalogService {
   // Describe returns connector specs and driver contracts. They are fixed for
   // the life of the host process.
@@ -31,19 +37,132 @@ enum Kind {
   KIND_SINK = 2;
 }
 
+// ReadMode is filament.ReadMode.
+enum ReadMode {
+  READ_MODE_UNSPECIFIED = 0;
+  READ_MODE_FULL = 1;
+  READ_MODE_INCREMENTAL = 2;
+  READ_MODE_CDC = 3;
+}
+
+// Operation is filament.Operation.
+enum Operation {
+  OPERATION_UNSPECIFIED = 0;
+  OPERATION_INSERT = 1;
+  OPERATION_UPDATE = 2;
+  OPERATION_DELETE = 3;
+}
+
 // Connector is one registered connector as the catalog describes it.
 message Connector {
   Kind kind = 1;
-  // name is the name the connector was asked for, which may be an alias.
+  // name is the lookup name: an alias in a listing, the concrete name when
+  // asked for one connector.
   string name = 2;
-  // spec_json is a filament.ConnectorSpec for a source, a filament.SinkSpec
-  // for a sink.
-  bytes spec_json = 3;
+  oneof spec {
+    SourceSpec source = 3;
+    SinkSpec sink = 4;
+  }
   // plans_streams is set when a source implements ReplicationStreamPlanner.
-  bool plans_streams = 4;
+  bool plans_streams = 5;
   // streams is set when a source implements StreamSource or a sink implements
   // StreamingSink.
-  bool streams = 5;
+  bool streams = 6;
+}
+
+// SourceSpec is filament.ConnectorSpec.
+message SourceSpec {
+  string name = 1;
+  string alias_target = 2;
+  string display_name = 3;
+  string description = 4;
+  string dark_logo_url = 5;
+  string light_logo_url = 6;
+  string version = 7;
+  string api_version = 8;
+  string maturity = 9;
+  repeated ReadMode modes = 10;
+  repeated SourcePolicy source_policies = 11;
+  ingestion.v1.ConfigSchema config = 12;
+  ResourceCapabilities resources = 13;
+  // stream is unset for sources without continuous input.
+  StreamCapabilities stream = 14;
+}
+
+// SourcePolicy is filament.SourcePolicy.
+message SourcePolicy {
+  ReadMode mode = 1;
+  repeated Operation emits_ops = 2;
+  bool ordered = 3;
+  string checkpointing = 4;
+}
+
+// ResourceCapabilities is filament.ResourceCapabilities.
+message ResourceCapabilities {
+  bool discoverable = 1;
+  bool per_resource_cursor = 2;
+}
+
+// StreamCapabilities is filament.StreamCapabilities.
+message StreamCapabilities {
+  repeated Operation emits_ops = 1;
+  string input = 2;
+  repeated string ordering = 3;
+  string delivery = 4;
+}
+
+// SinkSpec is filament.SinkSpec.
+message SinkSpec {
+  string name = 1;
+  string display_name = 2;
+  string description = 3;
+  string dark_logo_url = 4;
+  string light_logo_url = 5;
+  string version = 6;
+  string maturity = 7;
+  ingestion.v1.ConfigSchema config = 8;
+  SinkCapabilities capabilities = 9;
+  string schema_field = 10;
+}
+
+// SinkCapabilities is filament.SinkCapabilities.
+message SinkCapabilities {
+  // stream is unset for sinks without epoch writes.
+  StreamingSinkCapabilities stream = 1;
+  bool transactional = 2;
+  bool schematized = 3;
+  bool encoded_integrity = 4;
+  repeated WritePolicyCapability write_policies = 5;
+  int64 preferred_batch_rows = 6;
+  int64 preferred_batch_bytes = 7;
+  google.protobuf.Duration preferred_flush_interval = 8;
+}
+
+// StreamingSinkCapabilities is filament.StreamingSinkCapabilities.
+message StreamingSinkCapabilities {
+  repeated WritePolicyCapability write_policies = 1;
+  bool owner_fencing = 2;
+  bool isolated_epochs = 3;
+  // in_flight_bound is unset when unknown.
+  google.protobuf.Duration in_flight_bound = 4;
+}
+
+// WritePolicyCapability is filament.WritePolicyCapability.
+message WritePolicyCapability {
+  string mode = 1;
+  bool requires_pk = 2;
+  bool requires_order = 3;
+  repeated Operation accepts_ops = 4;
+  string atomicity = 5;
+  string durability = 6;
+}
+
+// ReplicationStreamPlan is filament.ReplicationStreamPlan.
+message ReplicationStreamPlan {
+  repeated string resources = 1;
+  string consumer_name = 2;
+  google.protobuf.Struct consumer_config = 3;
+  google.protobuf.Struct continuity_config = 4;
 }
 
 message DescribeRequest {
@@ -62,19 +181,18 @@ message PlanReplicationStreamRequest {
   string source = 1;
   string replication_stream_id = 2;
   string source_connection_id = 3;
-  bytes config_json = 4;
+  google.protobuf.Struct config = 4;
   repeated string resources = 5;
 }
 
 message PlanReplicationStreamResponse {
-  // plan_json is a filament.ReplicationStreamPlan.
-  bytes plan_json = 1;
+  ReplicationStreamPlan plan = 1;
 }
 
 message ValidateRequest {
   Kind kind = 1;
   string name = 2;
-  bytes config_json = 3;
+  google.protobuf.Struct config = 3;
 }
 
 message ValidateResponse {
@@ -85,7 +203,7 @@ message ValidateResponse {
 message TestConnectionRequest {
   Kind kind = 1;
   string name = 2;
-  bytes config_json = 3;
+  google.protobuf.Struct config = 3;
 }
 
 message TestConnectionResponse {
@@ -95,18 +213,17 @@ message TestConnectionResponse {
 
 message DiscoverRequest {
   string source = 1;
-  bytes config_json = 2;
+  google.protobuf.Struct config = 2;
   bool refresh = 3;
 }
 
 message DiscoverResponse {
-  // result_json is a filament.DiscoverResult.
-  bytes result_json = 1;
+  repeated ingestion.v1.Resource resources = 1;
 }
 
 message InspectRequest {
   string source = 1;
-  bytes config_json = 2;
+  google.protobuf.Struct config = 2;
   // resources to inspect. Empty inspects every selectable discovered resource.
   repeated string resources = 3;
 }
@@ -116,8 +233,7 @@ message ResourceInspection {
   repeated string primary_key = 2;
   // primary_key_error is a failed schema read. The key is then unknown.
   string primary_key_error = 3;
-  // columns_json is a []filament.CursorColumn.
-  bytes columns_json = 4;
+  repeated ingestion.v1.ResourceColumn columns = 4;
   // ranked marks the columns as annotated with cursor eligibility.
   bool ranked = 5;
   string columns_error = 6;

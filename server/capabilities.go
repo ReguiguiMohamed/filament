@@ -381,14 +381,14 @@ func cursorCandidates(inspection filament.ResourceInspection) ([]*ingestionv1.Ca
 	}
 	var out []*ingestionv1.CandidateValue
 	for _, column := range inspection.Columns {
-		if !column.Eligible {
+		if !column.GetIsCursorEligible() {
 			continue
 		}
 		out = append(out, &ingestionv1.CandidateValue{
-			Value:       column.Name,
-			Recommended: column.Recommended,
-			Rank:        int32(column.Rank), //nolint:gosec // tiny rank
-			Warning:     column.Warning,
+			Value:       column.GetName(),
+			Recommended: column.GetIsCursorRecommended(),
+			Rank:        column.GetRecommendationRank(),
+			Warning:     column.GetWarning(),
 		})
 	}
 	return out, ingestionv1.CandidateStatus_CANDIDATE_STATUS_ENUMERATED

@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"github.com/galaxy-io/filament"
 	catalogv1 "github.com/galaxy-io/filament/api/catalog/v1"
 	"github.com/galaxy-io/filament/api/catalog/v1/catalogv1connect"
+	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 )
 
 const (
@@ -301,30 +301,28 @@ func bounded(ctx context.Context) (context.Context, context.CancelFunc) {
 func (r *remote) PlanReplicationStream(ctx context.Context, source string, req filament.ReplicationStreamPlanningRequest) (filament.ReplicationStreamPlan, error) {
 	ctx, cancel := bounded(ctx)
 	defer cancel()
-	var plan filament.ReplicationStreamPlan
-	raw, err := encodeConfig(req.Config)
+	cfg, err := configToProto(req.Config)
 	if err != nil {
-		return plan, err
+		return filament.ReplicationStreamPlan{}, err
 	}
 	resp, err := r.client.PlanReplicationStream(ctx, connect.NewRequest(&catalogv1.PlanReplicationStreamRequest{
 		Source: source, ReplicationStreamId: req.ReplicationStreamID, SourceConnectionId: req.SourceConnectionID,
-		ConfigJson: raw, Resources: req.Resources,
+		Config: cfg, Resources: req.Resources,
 	}))
 	if err != nil {
-		return plan, fromConnect(err)
+		return filament.ReplicationStreamPlan{}, fromConnect(err)
 	}
-	err = json.Unmarshal(resp.Msg.GetPlanJson(), &plan)
-	return plan, err
+	return planFromProto(resp.Msg.GetPlan()), nil
 }
 
 func (r *remote) Validate(ctx context.Context, kind filament.ConnectorKind, name string, cfg filament.Config) error {
 	ctx, cancel := bounded(ctx)
 	defer cancel()
-	raw, err := encodeConfig(cfg)
+	wire, err := configToProto(cfg)
 	if err != nil {
 		return err
 	}
-	resp, err := r.client.Validate(ctx, connect.NewRequest(&catalogv1.ValidateRequest{Kind: kindToProto(kind), Name: name, ConfigJson: raw}))
+	resp, err := r.client.Validate(ctx, connect.NewRequest(&catalogv1.ValidateRequest{Kind: kindToProto(kind), Name: name, Config: wire}))
 	if err != nil {
 		return fromConnect(err)
 	}
@@ -334,59 +332,54 @@ func (r *remote) Validate(ctx context.Context, kind filament.ConnectorKind, name
 func (r *remote) TestConnection(ctx context.Context, kind filament.ConnectorKind, name string, cfg filament.Config) error {
 	ctx, cancel := bounded(ctx)
 	defer cancel()
-	raw, err := encodeConfig(cfg)
+	wire, err := configToProto(cfg)
 	if err != nil {
 		return err
 	}
-	resp, err := r.client.TestConnection(ctx, connect.NewRequest(&catalogv1.TestConnectionRequest{Kind: kindToProto(kind), Name: name, ConfigJson: raw}))
+	resp, err := r.client.TestConnection(ctx, connect.NewRequest(&catalogv1.TestConnectionRequest{Kind: kindToProto(kind), Name: name, Config: wire}))
 	if err != nil {
 		return fromConnect(err)
 	}
 	return failure(resp.Msg.GetFailure())
 }
 
-func (r *remote) Discover(ctx context.Context, source string, cfg filament.Config, opts filament.DiscoverOpts) (filament.DiscoverResult, error) {
+func (r *remote) Discover(ctx context.Context, source string, cfg filament.Config, opts filament.DiscoverOpts) ([]*ingestionv1.Resource, error) {
 	ctx, cancel := bounded(ctx)
 	defer cancel()
-	var result filament.DiscoverResult
-	raw, err := encodeConfig(cfg)
+	wire, err := configToProto(cfg)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
-	resp, err := r.client.Discover(ctx, connect.NewRequest(&catalogv1.DiscoverRequest{Source: source, ConfigJson: raw, Refresh: opts.Refresh}))
+	resp, err := r.client.Discover(ctx, connect.NewRequest(&catalogv1.DiscoverRequest{Source: source, Config: wire, Refresh: opts.Refresh}))
 	if err != nil {
-		return result, fromConnect(err)
+		return nil, fromConnect(err)
 	}
-	err = json.Unmarshal(resp.Msg.GetResultJson(), &result)
-	return result, err
+	return resp.Msg.GetResources(), nil
 }
 
 func (r *remote) Inspect(ctx context.Context, source string, cfg filament.Config, resources []string) ([]filament.ResourceInspection, error) {
 	ctx, cancel := bounded(ctx)
 	defer cancel()
-	raw, err := encodeConfig(cfg)
+	wire, err := configToProto(cfg)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := r.client.Inspect(ctx, connect.NewRequest(&catalogv1.InspectRequest{Source: source, ConfigJson: raw, Resources: resources}))
+	resp, err := r.client.Inspect(ctx, connect.NewRequest(&catalogv1.InspectRequest{Source: source, Config: wire, Resources: resources}))
 	if err != nil {
 		return nil, fromConnect(err)
 	}
 	out := make([]filament.ResourceInspection, 0, len(resp.Msg.GetResources()))
 	for _, resource := range resp.Msg.GetResources() {
 		inspection := filament.ResourceInspection{
-			Name: resource.GetName(), PrimaryKey: resource.GetPrimaryKey(), Ranked: resource.GetRanked(),
-			ManagedIncremental: resource.GetManagedIncremental(),
-			PrimaryKeyErr:      failure(resource.GetPrimaryKeyError()),
+			Name: resource.GetName(), PrimaryKey: resource.GetPrimaryKey(), Columns: resource.GetColumns(),
+			Ranked: resource.GetRanked(), ManagedIncremental: resource.GetManagedIncremental(),
+			PrimaryKeyErr: failure(resource.GetPrimaryKeyError()),
 		}
 		switch {
 		case resource.GetColumnsUnsupported():
 			inspection.ColumnsErr = wireError{sentinel: filament.ErrUnsupported, message: resource.GetColumnsError()}
 		case resource.GetColumnsError() != "":
 			inspection.ColumnsErr = errors.New(resource.GetColumnsError())
-		}
-		if err := json.Unmarshal(resource.GetColumnsJson(), &inspection.Columns); err != nil {
-			return nil, err
 		}
 		out = append(out, inspection)
 	}

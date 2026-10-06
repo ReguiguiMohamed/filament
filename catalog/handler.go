@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -120,12 +119,12 @@ func (h handler) sourceConnector(ctx context.Context, spec filament.ConnectorSpe
 	if err != nil {
 		return nil, err
 	}
-	raw, err := json.Marshal(spec)
+	wire, err := sourceSpecToProto(spec)
 	if err != nil {
 		return nil, err
 	}
 	return &catalogv1.Connector{
-		Kind: catalogv1.Kind_KIND_SOURCE, Name: spec.Name, SpecJson: raw,
+		Kind: catalogv1.Kind_KIND_SOURCE, Name: spec.Name, Spec: &catalogv1.Connector_Source{Source: wire},
 		PlansStreams: contracts.PlansStreams, Streams: contracts.Streams,
 	}, nil
 }
@@ -135,32 +134,28 @@ func (h handler) sinkConnector(ctx context.Context, spec filament.SinkSpec) (*ca
 	if err != nil {
 		return nil, err
 	}
-	raw, err := json.Marshal(spec)
+	wire, err := sinkSpecToProto(spec)
 	if err != nil {
 		return nil, err
 	}
-	return &catalogv1.Connector{Kind: catalogv1.Kind_KIND_SINK, Name: spec.Name, SpecJson: raw, Streams: contracts.Streams}, nil
+	return &catalogv1.Connector{Kind: catalogv1.Kind_KIND_SINK, Name: spec.Name, Spec: &catalogv1.Connector_Sink{Sink: wire}, Streams: contracts.Streams}, nil
 }
 
 func (h handler) PlanReplicationStream(ctx context.Context, req *connect.Request[catalogv1.PlanReplicationStreamRequest]) (*connect.Response[catalogv1.PlanReplicationStreamResponse], error) {
-	cfg, err := decodeConfig(req.Msg.GetConfigJson())
-	if err != nil {
-		return nil, err
-	}
 	plan, err := h.catalog.PlanReplicationStream(ctx, req.Msg.GetSource(), filament.ReplicationStreamPlanningRequest{
 		ReplicationStreamID: req.Msg.GetReplicationStreamId(),
 		SourceConnectionID:  req.Msg.GetSourceConnectionId(),
-		Config:              cfg,
+		Config:              configFromProto(req.Msg.GetConfig()),
 		Resources:           req.Msg.GetResources(),
 	})
 	if err != nil {
 		return nil, ConnectError(err)
 	}
-	raw, err := json.Marshal(plan)
+	wire, err := planToProto(plan)
 	if err != nil {
 		return nil, ConnectError(err)
 	}
-	return connect.NewResponse(&catalogv1.PlanReplicationStreamResponse{PlanJson: raw}), nil
+	return connect.NewResponse(&catalogv1.PlanReplicationStreamResponse{Plan: wire}), nil
 }
 
 func (h handler) Validate(ctx context.Context, req *connect.Request[catalogv1.ValidateRequest]) (*connect.Response[catalogv1.ValidateResponse], error) {
@@ -168,11 +163,7 @@ func (h handler) Validate(ctx context.Context, req *connect.Request[catalogv1.Va
 	if kind == filament.ConnectorKindUnspecified {
 		return nil, errKindRequired
 	}
-	cfg, err := decodeConfig(req.Msg.GetConfigJson())
-	if err != nil {
-		return nil, err
-	}
-	failure, err := Verdict(h.catalog.Validate(ctx, kind, req.Msg.GetName(), cfg))
+	failure, err := Verdict(h.catalog.Validate(ctx, kind, req.Msg.GetName(), configFromProto(req.Msg.GetConfig())))
 	if err != nil {
 		return nil, err
 	}
@@ -184,11 +175,7 @@ func (h handler) TestConnection(ctx context.Context, req *connect.Request[catalo
 	if kind == filament.ConnectorKindUnspecified {
 		return nil, errKindRequired
 	}
-	cfg, err := decodeConfig(req.Msg.GetConfigJson())
-	if err != nil {
-		return nil, err
-	}
-	failure, err := Verdict(h.catalog.TestConnection(ctx, kind, req.Msg.GetName(), cfg))
+	failure, err := Verdict(h.catalog.TestConnection(ctx, kind, req.Msg.GetName(), configFromProto(req.Msg.GetConfig())))
 	if err != nil {
 		return nil, err
 	}
@@ -212,42 +199,30 @@ func Verdict(err error) (string, error) {
 }
 
 func (h handler) Discover(ctx context.Context, req *connect.Request[catalogv1.DiscoverRequest]) (*connect.Response[catalogv1.DiscoverResponse], error) {
-	cfg, err := decodeConfig(req.Msg.GetConfigJson())
-	if err != nil {
-		return nil, err
-	}
-	result, err := h.catalog.Discover(ctx, req.Msg.GetSource(), cfg, filament.DiscoverOpts{Refresh: req.Msg.GetRefresh()})
+	resources, err := h.catalog.Discover(ctx, req.Msg.GetSource(), configFromProto(req.Msg.GetConfig()), filament.DiscoverOpts{Refresh: req.Msg.GetRefresh()})
 	if err != nil {
 		return nil, ConnectError(err)
 	}
-	raw, err := json.Marshal(result)
-	if err != nil {
-		return nil, ConnectError(err)
-	}
-	return connect.NewResponse(&catalogv1.DiscoverResponse{ResultJson: raw}), nil
+	return connect.NewResponse(&catalogv1.DiscoverResponse{Resources: resources}), nil
 }
 
 func (h handler) Inspect(ctx context.Context, req *connect.Request[catalogv1.InspectRequest]) (*connect.Response[catalogv1.InspectResponse], error) {
-	cfg, err := decodeConfig(req.Msg.GetConfigJson())
-	if err != nil {
-		return nil, err
-	}
-	inspections, err := h.catalog.Inspect(ctx, req.Msg.GetSource(), cfg, req.Msg.GetResources())
+	inspections, err := h.catalog.Inspect(ctx, req.Msg.GetSource(), configFromProto(req.Msg.GetConfig()), req.Msg.GetResources())
 	if err != nil {
 		return nil, ConnectError(err)
 	}
 	resp := &catalogv1.InspectResponse{Resources: make([]*catalogv1.ResourceInspection, 0, len(inspections))}
 	for _, inspection := range inspections {
-		out := &catalogv1.ResourceInspection{Name: inspection.Name, PrimaryKey: inspection.PrimaryKey, Ranked: inspection.Ranked, ManagedIncremental: inspection.ManagedIncremental}
+		out := &catalogv1.ResourceInspection{
+			Name: inspection.Name, PrimaryKey: inspection.PrimaryKey, Columns: inspection.Columns,
+			Ranked: inspection.Ranked, ManagedIncremental: inspection.ManagedIncremental,
+		}
 		if err := inspection.PrimaryKeyErr; err != nil {
 			out.PrimaryKeyError = err.Error()
 		}
 		if err := inspection.ColumnsErr; err != nil {
 			out.ColumnsError = err.Error()
 			out.ColumnsUnsupported = errors.Is(err, filament.ErrUnsupported)
-		}
-		if out.ColumnsJson, err = json.Marshal(inspection.Columns); err != nil {
-			return nil, ConnectError(err)
 		}
 		resp.Resources = append(resp.Resources, out)
 	}

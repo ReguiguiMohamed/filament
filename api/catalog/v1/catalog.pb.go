@@ -7,8 +7,11 @@
 package catalogv1
 
 import (
+	v1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -70,20 +73,129 @@ func (Kind) EnumDescriptor() ([]byte, []int) {
 	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
 }
 
+// ReadMode is filament.ReadMode.
+type ReadMode int32
+
+const (
+	ReadMode_READ_MODE_UNSPECIFIED ReadMode = 0
+	ReadMode_READ_MODE_FULL        ReadMode = 1
+	ReadMode_READ_MODE_INCREMENTAL ReadMode = 2
+	ReadMode_READ_MODE_CDC         ReadMode = 3
+)
+
+// Enum value maps for ReadMode.
+var (
+	ReadMode_name = map[int32]string{
+		0: "READ_MODE_UNSPECIFIED",
+		1: "READ_MODE_FULL",
+		2: "READ_MODE_INCREMENTAL",
+		3: "READ_MODE_CDC",
+	}
+	ReadMode_value = map[string]int32{
+		"READ_MODE_UNSPECIFIED": 0,
+		"READ_MODE_FULL":        1,
+		"READ_MODE_INCREMENTAL": 2,
+		"READ_MODE_CDC":         3,
+	}
+)
+
+func (x ReadMode) Enum() *ReadMode {
+	p := new(ReadMode)
+	*p = x
+	return p
+}
+
+func (x ReadMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReadMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_catalog_v1_catalog_proto_enumTypes[1].Descriptor()
+}
+
+func (ReadMode) Type() protoreflect.EnumType {
+	return &file_catalog_v1_catalog_proto_enumTypes[1]
+}
+
+func (x ReadMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReadMode.Descriptor instead.
+func (ReadMode) EnumDescriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
+}
+
+// Operation is filament.Operation.
+type Operation int32
+
+const (
+	Operation_OPERATION_UNSPECIFIED Operation = 0
+	Operation_OPERATION_INSERT      Operation = 1
+	Operation_OPERATION_UPDATE      Operation = 2
+	Operation_OPERATION_DELETE      Operation = 3
+)
+
+// Enum value maps for Operation.
+var (
+	Operation_name = map[int32]string{
+		0: "OPERATION_UNSPECIFIED",
+		1: "OPERATION_INSERT",
+		2: "OPERATION_UPDATE",
+		3: "OPERATION_DELETE",
+	}
+	Operation_value = map[string]int32{
+		"OPERATION_UNSPECIFIED": 0,
+		"OPERATION_INSERT":      1,
+		"OPERATION_UPDATE":      2,
+		"OPERATION_DELETE":      3,
+	}
+)
+
+func (x Operation) Enum() *Operation {
+	p := new(Operation)
+	*p = x
+	return p
+}
+
+func (x Operation) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Operation) Descriptor() protoreflect.EnumDescriptor {
+	return file_catalog_v1_catalog_proto_enumTypes[2].Descriptor()
+}
+
+func (Operation) Type() protoreflect.EnumType {
+	return &file_catalog_v1_catalog_proto_enumTypes[2]
+}
+
+func (x Operation) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Operation.Descriptor instead.
+func (Operation) EnumDescriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{2}
+}
+
 // Connector is one registered connector as the catalog describes it.
 type Connector struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Kind  Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
-	// name is the name the connector was asked for, which may be an alias.
+	// name is the lookup name: an alias in a listing, the concrete name when
+	// asked for one connector.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// spec_json is a filament.ConnectorSpec for a source, a filament.SinkSpec
-	// for a sink.
-	SpecJson []byte `protobuf:"bytes,3,opt,name=spec_json,json=specJson,proto3" json:"spec_json,omitempty"`
+	// Types that are valid to be assigned to Spec:
+	//
+	//	*Connector_Source
+	//	*Connector_Sink
+	Spec isConnector_Spec `protobuf_oneof:"spec"`
 	// plans_streams is set when a source implements ReplicationStreamPlanner.
-	PlansStreams bool `protobuf:"varint,4,opt,name=plans_streams,json=plansStreams,proto3" json:"plans_streams,omitempty"`
+	PlansStreams bool `protobuf:"varint,5,opt,name=plans_streams,json=plansStreams,proto3" json:"plans_streams,omitempty"`
 	// streams is set when a source implements StreamSource or a sink implements
 	// StreamingSink.
-	Streams       bool `protobuf:"varint,5,opt,name=streams,proto3" json:"streams,omitempty"`
+	Streams       bool `protobuf:"varint,6,opt,name=streams,proto3" json:"streams,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -132,9 +244,27 @@ func (x *Connector) GetName() string {
 	return ""
 }
 
-func (x *Connector) GetSpecJson() []byte {
+func (x *Connector) GetSpec() isConnector_Spec {
 	if x != nil {
-		return x.SpecJson
+		return x.Spec
+	}
+	return nil
+}
+
+func (x *Connector) GetSource() *SourceSpec {
+	if x != nil {
+		if x, ok := x.Spec.(*Connector_Source); ok {
+			return x.Source
+		}
+	}
+	return nil
+}
+
+func (x *Connector) GetSink() *SinkSpec {
+	if x != nil {
+		if x, ok := x.Spec.(*Connector_Sink); ok {
+			return x.Sink
+		}
 	}
 	return nil
 }
@@ -153,6 +283,806 @@ func (x *Connector) GetStreams() bool {
 	return false
 }
 
+type isConnector_Spec interface {
+	isConnector_Spec()
+}
+
+type Connector_Source struct {
+	Source *SourceSpec `protobuf:"bytes,3,opt,name=source,proto3,oneof"`
+}
+
+type Connector_Sink struct {
+	Sink *SinkSpec `protobuf:"bytes,4,opt,name=sink,proto3,oneof"`
+}
+
+func (*Connector_Source) isConnector_Spec() {}
+
+func (*Connector_Sink) isConnector_Spec() {}
+
+// SourceSpec is filament.ConnectorSpec.
+type SourceSpec struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	AliasTarget    string                 `protobuf:"bytes,2,opt,name=alias_target,json=aliasTarget,proto3" json:"alias_target,omitempty"`
+	DisplayName    string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Description    string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	DarkLogoUrl    string                 `protobuf:"bytes,5,opt,name=dark_logo_url,json=darkLogoUrl,proto3" json:"dark_logo_url,omitempty"`
+	LightLogoUrl   string                 `protobuf:"bytes,6,opt,name=light_logo_url,json=lightLogoUrl,proto3" json:"light_logo_url,omitempty"`
+	Version        string                 `protobuf:"bytes,7,opt,name=version,proto3" json:"version,omitempty"`
+	ApiVersion     string                 `protobuf:"bytes,8,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	Maturity       string                 `protobuf:"bytes,9,opt,name=maturity,proto3" json:"maturity,omitempty"`
+	Modes          []ReadMode             `protobuf:"varint,10,rep,packed,name=modes,proto3,enum=catalog.v1.ReadMode" json:"modes,omitempty"`
+	SourcePolicies []*SourcePolicy        `protobuf:"bytes,11,rep,name=source_policies,json=sourcePolicies,proto3" json:"source_policies,omitempty"`
+	Config         *v1.ConfigSchema       `protobuf:"bytes,12,opt,name=config,proto3" json:"config,omitempty"`
+	Resources      *ResourceCapabilities  `protobuf:"bytes,13,opt,name=resources,proto3" json:"resources,omitempty"`
+	// stream is unset for sources without continuous input.
+	Stream        *StreamCapabilities `protobuf:"bytes,14,opt,name=stream,proto3" json:"stream,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceSpec) Reset() {
+	*x = SourceSpec{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceSpec) ProtoMessage() {}
+
+func (x *SourceSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceSpec.ProtoReflect.Descriptor instead.
+func (*SourceSpec) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SourceSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetAliasTarget() string {
+	if x != nil {
+		return x.AliasTarget
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetDarkLogoUrl() string {
+	if x != nil {
+		return x.DarkLogoUrl
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetLightLogoUrl() string {
+	if x != nil {
+		return x.LightLogoUrl
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetMaturity() string {
+	if x != nil {
+		return x.Maturity
+	}
+	return ""
+}
+
+func (x *SourceSpec) GetModes() []ReadMode {
+	if x != nil {
+		return x.Modes
+	}
+	return nil
+}
+
+func (x *SourceSpec) GetSourcePolicies() []*SourcePolicy {
+	if x != nil {
+		return x.SourcePolicies
+	}
+	return nil
+}
+
+func (x *SourceSpec) GetConfig() *v1.ConfigSchema {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *SourceSpec) GetResources() *ResourceCapabilities {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
+func (x *SourceSpec) GetStream() *StreamCapabilities {
+	if x != nil {
+		return x.Stream
+	}
+	return nil
+}
+
+// SourcePolicy is filament.SourcePolicy.
+type SourcePolicy struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mode          ReadMode               `protobuf:"varint,1,opt,name=mode,proto3,enum=catalog.v1.ReadMode" json:"mode,omitempty"`
+	EmitsOps      []Operation            `protobuf:"varint,2,rep,packed,name=emits_ops,json=emitsOps,proto3,enum=catalog.v1.Operation" json:"emits_ops,omitempty"`
+	Ordered       bool                   `protobuf:"varint,3,opt,name=ordered,proto3" json:"ordered,omitempty"`
+	Checkpointing string                 `protobuf:"bytes,4,opt,name=checkpointing,proto3" json:"checkpointing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourcePolicy) Reset() {
+	*x = SourcePolicy{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourcePolicy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourcePolicy) ProtoMessage() {}
+
+func (x *SourcePolicy) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourcePolicy.ProtoReflect.Descriptor instead.
+func (*SourcePolicy) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SourcePolicy) GetMode() ReadMode {
+	if x != nil {
+		return x.Mode
+	}
+	return ReadMode_READ_MODE_UNSPECIFIED
+}
+
+func (x *SourcePolicy) GetEmitsOps() []Operation {
+	if x != nil {
+		return x.EmitsOps
+	}
+	return nil
+}
+
+func (x *SourcePolicy) GetOrdered() bool {
+	if x != nil {
+		return x.Ordered
+	}
+	return false
+}
+
+func (x *SourcePolicy) GetCheckpointing() string {
+	if x != nil {
+		return x.Checkpointing
+	}
+	return ""
+}
+
+// ResourceCapabilities is filament.ResourceCapabilities.
+type ResourceCapabilities struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Discoverable      bool                   `protobuf:"varint,1,opt,name=discoverable,proto3" json:"discoverable,omitempty"`
+	PerResourceCursor bool                   `protobuf:"varint,2,opt,name=per_resource_cursor,json=perResourceCursor,proto3" json:"per_resource_cursor,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ResourceCapabilities) Reset() {
+	*x = ResourceCapabilities{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResourceCapabilities) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResourceCapabilities) ProtoMessage() {}
+
+func (x *ResourceCapabilities) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResourceCapabilities.ProtoReflect.Descriptor instead.
+func (*ResourceCapabilities) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ResourceCapabilities) GetDiscoverable() bool {
+	if x != nil {
+		return x.Discoverable
+	}
+	return false
+}
+
+func (x *ResourceCapabilities) GetPerResourceCursor() bool {
+	if x != nil {
+		return x.PerResourceCursor
+	}
+	return false
+}
+
+// StreamCapabilities is filament.StreamCapabilities.
+type StreamCapabilities struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EmitsOps      []Operation            `protobuf:"varint,1,rep,packed,name=emits_ops,json=emitsOps,proto3,enum=catalog.v1.Operation" json:"emits_ops,omitempty"`
+	Input         string                 `protobuf:"bytes,2,opt,name=input,proto3" json:"input,omitempty"`
+	Ordering      []string               `protobuf:"bytes,3,rep,name=ordering,proto3" json:"ordering,omitempty"`
+	Delivery      string                 `protobuf:"bytes,4,opt,name=delivery,proto3" json:"delivery,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamCapabilities) Reset() {
+	*x = StreamCapabilities{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamCapabilities) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamCapabilities) ProtoMessage() {}
+
+func (x *StreamCapabilities) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamCapabilities.ProtoReflect.Descriptor instead.
+func (*StreamCapabilities) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StreamCapabilities) GetEmitsOps() []Operation {
+	if x != nil {
+		return x.EmitsOps
+	}
+	return nil
+}
+
+func (x *StreamCapabilities) GetInput() string {
+	if x != nil {
+		return x.Input
+	}
+	return ""
+}
+
+func (x *StreamCapabilities) GetOrdering() []string {
+	if x != nil {
+		return x.Ordering
+	}
+	return nil
+}
+
+func (x *StreamCapabilities) GetDelivery() string {
+	if x != nil {
+		return x.Delivery
+	}
+	return ""
+}
+
+// SinkSpec is filament.SinkSpec.
+type SinkSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	DarkLogoUrl   string                 `protobuf:"bytes,4,opt,name=dark_logo_url,json=darkLogoUrl,proto3" json:"dark_logo_url,omitempty"`
+	LightLogoUrl  string                 `protobuf:"bytes,5,opt,name=light_logo_url,json=lightLogoUrl,proto3" json:"light_logo_url,omitempty"`
+	Version       string                 `protobuf:"bytes,6,opt,name=version,proto3" json:"version,omitempty"`
+	Maturity      string                 `protobuf:"bytes,7,opt,name=maturity,proto3" json:"maturity,omitempty"`
+	Config        *v1.ConfigSchema       `protobuf:"bytes,8,opt,name=config,proto3" json:"config,omitempty"`
+	Capabilities  *SinkCapabilities      `protobuf:"bytes,9,opt,name=capabilities,proto3" json:"capabilities,omitempty"`
+	SchemaField   string                 `protobuf:"bytes,10,opt,name=schema_field,json=schemaField,proto3" json:"schema_field,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SinkSpec) Reset() {
+	*x = SinkSpec{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SinkSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SinkSpec) ProtoMessage() {}
+
+func (x *SinkSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SinkSpec.ProtoReflect.Descriptor instead.
+func (*SinkSpec) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SinkSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetDarkLogoUrl() string {
+	if x != nil {
+		return x.DarkLogoUrl
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetLightLogoUrl() string {
+	if x != nil {
+		return x.LightLogoUrl
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetMaturity() string {
+	if x != nil {
+		return x.Maturity
+	}
+	return ""
+}
+
+func (x *SinkSpec) GetConfig() *v1.ConfigSchema {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *SinkSpec) GetCapabilities() *SinkCapabilities {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
+}
+
+func (x *SinkSpec) GetSchemaField() string {
+	if x != nil {
+		return x.SchemaField
+	}
+	return ""
+}
+
+// SinkCapabilities is filament.SinkCapabilities.
+type SinkCapabilities struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// stream is unset for sinks without epoch writes.
+	Stream                 *StreamingSinkCapabilities `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
+	Transactional          bool                       `protobuf:"varint,2,opt,name=transactional,proto3" json:"transactional,omitempty"`
+	Schematized            bool                       `protobuf:"varint,3,opt,name=schematized,proto3" json:"schematized,omitempty"`
+	EncodedIntegrity       bool                       `protobuf:"varint,4,opt,name=encoded_integrity,json=encodedIntegrity,proto3" json:"encoded_integrity,omitempty"`
+	WritePolicies          []*WritePolicyCapability   `protobuf:"bytes,5,rep,name=write_policies,json=writePolicies,proto3" json:"write_policies,omitempty"`
+	PreferredBatchRows     int64                      `protobuf:"varint,6,opt,name=preferred_batch_rows,json=preferredBatchRows,proto3" json:"preferred_batch_rows,omitempty"`
+	PreferredBatchBytes    int64                      `protobuf:"varint,7,opt,name=preferred_batch_bytes,json=preferredBatchBytes,proto3" json:"preferred_batch_bytes,omitempty"`
+	PreferredFlushInterval *durationpb.Duration       `protobuf:"bytes,8,opt,name=preferred_flush_interval,json=preferredFlushInterval,proto3" json:"preferred_flush_interval,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *SinkCapabilities) Reset() {
+	*x = SinkCapabilities{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SinkCapabilities) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SinkCapabilities) ProtoMessage() {}
+
+func (x *SinkCapabilities) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SinkCapabilities.ProtoReflect.Descriptor instead.
+func (*SinkCapabilities) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SinkCapabilities) GetStream() *StreamingSinkCapabilities {
+	if x != nil {
+		return x.Stream
+	}
+	return nil
+}
+
+func (x *SinkCapabilities) GetTransactional() bool {
+	if x != nil {
+		return x.Transactional
+	}
+	return false
+}
+
+func (x *SinkCapabilities) GetSchematized() bool {
+	if x != nil {
+		return x.Schematized
+	}
+	return false
+}
+
+func (x *SinkCapabilities) GetEncodedIntegrity() bool {
+	if x != nil {
+		return x.EncodedIntegrity
+	}
+	return false
+}
+
+func (x *SinkCapabilities) GetWritePolicies() []*WritePolicyCapability {
+	if x != nil {
+		return x.WritePolicies
+	}
+	return nil
+}
+
+func (x *SinkCapabilities) GetPreferredBatchRows() int64 {
+	if x != nil {
+		return x.PreferredBatchRows
+	}
+	return 0
+}
+
+func (x *SinkCapabilities) GetPreferredBatchBytes() int64 {
+	if x != nil {
+		return x.PreferredBatchBytes
+	}
+	return 0
+}
+
+func (x *SinkCapabilities) GetPreferredFlushInterval() *durationpb.Duration {
+	if x != nil {
+		return x.PreferredFlushInterval
+	}
+	return nil
+}
+
+// StreamingSinkCapabilities is filament.StreamingSinkCapabilities.
+type StreamingSinkCapabilities struct {
+	state          protoimpl.MessageState   `protogen:"open.v1"`
+	WritePolicies  []*WritePolicyCapability `protobuf:"bytes,1,rep,name=write_policies,json=writePolicies,proto3" json:"write_policies,omitempty"`
+	OwnerFencing   bool                     `protobuf:"varint,2,opt,name=owner_fencing,json=ownerFencing,proto3" json:"owner_fencing,omitempty"`
+	IsolatedEpochs bool                     `protobuf:"varint,3,opt,name=isolated_epochs,json=isolatedEpochs,proto3" json:"isolated_epochs,omitempty"`
+	// in_flight_bound is unset when unknown.
+	InFlightBound *durationpb.Duration `protobuf:"bytes,4,opt,name=in_flight_bound,json=inFlightBound,proto3" json:"in_flight_bound,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamingSinkCapabilities) Reset() {
+	*x = StreamingSinkCapabilities{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamingSinkCapabilities) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamingSinkCapabilities) ProtoMessage() {}
+
+func (x *StreamingSinkCapabilities) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamingSinkCapabilities.ProtoReflect.Descriptor instead.
+func (*StreamingSinkCapabilities) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *StreamingSinkCapabilities) GetWritePolicies() []*WritePolicyCapability {
+	if x != nil {
+		return x.WritePolicies
+	}
+	return nil
+}
+
+func (x *StreamingSinkCapabilities) GetOwnerFencing() bool {
+	if x != nil {
+		return x.OwnerFencing
+	}
+	return false
+}
+
+func (x *StreamingSinkCapabilities) GetIsolatedEpochs() bool {
+	if x != nil {
+		return x.IsolatedEpochs
+	}
+	return false
+}
+
+func (x *StreamingSinkCapabilities) GetInFlightBound() *durationpb.Duration {
+	if x != nil {
+		return x.InFlightBound
+	}
+	return nil
+}
+
+// WritePolicyCapability is filament.WritePolicyCapability.
+type WritePolicyCapability struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mode          string                 `protobuf:"bytes,1,opt,name=mode,proto3" json:"mode,omitempty"`
+	RequiresPk    bool                   `protobuf:"varint,2,opt,name=requires_pk,json=requiresPk,proto3" json:"requires_pk,omitempty"`
+	RequiresOrder bool                   `protobuf:"varint,3,opt,name=requires_order,json=requiresOrder,proto3" json:"requires_order,omitempty"`
+	AcceptsOps    []Operation            `protobuf:"varint,4,rep,packed,name=accepts_ops,json=acceptsOps,proto3,enum=catalog.v1.Operation" json:"accepts_ops,omitempty"`
+	Atomicity     string                 `protobuf:"bytes,5,opt,name=atomicity,proto3" json:"atomicity,omitempty"`
+	Durability    string                 `protobuf:"bytes,6,opt,name=durability,proto3" json:"durability,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WritePolicyCapability) Reset() {
+	*x = WritePolicyCapability{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WritePolicyCapability) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WritePolicyCapability) ProtoMessage() {}
+
+func (x *WritePolicyCapability) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WritePolicyCapability.ProtoReflect.Descriptor instead.
+func (*WritePolicyCapability) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *WritePolicyCapability) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *WritePolicyCapability) GetRequiresPk() bool {
+	if x != nil {
+		return x.RequiresPk
+	}
+	return false
+}
+
+func (x *WritePolicyCapability) GetRequiresOrder() bool {
+	if x != nil {
+		return x.RequiresOrder
+	}
+	return false
+}
+
+func (x *WritePolicyCapability) GetAcceptsOps() []Operation {
+	if x != nil {
+		return x.AcceptsOps
+	}
+	return nil
+}
+
+func (x *WritePolicyCapability) GetAtomicity() string {
+	if x != nil {
+		return x.Atomicity
+	}
+	return ""
+}
+
+func (x *WritePolicyCapability) GetDurability() string {
+	if x != nil {
+		return x.Durability
+	}
+	return ""
+}
+
+// ReplicationStreamPlan is filament.ReplicationStreamPlan.
+type ReplicationStreamPlan struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Resources        []string               `protobuf:"bytes,1,rep,name=resources,proto3" json:"resources,omitempty"`
+	ConsumerName     string                 `protobuf:"bytes,2,opt,name=consumer_name,json=consumerName,proto3" json:"consumer_name,omitempty"`
+	ConsumerConfig   *structpb.Struct       `protobuf:"bytes,3,opt,name=consumer_config,json=consumerConfig,proto3" json:"consumer_config,omitempty"`
+	ContinuityConfig *structpb.Struct       `protobuf:"bytes,4,opt,name=continuity_config,json=continuityConfig,proto3" json:"continuity_config,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ReplicationStreamPlan) Reset() {
+	*x = ReplicationStreamPlan{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplicationStreamPlan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplicationStreamPlan) ProtoMessage() {}
+
+func (x *ReplicationStreamPlan) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplicationStreamPlan.ProtoReflect.Descriptor instead.
+func (*ReplicationStreamPlan) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ReplicationStreamPlan) GetResources() []string {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
+func (x *ReplicationStreamPlan) GetConsumerName() string {
+	if x != nil {
+		return x.ConsumerName
+	}
+	return ""
+}
+
+func (x *ReplicationStreamPlan) GetConsumerConfig() *structpb.Struct {
+	if x != nil {
+		return x.ConsumerConfig
+	}
+	return nil
+}
+
+func (x *ReplicationStreamPlan) GetContinuityConfig() *structpb.Struct {
+	if x != nil {
+		return x.ContinuityConfig
+	}
+	return nil
+}
+
 type DescribeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// kind narrows the listing. It is required when name is set.
@@ -166,7 +1096,7 @@ type DescribeRequest struct {
 
 func (x *DescribeRequest) Reset() {
 	*x = DescribeRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -178,7 +1108,7 @@ func (x *DescribeRequest) String() string {
 func (*DescribeRequest) ProtoMessage() {}
 
 func (x *DescribeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[1]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -191,7 +1121,7 @@ func (x *DescribeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeRequest.ProtoReflect.Descriptor instead.
 func (*DescribeRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DescribeRequest) GetKind() Kind {
@@ -217,7 +1147,7 @@ type DescribeResponse struct {
 
 func (x *DescribeResponse) Reset() {
 	*x = DescribeResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -229,7 +1159,7 @@ func (x *DescribeResponse) String() string {
 func (*DescribeResponse) ProtoMessage() {}
 
 func (x *DescribeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[2]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -242,7 +1172,7 @@ func (x *DescribeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DescribeResponse.ProtoReflect.Descriptor instead.
 func (*DescribeResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{2}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DescribeResponse) GetConnectors() []*Connector {
@@ -257,7 +1187,7 @@ type PlanReplicationStreamRequest struct {
 	Source              string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
 	ReplicationStreamId string                 `protobuf:"bytes,2,opt,name=replication_stream_id,json=replicationStreamId,proto3" json:"replication_stream_id,omitempty"`
 	SourceConnectionId  string                 `protobuf:"bytes,3,opt,name=source_connection_id,json=sourceConnectionId,proto3" json:"source_connection_id,omitempty"`
-	ConfigJson          []byte                 `protobuf:"bytes,4,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Config              *structpb.Struct       `protobuf:"bytes,4,opt,name=config,proto3" json:"config,omitempty"`
 	Resources           []string               `protobuf:"bytes,5,rep,name=resources,proto3" json:"resources,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
@@ -265,7 +1195,7 @@ type PlanReplicationStreamRequest struct {
 
 func (x *PlanReplicationStreamRequest) Reset() {
 	*x = PlanReplicationStreamRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -277,7 +1207,7 @@ func (x *PlanReplicationStreamRequest) String() string {
 func (*PlanReplicationStreamRequest) ProtoMessage() {}
 
 func (x *PlanReplicationStreamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[3]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -290,7 +1220,7 @@ func (x *PlanReplicationStreamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanReplicationStreamRequest.ProtoReflect.Descriptor instead.
 func (*PlanReplicationStreamRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{3}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PlanReplicationStreamRequest) GetSource() string {
@@ -314,9 +1244,9 @@ func (x *PlanReplicationStreamRequest) GetSourceConnectionId() string {
 	return ""
 }
 
-func (x *PlanReplicationStreamRequest) GetConfigJson() []byte {
+func (x *PlanReplicationStreamRequest) GetConfig() *structpb.Struct {
 	if x != nil {
-		return x.ConfigJson
+		return x.Config
 	}
 	return nil
 }
@@ -329,16 +1259,15 @@ func (x *PlanReplicationStreamRequest) GetResources() []string {
 }
 
 type PlanReplicationStreamResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// plan_json is a filament.ReplicationStreamPlan.
-	PlanJson      []byte `protobuf:"bytes,1,opt,name=plan_json,json=planJson,proto3" json:"plan_json,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *ReplicationStreamPlan `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PlanReplicationStreamResponse) Reset() {
 	*x = PlanReplicationStreamResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -350,7 +1279,7 @@ func (x *PlanReplicationStreamResponse) String() string {
 func (*PlanReplicationStreamResponse) ProtoMessage() {}
 
 func (x *PlanReplicationStreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[4]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -363,12 +1292,12 @@ func (x *PlanReplicationStreamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanReplicationStreamResponse.ProtoReflect.Descriptor instead.
 func (*PlanReplicationStreamResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{4}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *PlanReplicationStreamResponse) GetPlanJson() []byte {
+func (x *PlanReplicationStreamResponse) GetPlan() *ReplicationStreamPlan {
 	if x != nil {
-		return x.PlanJson
+		return x.Plan
 	}
 	return nil
 }
@@ -377,14 +1306,14 @@ type ValidateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ConfigJson    []byte                 `protobuf:"bytes,3,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Config        *structpb.Struct       `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ValidateRequest) Reset() {
 	*x = ValidateRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -396,7 +1325,7 @@ func (x *ValidateRequest) String() string {
 func (*ValidateRequest) ProtoMessage() {}
 
 func (x *ValidateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,7 +1338,7 @@ func (x *ValidateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateRequest.ProtoReflect.Descriptor instead.
 func (*ValidateRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ValidateRequest) GetKind() Kind {
@@ -426,9 +1355,9 @@ func (x *ValidateRequest) GetName() string {
 	return ""
 }
 
-func (x *ValidateRequest) GetConfigJson() []byte {
+func (x *ValidateRequest) GetConfig() *structpb.Struct {
 	if x != nil {
-		return x.ConfigJson
+		return x.Config
 	}
 	return nil
 }
@@ -443,7 +1372,7 @@ type ValidateResponse struct {
 
 func (x *ValidateResponse) Reset() {
 	*x = ValidateResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -455,7 +1384,7 @@ func (x *ValidateResponse) String() string {
 func (*ValidateResponse) ProtoMessage() {}
 
 func (x *ValidateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[6]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -468,7 +1397,7 @@ func (x *ValidateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateResponse.ProtoReflect.Descriptor instead.
 func (*ValidateResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{6}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ValidateResponse) GetFailure() string {
@@ -482,14 +1411,14 @@ type TestConnectionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ConfigJson    []byte                 `protobuf:"bytes,3,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Config        *structpb.Struct       `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TestConnectionRequest) Reset() {
 	*x = TestConnectionRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -501,7 +1430,7 @@ func (x *TestConnectionRequest) String() string {
 func (*TestConnectionRequest) ProtoMessage() {}
 
 func (x *TestConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[7]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -514,7 +1443,7 @@ func (x *TestConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestConnectionRequest.ProtoReflect.Descriptor instead.
 func (*TestConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{7}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TestConnectionRequest) GetKind() Kind {
@@ -531,9 +1460,9 @@ func (x *TestConnectionRequest) GetName() string {
 	return ""
 }
 
-func (x *TestConnectionRequest) GetConfigJson() []byte {
+func (x *TestConnectionRequest) GetConfig() *structpb.Struct {
 	if x != nil {
-		return x.ConfigJson
+		return x.Config
 	}
 	return nil
 }
@@ -548,7 +1477,7 @@ type TestConnectionResponse struct {
 
 func (x *TestConnectionResponse) Reset() {
 	*x = TestConnectionResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +1489,7 @@ func (x *TestConnectionResponse) String() string {
 func (*TestConnectionResponse) ProtoMessage() {}
 
 func (x *TestConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[8]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +1502,7 @@ func (x *TestConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestConnectionResponse.ProtoReflect.Descriptor instead.
 func (*TestConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{8}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *TestConnectionResponse) GetFailure() string {
@@ -586,7 +1515,7 @@ func (x *TestConnectionResponse) GetFailure() string {
 type DiscoverRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Source        string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	ConfigJson    []byte                 `protobuf:"bytes,2,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Config        *structpb.Struct       `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
 	Refresh       bool                   `protobuf:"varint,3,opt,name=refresh,proto3" json:"refresh,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -594,7 +1523,7 @@ type DiscoverRequest struct {
 
 func (x *DiscoverRequest) Reset() {
 	*x = DiscoverRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -606,7 +1535,7 @@ func (x *DiscoverRequest) String() string {
 func (*DiscoverRequest) ProtoMessage() {}
 
 func (x *DiscoverRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[9]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -619,7 +1548,7 @@ func (x *DiscoverRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscoverRequest.ProtoReflect.Descriptor instead.
 func (*DiscoverRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{9}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DiscoverRequest) GetSource() string {
@@ -629,9 +1558,9 @@ func (x *DiscoverRequest) GetSource() string {
 	return ""
 }
 
-func (x *DiscoverRequest) GetConfigJson() []byte {
+func (x *DiscoverRequest) GetConfig() *structpb.Struct {
 	if x != nil {
-		return x.ConfigJson
+		return x.Config
 	}
 	return nil
 }
@@ -644,16 +1573,15 @@ func (x *DiscoverRequest) GetRefresh() bool {
 }
 
 type DiscoverResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// result_json is a filament.DiscoverResult.
-	ResultJson    []byte `protobuf:"bytes,1,opt,name=result_json,json=resultJson,proto3" json:"result_json,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resources     []*v1.Resource         `protobuf:"bytes,1,rep,name=resources,proto3" json:"resources,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DiscoverResponse) Reset() {
 	*x = DiscoverResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +1593,7 @@ func (x *DiscoverResponse) String() string {
 func (*DiscoverResponse) ProtoMessage() {}
 
 func (x *DiscoverResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[10]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -678,20 +1606,20 @@ func (x *DiscoverResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscoverResponse.ProtoReflect.Descriptor instead.
 func (*DiscoverResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *DiscoverResponse) GetResultJson() []byte {
+func (x *DiscoverResponse) GetResources() []*v1.Resource {
 	if x != nil {
-		return x.ResultJson
+		return x.Resources
 	}
 	return nil
 }
 
 type InspectRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	Source     string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	ConfigJson []byte                 `protobuf:"bytes,2,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Source string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Config *structpb.Struct       `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
 	// resources to inspect. Empty inspects every selectable discovered resource.
 	Resources     []string `protobuf:"bytes,3,rep,name=resources,proto3" json:"resources,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -700,7 +1628,7 @@ type InspectRequest struct {
 
 func (x *InspectRequest) Reset() {
 	*x = InspectRequest{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -712,7 +1640,7 @@ func (x *InspectRequest) String() string {
 func (*InspectRequest) ProtoMessage() {}
 
 func (x *InspectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[11]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -725,7 +1653,7 @@ func (x *InspectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectRequest.ProtoReflect.Descriptor instead.
 func (*InspectRequest) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *InspectRequest) GetSource() string {
@@ -735,9 +1663,9 @@ func (x *InspectRequest) GetSource() string {
 	return ""
 }
 
-func (x *InspectRequest) GetConfigJson() []byte {
+func (x *InspectRequest) GetConfig() *structpb.Struct {
 	if x != nil {
-		return x.ConfigJson
+		return x.Config
 	}
 	return nil
 }
@@ -754,9 +1682,8 @@ type ResourceInspection struct {
 	Name       string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	PrimaryKey []string               `protobuf:"bytes,2,rep,name=primary_key,json=primaryKey,proto3" json:"primary_key,omitempty"`
 	// primary_key_error is a failed schema read. The key is then unknown.
-	PrimaryKeyError string `protobuf:"bytes,3,opt,name=primary_key_error,json=primaryKeyError,proto3" json:"primary_key_error,omitempty"`
-	// columns_json is a []filament.CursorColumn.
-	ColumnsJson []byte `protobuf:"bytes,4,opt,name=columns_json,json=columnsJson,proto3" json:"columns_json,omitempty"`
+	PrimaryKeyError string               `protobuf:"bytes,3,opt,name=primary_key_error,json=primaryKeyError,proto3" json:"primary_key_error,omitempty"`
+	Columns         []*v1.ResourceColumn `protobuf:"bytes,4,rep,name=columns,proto3" json:"columns,omitempty"`
 	// ranked marks the columns as annotated with cursor eligibility.
 	Ranked       bool   `protobuf:"varint,5,opt,name=ranked,proto3" json:"ranked,omitempty"`
 	ColumnsError string `protobuf:"bytes,6,opt,name=columns_error,json=columnsError,proto3" json:"columns_error,omitempty"`
@@ -772,7 +1699,7 @@ type ResourceInspection struct {
 
 func (x *ResourceInspection) Reset() {
 	*x = ResourceInspection{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -784,7 +1711,7 @@ func (x *ResourceInspection) String() string {
 func (*ResourceInspection) ProtoMessage() {}
 
 func (x *ResourceInspection) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[12]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -797,7 +1724,7 @@ func (x *ResourceInspection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceInspection.ProtoReflect.Descriptor instead.
 func (*ResourceInspection) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{12}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ResourceInspection) GetName() string {
@@ -821,9 +1748,9 @@ func (x *ResourceInspection) GetPrimaryKeyError() string {
 	return ""
 }
 
-func (x *ResourceInspection) GetColumnsJson() []byte {
+func (x *ResourceInspection) GetColumns() []*v1.ResourceColumn {
 	if x != nil {
-		return x.ColumnsJson
+		return x.Columns
 	}
 	return nil
 }
@@ -865,7 +1792,7 @@ type InspectResponse struct {
 
 func (x *InspectResponse) Reset() {
 	*x = InspectResponse{}
-	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -877,7 +1804,7 @@ func (x *InspectResponse) String() string {
 func (*InspectResponse) ProtoMessage() {}
 
 func (x *InspectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_catalog_v1_catalog_proto_msgTypes[13]
+	mi := &file_catalog_v1_catalog_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -890,7 +1817,7 @@ func (x *InspectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectResponse.ProtoReflect.Descriptor instead.
 func (*InspectResponse) Descriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{13}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *InspectResponse) GetResources() []*ResourceInspection {
@@ -905,62 +1832,131 @@ var File_catalog_v1_catalog_proto protoreflect.FileDescriptor
 const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\n" +
 	"\x18catalog/v1/catalog.proto\x12\n" +
-	"catalog.v1\"\xa1\x01\n" +
+	"catalog.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x19ingestion/v1/common.proto\x1a\x1dingestion/v1/connectors.proto\"\xea\x01\n" +
 	"\tConnector\x12$\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
-	"\tspec_json\x18\x03 \x01(\fR\bspecJson\x12#\n" +
-	"\rplans_streams\x18\x04 \x01(\bR\fplansStreams\x12\x18\n" +
-	"\astreams\x18\x05 \x01(\bR\astreams\"K\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
+	"\x06source\x18\x03 \x01(\v2\x16.catalog.v1.SourceSpecH\x00R\x06source\x12*\n" +
+	"\x04sink\x18\x04 \x01(\v2\x14.catalog.v1.SinkSpecH\x00R\x04sink\x12#\n" +
+	"\rplans_streams\x18\x05 \x01(\bR\fplansStreams\x12\x18\n" +
+	"\astreams\x18\x06 \x01(\bR\astreamsB\x06\n" +
+	"\x04spec\"\xc4\x04\n" +
+	"\n" +
+	"SourceSpec\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\falias_target\x18\x02 \x01(\tR\valiasTarget\x12!\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\"\n" +
+	"\rdark_logo_url\x18\x05 \x01(\tR\vdarkLogoUrl\x12$\n" +
+	"\x0elight_logo_url\x18\x06 \x01(\tR\flightLogoUrl\x12\x18\n" +
+	"\aversion\x18\a \x01(\tR\aversion\x12\x1f\n" +
+	"\vapi_version\x18\b \x01(\tR\n" +
+	"apiVersion\x12\x1a\n" +
+	"\bmaturity\x18\t \x01(\tR\bmaturity\x12*\n" +
+	"\x05modes\x18\n" +
+	" \x03(\x0e2\x14.catalog.v1.ReadModeR\x05modes\x12A\n" +
+	"\x0fsource_policies\x18\v \x03(\v2\x18.catalog.v1.SourcePolicyR\x0esourcePolicies\x122\n" +
+	"\x06config\x18\f \x01(\v2\x1a.ingestion.v1.ConfigSchemaR\x06config\x12>\n" +
+	"\tresources\x18\r \x01(\v2 .catalog.v1.ResourceCapabilitiesR\tresources\x126\n" +
+	"\x06stream\x18\x0e \x01(\v2\x1e.catalog.v1.StreamCapabilitiesR\x06stream\"\xac\x01\n" +
+	"\fSourcePolicy\x12(\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x14.catalog.v1.ReadModeR\x04mode\x122\n" +
+	"\temits_ops\x18\x02 \x03(\x0e2\x15.catalog.v1.OperationR\bemitsOps\x12\x18\n" +
+	"\aordered\x18\x03 \x01(\bR\aordered\x12$\n" +
+	"\rcheckpointing\x18\x04 \x01(\tR\rcheckpointing\"j\n" +
+	"\x14ResourceCapabilities\x12\"\n" +
+	"\fdiscoverable\x18\x01 \x01(\bR\fdiscoverable\x12.\n" +
+	"\x13per_resource_cursor\x18\x02 \x01(\bR\x11perResourceCursor\"\x96\x01\n" +
+	"\x12StreamCapabilities\x122\n" +
+	"\temits_ops\x18\x01 \x03(\x0e2\x15.catalog.v1.OperationR\bemitsOps\x12\x14\n" +
+	"\x05input\x18\x02 \x01(\tR\x05input\x12\x1a\n" +
+	"\bordering\x18\x03 \x03(\tR\bordering\x12\x1a\n" +
+	"\bdelivery\x18\x04 \x01(\tR\bdelivery\"\xfc\x02\n" +
+	"\bSinkSpec\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\"\n" +
+	"\rdark_logo_url\x18\x04 \x01(\tR\vdarkLogoUrl\x12$\n" +
+	"\x0elight_logo_url\x18\x05 \x01(\tR\flightLogoUrl\x12\x18\n" +
+	"\aversion\x18\x06 \x01(\tR\aversion\x12\x1a\n" +
+	"\bmaturity\x18\a \x01(\tR\bmaturity\x122\n" +
+	"\x06config\x18\b \x01(\v2\x1a.ingestion.v1.ConfigSchemaR\x06config\x12@\n" +
+	"\fcapabilities\x18\t \x01(\v2\x1c.catalog.v1.SinkCapabilitiesR\fcapabilities\x12!\n" +
+	"\fschema_field\x18\n" +
+	" \x01(\tR\vschemaField\"\xcb\x03\n" +
+	"\x10SinkCapabilities\x12=\n" +
+	"\x06stream\x18\x01 \x01(\v2%.catalog.v1.StreamingSinkCapabilitiesR\x06stream\x12$\n" +
+	"\rtransactional\x18\x02 \x01(\bR\rtransactional\x12 \n" +
+	"\vschematized\x18\x03 \x01(\bR\vschematized\x12+\n" +
+	"\x11encoded_integrity\x18\x04 \x01(\bR\x10encodedIntegrity\x12H\n" +
+	"\x0ewrite_policies\x18\x05 \x03(\v2!.catalog.v1.WritePolicyCapabilityR\rwritePolicies\x120\n" +
+	"\x14preferred_batch_rows\x18\x06 \x01(\x03R\x12preferredBatchRows\x122\n" +
+	"\x15preferred_batch_bytes\x18\a \x01(\x03R\x13preferredBatchBytes\x12S\n" +
+	"\x18preferred_flush_interval\x18\b \x01(\v2\x19.google.protobuf.DurationR\x16preferredFlushInterval\"\xf6\x01\n" +
+	"\x19StreamingSinkCapabilities\x12H\n" +
+	"\x0ewrite_policies\x18\x01 \x03(\v2!.catalog.v1.WritePolicyCapabilityR\rwritePolicies\x12#\n" +
+	"\rowner_fencing\x18\x02 \x01(\bR\fownerFencing\x12'\n" +
+	"\x0fisolated_epochs\x18\x03 \x01(\bR\x0eisolatedEpochs\x12A\n" +
+	"\x0fin_flight_bound\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\rinFlightBound\"\xe9\x01\n" +
+	"\x15WritePolicyCapability\x12\x12\n" +
+	"\x04mode\x18\x01 \x01(\tR\x04mode\x12\x1f\n" +
+	"\vrequires_pk\x18\x02 \x01(\bR\n" +
+	"requiresPk\x12%\n" +
+	"\x0erequires_order\x18\x03 \x01(\bR\rrequiresOrder\x126\n" +
+	"\vaccepts_ops\x18\x04 \x03(\x0e2\x15.catalog.v1.OperationR\n" +
+	"acceptsOps\x12\x1c\n" +
+	"\tatomicity\x18\x05 \x01(\tR\tatomicity\x12\x1e\n" +
+	"\n" +
+	"durability\x18\x06 \x01(\tR\n" +
+	"durability\"\xe2\x01\n" +
+	"\x15ReplicationStreamPlan\x12\x1c\n" +
+	"\tresources\x18\x01 \x03(\tR\tresources\x12#\n" +
+	"\rconsumer_name\x18\x02 \x01(\tR\fconsumerName\x12@\n" +
+	"\x0fconsumer_config\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x0econsumerConfig\x12D\n" +
+	"\x11continuity_config\x18\x04 \x01(\v2\x17.google.protobuf.StructR\x10continuityConfig\"K\n" +
 	"\x0fDescribeRequest\x12$\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"I\n" +
 	"\x10DescribeResponse\x125\n" +
 	"\n" +
 	"connectors\x18\x01 \x03(\v2\x15.catalog.v1.ConnectorR\n" +
-	"connectors\"\xdb\x01\n" +
+	"connectors\"\xeb\x01\n" +
 	"\x1cPlanReplicationStreamRequest\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x122\n" +
 	"\x15replication_stream_id\x18\x02 \x01(\tR\x13replicationStreamId\x120\n" +
-	"\x14source_connection_id\x18\x03 \x01(\tR\x12sourceConnectionId\x12\x1f\n" +
-	"\vconfig_json\x18\x04 \x01(\fR\n" +
-	"configJson\x12\x1c\n" +
-	"\tresources\x18\x05 \x03(\tR\tresources\"<\n" +
-	"\x1dPlanReplicationStreamResponse\x12\x1b\n" +
-	"\tplan_json\x18\x01 \x01(\fR\bplanJson\"l\n" +
+	"\x14source_connection_id\x18\x03 \x01(\tR\x12sourceConnectionId\x12/\n" +
+	"\x06config\x18\x04 \x01(\v2\x17.google.protobuf.StructR\x06config\x12\x1c\n" +
+	"\tresources\x18\x05 \x03(\tR\tresources\"V\n" +
+	"\x1dPlanReplicationStreamResponse\x125\n" +
+	"\x04plan\x18\x01 \x01(\v2!.catalog.v1.ReplicationStreamPlanR\x04plan\"|\n" +
 	"\x0fValidateRequest\x12$\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
-	"\vconfig_json\x18\x03 \x01(\fR\n" +
-	"configJson\",\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
+	"\x06config\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x06config\",\n" +
 	"\x10ValidateResponse\x12\x18\n" +
-	"\afailure\x18\x01 \x01(\tR\afailure\"r\n" +
+	"\afailure\x18\x01 \x01(\tR\afailure\"\x82\x01\n" +
 	"\x15TestConnectionRequest\x12$\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
-	"\vconfig_json\x18\x03 \x01(\fR\n" +
-	"configJson\"2\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
+	"\x06config\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x06config\"2\n" +
 	"\x16TestConnectionResponse\x12\x18\n" +
-	"\afailure\x18\x01 \x01(\tR\afailure\"d\n" +
+	"\afailure\x18\x01 \x01(\tR\afailure\"t\n" +
 	"\x0fDiscoverRequest\x12\x16\n" +
-	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1f\n" +
-	"\vconfig_json\x18\x02 \x01(\fR\n" +
-	"configJson\x12\x18\n" +
-	"\arefresh\x18\x03 \x01(\bR\arefresh\"3\n" +
-	"\x10DiscoverResponse\x12\x1f\n" +
-	"\vresult_json\x18\x01 \x01(\fR\n" +
-	"resultJson\"g\n" +
+	"\x06source\x18\x01 \x01(\tR\x06source\x12/\n" +
+	"\x06config\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x06config\x12\x18\n" +
+	"\arefresh\x18\x03 \x01(\bR\arefresh\"H\n" +
+	"\x10DiscoverResponse\x124\n" +
+	"\tresources\x18\x01 \x03(\v2\x16.ingestion.v1.ResourceR\tresources\"w\n" +
 	"\x0eInspectRequest\x12\x16\n" +
-	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1f\n" +
-	"\vconfig_json\x18\x02 \x01(\fR\n" +
-	"configJson\x12\x1c\n" +
-	"\tresources\x18\x03 \x03(\tR\tresources\"\xb7\x02\n" +
+	"\x06source\x18\x01 \x01(\tR\x06source\x12/\n" +
+	"\x06config\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x06config\x12\x1c\n" +
+	"\tresources\x18\x03 \x03(\tR\tresources\"\xcc\x02\n" +
 	"\x12ResourceInspection\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vprimary_key\x18\x02 \x03(\tR\n" +
 	"primaryKey\x12*\n" +
-	"\x11primary_key_error\x18\x03 \x01(\tR\x0fprimaryKeyError\x12!\n" +
-	"\fcolumns_json\x18\x04 \x01(\fR\vcolumnsJson\x12\x16\n" +
+	"\x11primary_key_error\x18\x03 \x01(\tR\x0fprimaryKeyError\x126\n" +
+	"\acolumns\x18\x04 \x03(\v2\x1c.ingestion.v1.ResourceColumnR\acolumns\x12\x16\n" +
 	"\x06ranked\x18\x05 \x01(\bR\x06ranked\x12#\n" +
 	"\rcolumns_error\x18\x06 \x01(\tR\fcolumnsError\x12/\n" +
 	"\x13columns_unsupported\x18\a \x01(\bR\x12columnsUnsupported\x12/\n" +
@@ -970,7 +1966,17 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x04Kind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vKIND_SOURCE\x10\x01\x12\r\n" +
-	"\tKIND_SINK\x10\x022\xf0\x03\n" +
+	"\tKIND_SINK\x10\x02*g\n" +
+	"\bReadMode\x12\x19\n" +
+	"\x15READ_MODE_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eREAD_MODE_FULL\x10\x01\x12\x19\n" +
+	"\x15READ_MODE_INCREMENTAL\x10\x02\x12\x11\n" +
+	"\rREAD_MODE_CDC\x10\x03*h\n" +
+	"\tOperation\x12\x19\n" +
+	"\x15OPERATION_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10OPERATION_INSERT\x10\x01\x12\x14\n" +
+	"\x10OPERATION_UPDATE\x10\x02\x12\x14\n" +
+	"\x10OPERATION_DELETE\x10\x032\xf0\x03\n" +
 	"\x0eCatalogService\x12E\n" +
 	"\bDescribe\x12\x1b.catalog.v1.DescribeRequest\x1a\x1c.catalog.v1.DescribeResponse\x12l\n" +
 	"\x15PlanReplicationStream\x12(.catalog.v1.PlanReplicationStreamRequest\x1a).catalog.v1.PlanReplicationStreamResponse\x12E\n" +
@@ -994,49 +2000,93 @@ func file_catalog_v1_catalog_proto_rawDescGZIP() []byte {
 	return file_catalog_v1_catalog_proto_rawDescData
 }
 
-var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_catalog_v1_catalog_proto_goTypes = []any{
 	(Kind)(0),                             // 0: catalog.v1.Kind
-	(*Connector)(nil),                     // 1: catalog.v1.Connector
-	(*DescribeRequest)(nil),               // 2: catalog.v1.DescribeRequest
-	(*DescribeResponse)(nil),              // 3: catalog.v1.DescribeResponse
-	(*PlanReplicationStreamRequest)(nil),  // 4: catalog.v1.PlanReplicationStreamRequest
-	(*PlanReplicationStreamResponse)(nil), // 5: catalog.v1.PlanReplicationStreamResponse
-	(*ValidateRequest)(nil),               // 6: catalog.v1.ValidateRequest
-	(*ValidateResponse)(nil),              // 7: catalog.v1.ValidateResponse
-	(*TestConnectionRequest)(nil),         // 8: catalog.v1.TestConnectionRequest
-	(*TestConnectionResponse)(nil),        // 9: catalog.v1.TestConnectionResponse
-	(*DiscoverRequest)(nil),               // 10: catalog.v1.DiscoverRequest
-	(*DiscoverResponse)(nil),              // 11: catalog.v1.DiscoverResponse
-	(*InspectRequest)(nil),                // 12: catalog.v1.InspectRequest
-	(*ResourceInspection)(nil),            // 13: catalog.v1.ResourceInspection
-	(*InspectResponse)(nil),               // 14: catalog.v1.InspectResponse
+	(ReadMode)(0),                         // 1: catalog.v1.ReadMode
+	(Operation)(0),                        // 2: catalog.v1.Operation
+	(*Connector)(nil),                     // 3: catalog.v1.Connector
+	(*SourceSpec)(nil),                    // 4: catalog.v1.SourceSpec
+	(*SourcePolicy)(nil),                  // 5: catalog.v1.SourcePolicy
+	(*ResourceCapabilities)(nil),          // 6: catalog.v1.ResourceCapabilities
+	(*StreamCapabilities)(nil),            // 7: catalog.v1.StreamCapabilities
+	(*SinkSpec)(nil),                      // 8: catalog.v1.SinkSpec
+	(*SinkCapabilities)(nil),              // 9: catalog.v1.SinkCapabilities
+	(*StreamingSinkCapabilities)(nil),     // 10: catalog.v1.StreamingSinkCapabilities
+	(*WritePolicyCapability)(nil),         // 11: catalog.v1.WritePolicyCapability
+	(*ReplicationStreamPlan)(nil),         // 12: catalog.v1.ReplicationStreamPlan
+	(*DescribeRequest)(nil),               // 13: catalog.v1.DescribeRequest
+	(*DescribeResponse)(nil),              // 14: catalog.v1.DescribeResponse
+	(*PlanReplicationStreamRequest)(nil),  // 15: catalog.v1.PlanReplicationStreamRequest
+	(*PlanReplicationStreamResponse)(nil), // 16: catalog.v1.PlanReplicationStreamResponse
+	(*ValidateRequest)(nil),               // 17: catalog.v1.ValidateRequest
+	(*ValidateResponse)(nil),              // 18: catalog.v1.ValidateResponse
+	(*TestConnectionRequest)(nil),         // 19: catalog.v1.TestConnectionRequest
+	(*TestConnectionResponse)(nil),        // 20: catalog.v1.TestConnectionResponse
+	(*DiscoverRequest)(nil),               // 21: catalog.v1.DiscoverRequest
+	(*DiscoverResponse)(nil),              // 22: catalog.v1.DiscoverResponse
+	(*InspectRequest)(nil),                // 23: catalog.v1.InspectRequest
+	(*ResourceInspection)(nil),            // 24: catalog.v1.ResourceInspection
+	(*InspectResponse)(nil),               // 25: catalog.v1.InspectResponse
+	(*v1.ConfigSchema)(nil),               // 26: ingestion.v1.ConfigSchema
+	(*durationpb.Duration)(nil),           // 27: google.protobuf.Duration
+	(*structpb.Struct)(nil),               // 28: google.protobuf.Struct
+	(*v1.Resource)(nil),                   // 29: ingestion.v1.Resource
+	(*v1.ResourceColumn)(nil),             // 30: ingestion.v1.ResourceColumn
 }
 var file_catalog_v1_catalog_proto_depIdxs = []int32{
 	0,  // 0: catalog.v1.Connector.kind:type_name -> catalog.v1.Kind
-	0,  // 1: catalog.v1.DescribeRequest.kind:type_name -> catalog.v1.Kind
-	1,  // 2: catalog.v1.DescribeResponse.connectors:type_name -> catalog.v1.Connector
-	0,  // 3: catalog.v1.ValidateRequest.kind:type_name -> catalog.v1.Kind
-	0,  // 4: catalog.v1.TestConnectionRequest.kind:type_name -> catalog.v1.Kind
-	13, // 5: catalog.v1.InspectResponse.resources:type_name -> catalog.v1.ResourceInspection
-	2,  // 6: catalog.v1.CatalogService.Describe:input_type -> catalog.v1.DescribeRequest
-	4,  // 7: catalog.v1.CatalogService.PlanReplicationStream:input_type -> catalog.v1.PlanReplicationStreamRequest
-	6,  // 8: catalog.v1.CatalogService.Validate:input_type -> catalog.v1.ValidateRequest
-	8,  // 9: catalog.v1.CatalogService.TestConnection:input_type -> catalog.v1.TestConnectionRequest
-	10, // 10: catalog.v1.CatalogService.Discover:input_type -> catalog.v1.DiscoverRequest
-	12, // 11: catalog.v1.CatalogService.Inspect:input_type -> catalog.v1.InspectRequest
-	3,  // 12: catalog.v1.CatalogService.Describe:output_type -> catalog.v1.DescribeResponse
-	5,  // 13: catalog.v1.CatalogService.PlanReplicationStream:output_type -> catalog.v1.PlanReplicationStreamResponse
-	7,  // 14: catalog.v1.CatalogService.Validate:output_type -> catalog.v1.ValidateResponse
-	9,  // 15: catalog.v1.CatalogService.TestConnection:output_type -> catalog.v1.TestConnectionResponse
-	11, // 16: catalog.v1.CatalogService.Discover:output_type -> catalog.v1.DiscoverResponse
-	14, // 17: catalog.v1.CatalogService.Inspect:output_type -> catalog.v1.InspectResponse
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	4,  // 1: catalog.v1.Connector.source:type_name -> catalog.v1.SourceSpec
+	8,  // 2: catalog.v1.Connector.sink:type_name -> catalog.v1.SinkSpec
+	1,  // 3: catalog.v1.SourceSpec.modes:type_name -> catalog.v1.ReadMode
+	5,  // 4: catalog.v1.SourceSpec.source_policies:type_name -> catalog.v1.SourcePolicy
+	26, // 5: catalog.v1.SourceSpec.config:type_name -> ingestion.v1.ConfigSchema
+	6,  // 6: catalog.v1.SourceSpec.resources:type_name -> catalog.v1.ResourceCapabilities
+	7,  // 7: catalog.v1.SourceSpec.stream:type_name -> catalog.v1.StreamCapabilities
+	1,  // 8: catalog.v1.SourcePolicy.mode:type_name -> catalog.v1.ReadMode
+	2,  // 9: catalog.v1.SourcePolicy.emits_ops:type_name -> catalog.v1.Operation
+	2,  // 10: catalog.v1.StreamCapabilities.emits_ops:type_name -> catalog.v1.Operation
+	26, // 11: catalog.v1.SinkSpec.config:type_name -> ingestion.v1.ConfigSchema
+	9,  // 12: catalog.v1.SinkSpec.capabilities:type_name -> catalog.v1.SinkCapabilities
+	10, // 13: catalog.v1.SinkCapabilities.stream:type_name -> catalog.v1.StreamingSinkCapabilities
+	11, // 14: catalog.v1.SinkCapabilities.write_policies:type_name -> catalog.v1.WritePolicyCapability
+	27, // 15: catalog.v1.SinkCapabilities.preferred_flush_interval:type_name -> google.protobuf.Duration
+	11, // 16: catalog.v1.StreamingSinkCapabilities.write_policies:type_name -> catalog.v1.WritePolicyCapability
+	27, // 17: catalog.v1.StreamingSinkCapabilities.in_flight_bound:type_name -> google.protobuf.Duration
+	2,  // 18: catalog.v1.WritePolicyCapability.accepts_ops:type_name -> catalog.v1.Operation
+	28, // 19: catalog.v1.ReplicationStreamPlan.consumer_config:type_name -> google.protobuf.Struct
+	28, // 20: catalog.v1.ReplicationStreamPlan.continuity_config:type_name -> google.protobuf.Struct
+	0,  // 21: catalog.v1.DescribeRequest.kind:type_name -> catalog.v1.Kind
+	3,  // 22: catalog.v1.DescribeResponse.connectors:type_name -> catalog.v1.Connector
+	28, // 23: catalog.v1.PlanReplicationStreamRequest.config:type_name -> google.protobuf.Struct
+	12, // 24: catalog.v1.PlanReplicationStreamResponse.plan:type_name -> catalog.v1.ReplicationStreamPlan
+	0,  // 25: catalog.v1.ValidateRequest.kind:type_name -> catalog.v1.Kind
+	28, // 26: catalog.v1.ValidateRequest.config:type_name -> google.protobuf.Struct
+	0,  // 27: catalog.v1.TestConnectionRequest.kind:type_name -> catalog.v1.Kind
+	28, // 28: catalog.v1.TestConnectionRequest.config:type_name -> google.protobuf.Struct
+	28, // 29: catalog.v1.DiscoverRequest.config:type_name -> google.protobuf.Struct
+	29, // 30: catalog.v1.DiscoverResponse.resources:type_name -> ingestion.v1.Resource
+	28, // 31: catalog.v1.InspectRequest.config:type_name -> google.protobuf.Struct
+	30, // 32: catalog.v1.ResourceInspection.columns:type_name -> ingestion.v1.ResourceColumn
+	24, // 33: catalog.v1.InspectResponse.resources:type_name -> catalog.v1.ResourceInspection
+	13, // 34: catalog.v1.CatalogService.Describe:input_type -> catalog.v1.DescribeRequest
+	15, // 35: catalog.v1.CatalogService.PlanReplicationStream:input_type -> catalog.v1.PlanReplicationStreamRequest
+	17, // 36: catalog.v1.CatalogService.Validate:input_type -> catalog.v1.ValidateRequest
+	19, // 37: catalog.v1.CatalogService.TestConnection:input_type -> catalog.v1.TestConnectionRequest
+	21, // 38: catalog.v1.CatalogService.Discover:input_type -> catalog.v1.DiscoverRequest
+	23, // 39: catalog.v1.CatalogService.Inspect:input_type -> catalog.v1.InspectRequest
+	14, // 40: catalog.v1.CatalogService.Describe:output_type -> catalog.v1.DescribeResponse
+	16, // 41: catalog.v1.CatalogService.PlanReplicationStream:output_type -> catalog.v1.PlanReplicationStreamResponse
+	18, // 42: catalog.v1.CatalogService.Validate:output_type -> catalog.v1.ValidateResponse
+	20, // 43: catalog.v1.CatalogService.TestConnection:output_type -> catalog.v1.TestConnectionResponse
+	22, // 44: catalog.v1.CatalogService.Discover:output_type -> catalog.v1.DiscoverResponse
+	25, // 45: catalog.v1.CatalogService.Inspect:output_type -> catalog.v1.InspectResponse
+	40, // [40:46] is the sub-list for method output_type
+	34, // [34:40] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_catalog_v1_catalog_proto_init() }
@@ -1044,13 +2094,17 @@ func file_catalog_v1_catalog_proto_init() {
 	if File_catalog_v1_catalog_proto != nil {
 		return
 	}
+	file_catalog_v1_catalog_proto_msgTypes[0].OneofWrappers = []any{
+		(*Connector_Source)(nil),
+		(*Connector_Sink)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catalog_v1_catalog_proto_rawDesc), len(file_catalog_v1_catalog_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   14,
+			NumEnums:      3,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

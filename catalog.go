@@ -3,6 +3,8 @@ package filament
 import (
 	"context"
 	"errors"
+
+	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 )
 
 // ErrUnsupported reports that a connector does not implement the optional
@@ -37,8 +39,9 @@ type Catalog interface {
 	// TestConnection runs the connector's live probe. Connectors without one
 	// pass.
 	TestConnection(ctx context.Context, kind ConnectorKind, name string, cfg Config) error
-	// Discover configures the source and lists its resources.
-	Discover(ctx context.Context, source string, cfg Config, opts DiscoverOpts) (DiscoverResult, error)
+	// Discover configures the source and lists its resources as the API
+	// presents them.
+	Discover(ctx context.Context, source string, cfg Config, opts DiscoverOpts) ([]*ingestionv1.Resource, error)
 	// Inspect configures the source once and reports each resource's primary
 	// key and columns. An empty resources list inspects every selectable
 	// discovered resource, or returns ErrUnsupported when the source cannot
@@ -106,10 +109,11 @@ type ResourceInspection struct {
 	// holds a failed schema read.
 	PrimaryKey    []string
 	PrimaryKeyErr error
-	// Columns are the resource's fields. Ranked marks them as annotated with
-	// cursor eligibility. ColumnsErr is ErrUnsupported when the source exposes
-	// neither cursor columns nor a schema, otherwise the read error.
-	Columns    []CursorColumn
+	// Columns are the resource's fields as the API presents them. Ranked marks
+	// them as annotated with cursor eligibility. ColumnsErr is ErrUnsupported
+	// when the source exposes neither cursor columns nor a schema, otherwise
+	// the read error.
+	Columns    []*ingestionv1.ResourceColumn
 	Ranked     bool
 	ColumnsErr error
 	// ManagedIncremental marks a resource whose incremental state the source

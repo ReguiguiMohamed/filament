@@ -276,21 +276,6 @@ func runSignalFromProto(signal ingestionv1.RunSignal) (filament.Signal, error) {
 	}
 }
 
-func resourcesToProto(resources []filament.Resource) *ingestionv1.DiscoverResourcesResponse {
-	out := make([]*ingestionv1.Resource, 0, len(resources))
-	for _, resource := range resources {
-		out = append(out, &ingestionv1.Resource{
-			Name:         resource.Name,
-			IsSelectable: resource.Selectable,
-			PrimaryKey:   resource.PrimaryKey,
-			Selector:     resource.Selector,
-			DisplayName:  resource.DisplayName,
-			Metadata:     resource.Metadata,
-		})
-	}
-	return &ingestionv1.DiscoverResourcesResponse{Resources: out}
-}
-
 // epochMillis renders a stamp for the wire, where 0 means unset.
 func epochMillis(t time.Time) int64 {
 	if t.IsZero() {

@@ -214,11 +214,11 @@ func (a *Server) DiscoverResources(ctx context.Context, req *connect.Request[ing
 		config = overlayConfig(conn.Config, config)
 	}
 
-	result, err := a.catalog.Discover(ctx, connector, filament.NewConfig(config), filament.DiscoverOpts{Refresh: req.Msg.GetRefresh()})
+	resources, err := a.catalog.Discover(ctx, connector, filament.NewConfig(config), filament.DiscoverOpts{Refresh: req.Msg.GetRefresh()})
 	if err != nil {
 		return nil, catalog.ConnectError(err)
 	}
-	return connect.NewResponse(resourcesToProto(result.Resources)), nil
+	return connect.NewResponse(&ingestionv1.DiscoverResourcesResponse{Resources: resources}), nil
 }
 
 // GetResourceColumns configures one source and returns schemas for every
@@ -266,22 +266,8 @@ func (a *Server) GetResourceColumns(ctx context.Context, req *connect.Request[in
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("resource columns %q: %w", inspection.Name, err))
 		}
 		response.Resources = append(response.Resources, &ingestionv1.ResourceColumns{
-			Resource: inspection.Name, Columns: cursorColumnsToProto(inspection.Columns), ManagedIncremental: inspection.ManagedIncremental,
+			Resource: inspection.Name, Columns: inspection.Columns, ManagedIncremental: inspection.ManagedIncremental,
 		})
 	}
 	return connect.NewResponse(response), nil
-}
-
-func cursorColumnsToProto(columns []filament.CursorColumn) []*ingestionv1.ResourceColumn {
-	out := make([]*ingestionv1.ResourceColumn, 0, len(columns))
-	for _, column := range columns {
-		out = append(out, &ingestionv1.ResourceColumn{
-			Name: column.Name, LogicalType: string(column.Logical), NativeType: column.Native,
-			IsNullable: column.Nullable, IsPrimaryKey: column.PrimaryKey,
-			IsCursorEligible: column.Eligible, IsCursorRecommended: column.Recommended,
-			RecommendationRank: int32(column.Rank), Warning: column.Warning, //nolint:gosec // tiny rank
-			IsConfigurable: column.Configurable, SupportsLookback: column.SupportsLookback,
-		})
-	}
-	return out
 }

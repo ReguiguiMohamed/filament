@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/galaxy-io/filament"
+	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	"github.com/galaxy-io/filament/registry"
 )
 
@@ -127,17 +128,21 @@ func (l local) TestConnection(ctx context.Context, kind filament.ConnectorKind, 
 	return live.TestConnection(ctx, cfg)
 }
 
-func (l local) Discover(ctx context.Context, name string, cfg filament.Config, opts filament.DiscoverOpts) (filament.DiscoverResult, error) {
+func (l local) Discover(ctx context.Context, name string, cfg filament.Config, opts filament.DiscoverOpts) ([]*ingestionv1.Resource, error) {
 	source, teardown, err := l.configure(ctx, name, cfg)
 	if err != nil {
-		return filament.DiscoverResult{}, err
+		return nil, err
 	}
 	defer teardown()
 	discoverable, ok := source.(filament.Discoverable)
 	if !ok {
-		return filament.DiscoverResult{}, fmt.Errorf("%w: %q does not support discovery", filament.ErrUnsupported, name)
+		return nil, fmt.Errorf("%w: %q does not support discovery", filament.ErrUnsupported, name)
 	}
-	return discoverable.Discover(ctx, opts)
+	result, err := discoverable.Discover(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return presentResources(result.Resources), nil
 }
 
 func (l local) Inspect(ctx context.Context, name string, cfg filament.Config, resources []string) ([]filament.ResourceInspection, error) {
@@ -177,19 +182,21 @@ func (l local) Inspect(ctx context.Context, name string, cfg filament.Config, re
 		} else {
 			inspection.PrimaryKey, inspection.PrimaryKeyErr = filament.PrimaryKeyForResource(ctx, source, resource)
 		}
+		var columns []filament.CursorColumn
 		switch {
 		case hasCursors:
 			inspection.Ranked = true
-			inspection.Columns, inspection.ColumnsErr = cursors.CursorColumns(ctx, resource)
+			columns, inspection.ColumnsErr = cursors.CursorColumns(ctx, resource)
 		case hasSchema:
 			var schema filament.RecordSchema
 			schema, inspection.ColumnsErr = schemas.Schema(ctx, resource)
 			for _, field := range schema.Fields {
-				inspection.Columns = append(inspection.Columns, filament.CursorColumn{SchemaField: field})
+				columns = append(columns, filament.CursorColumn{SchemaField: field})
 			}
 		default:
 			inspection.ColumnsErr = fmt.Errorf("%w: %q does not provide resource columns", filament.ErrUnsupported, name)
 		}
+		inspection.Columns = presentColumns(columns)
 		if managed, ok := source.(filament.ManagedIncrementalSource); ok {
 			inspection.ManagedIncremental = managed.ManagedIncremental(resource)
 		}
