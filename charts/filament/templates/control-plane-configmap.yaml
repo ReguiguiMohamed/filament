@@ -14,6 +14,9 @@ data:
   NATS_SUBJECTS: {{ .Values.eventBus.nats.subjects | quote }}
   NATS_TTL_SECONDS: {{ .Values.eventBus.nats.ttlSeconds | quote }}
 
+  # Worker
+  WORKER_URL: "http://{{ include "filament.worker.fullname" . }}:{{ .Values.worker.service.port }}"
+
   # Dispatch
   DISPATCH_MODE: "kubernetes"
 
