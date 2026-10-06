@@ -13,6 +13,7 @@ import (
 	"github.com/galaxy-io/filament"
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	"github.com/galaxy-io/filament/internal/compile"
+	"github.com/galaxy-io/filament/internal/convert"
 	"github.com/galaxy-io/filament/internal/runs"
 	scheduledomain "github.com/galaxy-io/filament/internal/schedule"
 )
@@ -204,13 +205,13 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 				return fmt.Errorf("edge %s -> %s: all resources on a route must use the same write mode", edge.GetFromNode(), edge.GetToNode())
 			}
 			routeWriteModes[route] = writeMode
-			edge.WriteMode = writeModeToProto(writeMode)
+			edge.WriteMode = convert.WriteModeToProto(writeMode)
 		} else {
-			readMode, err := readModeFromProto(edge.GetReadMode())
+			readMode, err := convert.ReadModeFromProto(edge.GetReadMode())
 			if err != nil {
 				return fmt.Errorf("edge %s -> %s: %w", edge.GetFromNode(), edge.GetToNode(), err)
 			}
-			writeMode, err := writeModeFromProto(edge.GetWriteMode())
+			writeMode, err := convert.WriteModeFromProto(edge.GetWriteMode())
 			if err != nil {
 				return fmt.Errorf("edge %s -> %s: %w", edge.GetFromNode(), edge.GetToNode(), err)
 			}
@@ -219,8 +220,8 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 				return fmt.Errorf("edge %s -> %s: all resources on a route must use the same write mode", edge.GetFromNode(), edge.GetToNode())
 			}
 			routeWriteModes[route] = writeMode
-			edge.ReadMode = readModeToProto(readMode)
-			edge.WriteMode = writeModeToProto(writeMode)
+			edge.ReadMode = convert.ReadModeToProto(readMode)
+			edge.WriteMode = convert.WriteModeToProto(writeMode)
 			ingestionType, err = filament.IngestionFor(readMode, writeMode)
 			if err != nil {
 				return fmt.Errorf("edge %s -> %s: %w", edge.GetFromNode(), edge.GetToNode(), err)

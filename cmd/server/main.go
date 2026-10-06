@@ -31,8 +31,6 @@ import (
 	"github.com/galaxy-io/filament/internal/modules/orchestrator"
 	"github.com/galaxy-io/filament/server"
 	"github.com/galaxy-io/filament/ui"
-
-	_ "github.com/galaxy-io/filament/cmd/internal/connectors"
 )
 
 func main() {
@@ -59,6 +57,9 @@ func run(ctx context.Context, migrateOnly bool) error {
 		return err
 	}
 	defer closeDeps()
+	if deps.Worker, err = boot.RemoteWorker(); err != nil {
+		return err
+	}
 	serverLog := deps.Log.With(filament.Field{Key: "component", Value: "server"})
 
 	// A nil provider means auth is disabled: the API stays unauthenticated

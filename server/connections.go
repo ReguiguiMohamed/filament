@@ -15,6 +15,7 @@ import (
 	"github.com/galaxy-io/filament"
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	"github.com/galaxy-io/filament/internal/compile"
+	"github.com/galaxy-io/filament/internal/convert"
 )
 
 // CreateConnection separates schema-declared secret fields from ordinary
@@ -39,7 +40,7 @@ func (a *Server) CreateConnection(ctx context.Context, req *connect.Request[inge
 		// Persist the concrete identity when a catalog default alias was used.
 		connector = spec.Name
 	}
-	cfg := structMap(req.Msg.GetConfig())
+	cfg := convert.StructMap(req.Msg.GetConfig())
 	refs := cloneStrings(req.Msg.GetSecretRefs())
 	canonicalizeConnectionConfig(schema, cfg, refs)
 	if err := validateSecretRefTenant(refs, tenant); err != nil {
@@ -72,7 +73,7 @@ func (a *Server) CreateConnection(ctx context.Context, req *connect.Request[inge
 	}
 
 	conn, err := a.store.CreateConnection(ctx, filament.Connection{
-		ID: id, Tenant: tenant, Kind: connectionKindFromProto(req.Msg.GetKind()), Name: req.Msg.GetName(),
+		ID: id, Tenant: tenant, Kind: convert.ConnectorKindFromProto(req.Msg.GetKind()), Name: req.Msg.GetName(),
 		Connector: connector, Config: config.AsMap(), SecretRefs: refs,
 	})
 	if err != nil {
@@ -107,7 +108,7 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	cfg := structMap(in.GetConfig())
+	cfg := convert.StructMap(in.GetConfig())
 	refs := cloneStrings(in.GetSecretRefs())
 	canonicalizeConnectionConfig(schema, cfg, refs)
 	if err := validateSecretRefTenant(refs, stored.Tenant); err != nil {
@@ -176,7 +177,7 @@ func validateConnectionUpdateTarget(stored filament.Connection, in *ingestionv1.
 	if stored.Connector != in.GetConnector() {
 		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("connection %q connector cannot change from %q to %q", in.GetId(), stored.Connector, in.GetConnector()))
 	}
-	if stored.Kind != connectionKindFromProto(in.GetKind()) {
+	if stored.Kind != convert.ConnectorKindFromProto(in.GetKind()) {
 		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("connection %q kind cannot change", in.GetId()))
 	}
 	return nil
@@ -213,7 +214,7 @@ func (a *Server) ListConnections(ctx context.Context, req *connect.Request[inges
 		return nil, err
 	}
 	connections, total, err := a.store.ListConnections(ctx, filament.ConnectionFilter{
-		Tenant: string(tenant), Kind: connectionKindFromProto(req.Msg.GetKind()),
+		Tenant: string(tenant), Kind: convert.ConnectorKindFromProto(req.Msg.GetKind()),
 		IncludeDeleted: req.Msg.GetIncludeDeleted(), ListOptions: options,
 	})
 	if err != nil {
@@ -228,7 +229,7 @@ func (a *Server) ListConnections(ctx context.Context, req *connect.Request[inges
 
 func (a *Server) connectionForResponse(ctx context.Context, conn filament.Connection) *ingestionv1.Connection {
 	conn.Config = cloneConfigMap(conn.Config)
-	if schema, err := a.schemaFor(ctx, connectionKindToProto(conn.Kind), conn.Connector); err == nil {
+	if schema, err := a.schemaFor(ctx, convert.ConnectorKindToProto(conn.Kind), conn.Connector); err == nil {
 		canonicalizeConnectionConfig(schema, conn.Config, cloneStrings(conn.SecretRefs))
 	}
 	out := connectionToProto(conn)
@@ -238,7 +239,7 @@ func (a *Server) connectionForResponse(ctx context.Context, conn filament.Connec
 		if err != nil {
 			return out
 		}
-		out.Replication = replicationToProto(filament.ReplicationFor(spec, filament.NewConfig(conn.Config)))
+		out.Replication = convert.ReplicationToProto(filament.ReplicationFor(spec, filament.NewConfig(conn.Config)))
 		out.ExecutionModes = a.sourceExecutionModes(spec)
 	case filament.ConnectorKindSink:
 		spec, err := a.worker.SinkSpec(ctx, conn.Connector)

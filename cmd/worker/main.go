@@ -1,9 +1,11 @@
-// Command worker executes one already-persisted Filament run.
+// Command worker executes one already-persisted Filament run, or with -serve
+// runs long-lived answering connector calls for the control services.
 package main
 
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -15,12 +17,22 @@ import (
 	"github.com/galaxy-io/filament/registry"
 	"github.com/galaxy-io/filament/runner"
 
-	_ "github.com/galaxy-io/filament/cmd/internal/connectors"
+	"github.com/galaxy-io/filament/cmd/internal/connectors"
 )
 
 func main() {
+	serveMode := flag.Bool("serve", false, "run long-lived, answering connector calls for the control services")
+	flag.Parse()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	err := run(ctx)
+	var err error
+	switch {
+	case *serveMode && os.Getenv("RUN_ID") != "":
+		err = errors.New("-serve and RUN_ID are exclusive: a run executes in its own process")
+	case *serveMode:
+		err = serve(ctx)
+	default:
+		err = run(ctx)
+	}
 	stop()
 	if err != nil {
 		slog.Error("worker exited",
@@ -49,6 +61,9 @@ func run(ctx context.Context) error {
 		return err
 	}
 	defer closeDeps()
+	if deps.Sources, err = connectors.SourcesFromEnv(); err != nil {
+		return err
+	}
 	workerLog := deps.Log.With(
 		filament.Field{Key: "component", Value: "worker"},
 		filament.Field{Key: "run_id", Value: string(runID)},

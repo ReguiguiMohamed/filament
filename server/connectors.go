@@ -14,6 +14,7 @@ import (
 	"github.com/galaxy-io/filament"
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	"github.com/galaxy-io/filament/internal/compile"
+	"github.com/galaxy-io/filament/internal/convert"
 )
 
 const (
@@ -37,12 +38,12 @@ func (a *Server) ListConnectors(ctx context.Context, req *connect.Request[ingest
 	var connectors []*ingestionv1.ConnectorSpec
 	if req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_UNSPECIFIED || req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE {
 		for _, spec := range catalog.Sources {
-			connectors = append(connectors, sourceSpecToProto(spec))
+			connectors = append(connectors, convert.SourceSpecToProto(spec))
 		}
 	}
 	if req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_UNSPECIFIED || req.Msg.GetKind() == ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK {
 		for _, spec := range catalog.Sinks {
-			connectors = append(connectors, sinkSpecToProto(spec))
+			connectors = append(connectors, convert.SinkSpecToProto(spec))
 		}
 	}
 	search := strings.ToLower(options.Search)
@@ -97,13 +98,13 @@ func (a *Server) GetConnector(ctx context.Context, req *connect.Request[ingestio
 		if err != nil {
 			return nil, connectorError(err)
 		}
-		spec = sourceSpecToProto(sourceSpec)
+		spec = convert.SourceSpecToProto(sourceSpec)
 	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
 		sinkSpec, err := a.worker.SinkSpec(ctx, req.Msg.GetConnector())
 		if err != nil {
 			return nil, connectorError(err)
 		}
-		spec = sinkSpecToProto(sinkSpec)
+		spec = convert.SinkSpecToProto(sinkSpec)
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("connector kind is required"))
 	}
@@ -121,7 +122,7 @@ func (a *Server) ValidateConfig(ctx context.Context, req *connect.Request[ingest
 	ctx, cancel := context.WithTimeout(ctx, connectorRPCTimeout)
 	defer cancel()
 
-	config := structMap(req.Msg.GetConfig())
+	config := convert.StructMap(req.Msg.GetConfig())
 	if id := req.Msg.GetConnectionId(); id != "" {
 		conn, err := a.store.LoadConnection(ctx, tenant, id)
 		if err != nil {
@@ -182,7 +183,7 @@ func (a *Server) DiscoverResources(ctx context.Context, req *connect.Request[ing
 	defer cancel()
 
 	connector := req.Msg.GetConnector()
-	config := structMap(req.Msg.GetConfig())
+	config := convert.StructMap(req.Msg.GetConfig())
 	if id := req.Msg.GetConnectionId(); id != "" {
 		conn, err := a.store.LoadConnection(ctx, tenant, id)
 		if err != nil {
@@ -207,7 +208,7 @@ func (a *Server) DiscoverResources(ctx context.Context, req *connect.Request[ing
 		}
 		return nil, connectorError(err)
 	}
-	return connect.NewResponse(resourcesToProto(resources)), nil
+	return connect.NewResponse(&ingestionv1.DiscoverResourcesResponse{Resources: convert.ResourcesToProto(resources)}), nil
 }
 
 // GetResourceColumns configures one source and returns schemas for every
@@ -221,7 +222,7 @@ func (a *Server) GetResourceColumns(ctx context.Context, req *connect.Request[in
 	defer cancel()
 
 	connector := req.Msg.GetConnector()
-	config := structMap(req.Msg.GetConfig())
+	config := convert.StructMap(req.Msg.GetConfig())
 	if id := req.Msg.GetConnectionId(); id != "" {
 		conn, err := a.store.LoadConnection(ctx, tenant, id)
 		if err != nil {
@@ -256,7 +257,7 @@ func (a *Server) GetResourceColumns(ctx context.Context, req *connect.Request[in
 		}
 		response.Resources = append(response.Resources, &ingestionv1.ResourceColumns{
 			Resource:           inspection.Name,
-			Columns:            cursorColumnsToProto(inspection.Columns),
+			Columns:            convert.CursorColumnsToProto(inspection.Columns),
 			ManagedIncremental: inspection.ManagedIncremental,
 		})
 	}
@@ -290,18 +291,4 @@ func connectorError(err error) error {
 	default:
 		return connect.NewError(connect.CodeInternal, err)
 	}
-}
-
-func cursorColumnsToProto(columns []filament.CursorColumn) []*ingestionv1.ResourceColumn {
-	out := make([]*ingestionv1.ResourceColumn, 0, len(columns))
-	for _, column := range columns {
-		out = append(out, &ingestionv1.ResourceColumn{
-			Name: column.Name, LogicalType: string(column.Logical), NativeType: column.Native,
-			IsNullable: column.Nullable, IsPrimaryKey: column.PrimaryKey,
-			IsCursorEligible: column.Eligible, IsCursorRecommended: column.Recommended,
-			RecommendationRank: int32(column.Rank), Warning: column.Warning, //nolint:gosec // tiny rank
-			IsConfigurable: column.Configurable, SupportsLookback: column.SupportsLookback,
-		})
-	}
-	return out
 }

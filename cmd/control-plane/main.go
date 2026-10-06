@@ -16,6 +16,7 @@ import (
 
 	"github.com/galaxy-io/filament"
 	"github.com/galaxy-io/filament/cmd/internal/boot"
+	"github.com/galaxy-io/filament/cmd/internal/connectors"
 	"github.com/galaxy-io/filament/cmd/internal/dispatch"
 	"github.com/galaxy-io/filament/cmd/internal/health"
 	"github.com/galaxy-io/filament/eventbus"
@@ -27,8 +28,7 @@ import (
 	"github.com/galaxy-io/filament/module"
 	"github.com/galaxy-io/filament/registry"
 	"github.com/galaxy-io/filament/runner"
-
-	_ "github.com/galaxy-io/filament/cmd/internal/connectors"
+	"github.com/galaxy-io/filament/worker"
 )
 
 func main() {
@@ -51,6 +51,9 @@ func run(ctx context.Context) error {
 		return err
 	}
 	defer closeDeps()
+	if err := loadDrivers(&deps); err != nil {
+		return err
+	}
 	log := deps.Log.With(
 		filament.Field{Key: "component", Value: "control-plane"},
 	)
@@ -67,10 +70,7 @@ func run(ctx context.Context) error {
 		},
 	)
 	healthState.Mount(healthMux)
-	healthAddr := os.Getenv("HEALTH_ADDR")
-	if healthAddr == "" {
-		healthAddr = ":8081"
-	}
+	healthAddr := healthAddress()
 	healthSrv := &http.Server{Addr: healthAddr, Handler: healthMux, ReadHeaderTimeout: 10 * time.Second}
 	healthErr := make(chan error, 1)
 	go func() { healthErr <- healthSrv.ListenAndServe() }()
@@ -157,4 +157,23 @@ func shutdownHealth(srv *http.Server, state *health.State, log filament.Logger) 
 		log.Error("control-plane health server shutdown failed", err,
 			filament.Field{Key: "event.name", Value: "control_plane.health.shutdown_failed"})
 	}
+}
+
+// loadDrivers wires the registered connectors into deps: the sources for
+// in-process execution and a local worker over them for the scheduler.
+func loadDrivers(deps *boot.Deps) error {
+	sources, err := connectors.SourcesFromEnv()
+	if err != nil {
+		return err
+	}
+	deps.Sources = sources
+	deps.Worker = worker.Local(sources, registry.DefaultSinks)
+	return nil
+}
+
+func healthAddress() string {
+	if addr := os.Getenv("HEALTH_ADDR"); addr != "" {
+		return addr
+	}
+	return ":8081"
 }

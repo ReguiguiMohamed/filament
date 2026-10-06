@@ -47,10 +47,11 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	serverBinary, controlBinary := buildServiceBinaries(t, ctx)
-	t.Log("built server and control-plane binaries")
+	serverBinary, controlBinary, workerBinary := buildServiceBinaries(t, ctx)
+	t.Log("built server, control-plane and worker binaries")
 	serverAddr := freeAddress(t)
 	controlAddr := freeAddress(t)
+	workerAddr := freeAddress(t)
 	commonEnv := []string{
 		"PERSISTENCE_PROVIDER=postgres",
 		"PERSISTENCE_DSN=" + persistence.DSN(),
@@ -65,7 +66,10 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 
 	runCommand(t, ctx, serverBinary, []string{"-migrate"}, commonEnv)
 	t.Log("migrated persistence database")
-	server := startManagedProcess(t, serverBinary, nil, append(commonEnv, "SERVER_ADDR="+serverAddr))
+	worker := startManagedProcess(t, workerBinary, []string{"-serve"}, append(commonEnv, "WORKER_ADDR="+workerAddr))
+	waitForHealth(t, ctx, worker, "http://"+workerAddr+"/readyz")
+	t.Log("worker is ready")
+	server := startManagedProcess(t, serverBinary, nil, append(commonEnv, "SERVER_ADDR="+serverAddr, "WORKER_URL=http://"+workerAddr))
 	waitForHealth(t, ctx, server, "http://"+serverAddr+"/readyz")
 	t.Log("server is ready")
 
@@ -149,21 +153,22 @@ func TestPipelineAcrossRealProcesses(t *testing.T) {
 	})
 }
 
-func buildServiceBinaries(t testing.TB, ctx context.Context) (string, string) {
+func buildServiceBinaries(t testing.TB, ctx context.Context) (string, string, string) {
 	t.Helper()
 	root := e2eRepositoryRoot(t)
 	dir := t.TempDir()
 	server := filepath.Join(dir, "server")
 	control := filepath.Join(dir, "control-plane")
+	worker := filepath.Join(dir, "worker")
 	goBinary := filepath.Join(runtime.GOROOT(), "bin", "go")
-	cmd := exec.CommandContext(ctx, goBinary, "build", "-o", dir, "./server", "./control-plane")
+	cmd := exec.CommandContext(ctx, goBinary, "build", "-o", dir, "./server", "./control-plane", "./worker")
 	cmd.Dir = filepath.Join(root, "cmd")
 	cmd.Env = append(os.Environ(), "GOWORK=off")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("build service binaries: %v\n%s", err, output)
 	}
-	return server, control
+	return server, control, worker
 }
 
 func e2eRepositoryRoot(t testing.TB) string {

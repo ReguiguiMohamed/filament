@@ -11,6 +11,7 @@ import (
 	"github.com/galaxy-io/filament"
 	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 	"github.com/galaxy-io/filament/internal/compile"
+	"github.com/galaxy-io/filament/internal/convert"
 )
 
 // ValidatePipeline checks every edge of a graph: the per-resource read modes
@@ -64,7 +65,7 @@ func (a *Server) validatePipelineGraph(ctx context.Context, tenant string, graph
 			return nil, err
 		}
 		ev := resp.Edges[len(resp.Edges)-1]
-		writeMode, err := writeModeFromProto(ev.GetEffectiveWriteMode())
+		writeMode, err := convert.WriteModeFromProto(ev.GetEffectiveWriteMode())
 		if err != nil {
 			continue
 		}
@@ -164,7 +165,7 @@ func (a *Server) validateEdge(ctx context.Context, edge *ingestionv1.PipelineEdg
 		return nil
 	}
 	replication := filament.ReplicationFor(srcSpec, filament.NewConfig(srcConn.Config))
-	ev.Replication = replicationToProto(replication)
+	ev.Replication = convert.ReplicationToProto(replication)
 
 	// CDC connections fix the read side to the change stream and expose append
 	// (the history-preserving default) or merge. Standard edges expose both.
@@ -185,24 +186,24 @@ func (a *Server) validateEdge(ctx context.Context, edge *ingestionv1.PipelineEdg
 			edgeError(ev, "write_mode", "CDC connections support append or merge write mode")
 			chosen = filament.IngestionCDCAppend
 		}
-		ev.EffectiveWriteMode = writeModeToProto(writeMode)
+		ev.EffectiveWriteMode = convert.WriteModeToProto(writeMode)
 		ev.SupportedWriteModes = supportedCDCWriteModesFor(snkSpec)
 		if len(edge.GetCursors()) > 0 {
 			edgeError(ev, "cursors", "CDC connections manage their stream position automatically")
 		}
 	} else {
-		readMode, err := readModeFromProto(edge.GetReadMode())
+		readMode, err := convert.ReadModeFromProto(edge.GetReadMode())
 		if err != nil {
 			edgeError(ev, "read_mode", err.Error())
 			return nil
 		}
-		writeMode, err := writeModeFromProto(edge.GetWriteMode())
+		writeMode, err := convert.WriteModeFromProto(edge.GetWriteMode())
 		if err != nil {
 			edgeError(ev, "write_mode", err.Error())
 			return nil
 		}
-		ev.EffectiveReadMode = readModeToProto(readMode)
-		ev.EffectiveWriteMode = writeModeToProto(writeMode)
+		ev.EffectiveReadMode = convert.ReadModeToProto(readMode)
+		ev.EffectiveWriteMode = convert.WriteModeToProto(writeMode)
 		supportedReadModes = supportedReadModesFor(srcSpec)
 		ev.SupportedWriteModes = supportedWriteModesFor(snkSpec)
 		chosen, err = filament.IngestionFor(readMode, writeMode)
@@ -236,7 +237,7 @@ func supportedCDCWriteModesFor(sink filament.SinkSpec) []ingestionv1.WriteMode {
 		{filament.WriteMerge, filament.IngestionCDCMerge},
 	} {
 		if filament.ValidateSinkIngestion(sink, candidate.ingestion) == nil {
-			out = append(out, writeModeToProto(candidate.mode))
+			out = append(out, convert.WriteModeToProto(candidate.mode))
 		}
 	}
 	return out
@@ -247,7 +248,7 @@ func supportedReadModesFor(source filament.ConnectorSpec) []ingestionv1.ReadMode
 	for _, read := range []filament.ReadMode{filament.ModeFull, filament.ModeIncremental} {
 		ingestionType, _ := filament.IngestionFor(read, filament.WriteAppend)
 		if filament.ValidateSourceIngestion(source, ingestionType) == nil {
-			out = append(out, readModeToProto(read))
+			out = append(out, convert.ReadModeToProto(read))
 		}
 	}
 	return out
@@ -258,7 +259,7 @@ func supportedWriteModesFor(sink filament.SinkSpec) []ingestionv1.WriteMode {
 	for _, write := range []filament.WriteMode{filament.WriteAppend, filament.WriteReplace, filament.WriteUpsert} {
 		ingestionType, _ := filament.IngestionFor(filament.ModeFull, write)
 		if filament.ValidateSinkIngestion(sink, ingestionType) == nil {
-			out = append(out, writeModeToProto(write))
+			out = append(out, convert.WriteModeToProto(write))
 		}
 	}
 	return out
@@ -476,7 +477,7 @@ func (a *Server) validateNodeConfig(ctx context.Context, tenant string, node *in
 	default:
 		return nil
 	}
-	cfg := filament.NewConfig(overlayConfig(conn.Config, structMap(node.GetConfig())))
+	cfg := filament.NewConfig(overlayConfig(conn.Config, convert.StructMap(node.GetConfig())))
 	if err := validateConfigScope(schema, cfg, filament.ScopePipeline); err != nil {
 		validationErr := &ingestionv1.ValidationError{Message: fmt.Sprintf("node %q: %s", node.GetId(), err.Error())}
 		if fieldErr, ok := err.(*configValidationError); ok {
@@ -589,7 +590,7 @@ func (p *nodeInspections) resource(ctx context.Context, node *ingestionv1.Pipeli
 }
 
 func (p *nodeInspections) inspect(ctx context.Context, node *ingestionv1.PipelineNode, conn filament.Connection, resources []string) ([]filament.Inspection, error) {
-	config := compile.MergeConfig(conn.Config, structMap(node.GetConfig()))
+	config := compile.MergeConfig(conn.Config, convert.StructMap(node.GetConfig()))
 	if err := p.server.resolveConnectionSecrets(ctx, conn, config); err != nil {
 		return nil, err
 	}
@@ -605,8 +606,8 @@ func (a *Server) validateContinuousEdge(ctx context.Context, edge *ingestionv1.P
 	if caps := snkSpec.Capabilities.Stream; caps != nil {
 		seen := map[filament.WriteMode]bool{}
 		for _, candidate := range caps.WritePolicies {
-			if _, err := filament.PlanContinuousWrite(srcSpec, snkSpec, candidate.Mode); err == nil && !seen[candidate.Mode] && writeModeToProto(candidate.Mode) != ingestionv1.WriteMode_WRITE_MODE_UNSPECIFIED {
-				ev.SupportedWriteModes = append(ev.SupportedWriteModes, writeModeToProto(candidate.Mode))
+			if _, err := filament.PlanContinuousWrite(srcSpec, snkSpec, candidate.Mode); err == nil && !seen[candidate.Mode] && convert.WriteModeToProto(candidate.Mode) != ingestionv1.WriteMode_WRITE_MODE_UNSPECIFIED {
+				ev.SupportedWriteModes = append(ev.SupportedWriteModes, convert.WriteModeToProto(candidate.Mode))
 				seen[candidate.Mode] = true
 			}
 		}
@@ -617,7 +618,7 @@ func (a *Server) validateContinuousEdge(ctx context.Context, edge *ingestionv1.P
 	if err := filament.ValidateContinuous(srcSpec, snkSpec); err != nil {
 		edgeError(ev, "execution_mode", err.Error())
 	}
-	writeMode, err := writeModeFromProto(selected)
+	writeMode, err := convert.WriteModeFromProto(selected)
 	var writePlan filament.ContinuousWritePlan
 	if err == nil {
 		writePlan, err = filament.PlanContinuousWrite(srcSpec, snkSpec, writeMode)
@@ -635,7 +636,7 @@ func (a *Server) validateContinuousEdge(ctx context.Context, edge *ingestionv1.P
 	if edge.Resource != "" {
 		resources = []string{edge.Resource}
 	}
-	ref := filament.Ref{Connector: srcConn.Connector, Config: compile.MergeConfig(srcConn.Config, structMap(from.Config))}
+	ref := filament.Ref{Connector: srcConn.Connector, Config: compile.MergeConfig(srcConn.Config, convert.StructMap(from.Config))}
 	sourcePlan, planErr := compile.PlanContinuousSource(ctx, a.worker, ref, resources, srcConn.ID)
 	if planErr != nil {
 		edgeError(ev, "from_node", planErr.Error())

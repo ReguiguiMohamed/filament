@@ -37,7 +37,14 @@ server mode="": migrate
       AUTH_ADMIN_USERNAME="${AUTH_ADMIN_USERNAME:-admin}" \
       AUTH_ADMIN_PASSWORD="${AUTH_ADMIN_PASSWORD:-admin}" \
       AUTH_UI_ORIGIN="${AUTH_UI_ORIGIN:-http://localhost:5173}" \
+      WORKER_URL="${WORKER_URL:-http://localhost:8082}" \
       GOWORK=off go run .
+
+# run the persistent worker locally, answering the server's connector calls
+worker:
+    cd cmd/worker && \
+      WORKER_ADDR="${WORKER_ADDR:-:8082}" \
+      GOWORK=off go run . -serve
 
 # run the control plane locally (defaults match docker-compose.yaml; env overrides)
 control-plane:
@@ -54,13 +61,15 @@ control-plane:
 ui:
     cd ui && pnpm install && pnpm dev
 
-# run the full app: control plane, API server, UI; `just dev zitadel|keycloak` turns auth on
+# run the full app: worker, control plane, API server, UI; `just dev zitadel|keycloak` turns auth on
 dev mode="": migrate
     #!/usr/bin/env bash
     set -euo pipefail
     trap 'kill $(jobs -p) 2>/dev/null' EXIT
+    just worker &
     just control-plane &
     just server {{ mode }} &
+    until curl -sf http://localhost:8082/startupz > /dev/null 2>&1; do sleep 0.2; done
     until curl -sf http://localhost:8080/startupz > /dev/null 2>&1; do sleep 0.2; done
     until curl -sf http://localhost:8081/startupz > /dev/null 2>&1; do sleep 0.2; done
     just ui &
