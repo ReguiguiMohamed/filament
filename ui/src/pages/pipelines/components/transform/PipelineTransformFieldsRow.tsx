@@ -106,7 +106,7 @@ const PipelineTransformFieldsRow = ({
           $minHeight={minHeight}
         >
           {typeof gutter === "string" ? (
-            <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} isEllipsis={isArg}>
+            <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} lineClamp={1}>
               {gutter}
             </Text>
           ) : (

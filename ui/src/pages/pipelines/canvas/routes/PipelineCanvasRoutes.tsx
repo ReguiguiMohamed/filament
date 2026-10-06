@@ -2,8 +2,8 @@ import { useState } from "react";
 
 import { styled } from "@linaria/react";
 
-import HorizontalDivider from "@galaxy-io/dls/dividers/HorizontalDivider";
-import { useDebouncedValue } from "@galaxy-io/dls/inputs/hooks";
+import { useDebouncedValue } from "@galaxy-io/dls/hooks/useDebouncedValue";
+import Divider from "@galaxy-io/dls/layout/Divider";
 
 import { usePipelineCanvasSelection } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasSelection";
 import PipelineCanvasPanel from "@/pages/pipelines/canvas/panel/PipelineCanvasPanel";
@@ -37,7 +37,7 @@ const PipelineCanvasRoutes = () => {
           canAddRoute={draft.canOpen}
           onAddRoute={() => draft.open()}
         />
-        <HorizontalDivider />
+        <Divider />
         <PipelineCanvasRoutesList routes={routes} hasRoutes={hasRoutes} draftState={draft} />
       </RoutesWrapper>
       {showPanel && <PipelineCanvasPanel />}

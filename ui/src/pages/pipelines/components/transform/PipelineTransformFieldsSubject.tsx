@@ -1,7 +1,7 @@
 import { match } from "ts-pattern";
 
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, { FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 
 import {
   TRANSFORM_LITERAL_KIND_TO_PLACEHOLDER_MAP,
@@ -98,7 +98,7 @@ const PipelineTransformFieldsSubject = ({
   };
 
   return (
-    <FlexWrapper gap={FlexGap.SMALL} fillWidth>
+    <Flex alignItems={AlignItems.START} gap={8} fillWidth>
       <FlexItem grow={1} basis={0} minWidth={0}>
         <PipelineTransformFieldsActionPicker
           root={chain.root}
@@ -138,7 +138,7 @@ const PipelineTransformFieldsSubject = ({
           isError={isRootError}
         />
       </FlexItem>
-    </FlexWrapper>
+    </Flex>
   );
 };
 

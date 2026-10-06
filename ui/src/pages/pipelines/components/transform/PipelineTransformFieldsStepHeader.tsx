@@ -5,8 +5,7 @@ import { CaretDownIcon, DotsSixVerticalIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
 import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 import Rotate from "@galaxy-io/dls/transform/Rotate";
 
 import {
@@ -33,7 +32,7 @@ const Header = styled.div<{ $isClickable: boolean; $isOpen: boolean }>`
   cursor: ${({ $isClickable }) => ($isClickable ? "pointer" : "default")};
 `;
 
-const Handle = withTheme(styled.button<PropsWithTheme>`
+const Handle = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,7 +48,7 @@ const Handle = withTheme(styled.button<PropsWithTheme>`
   transition: background-color 100ms ease;
 
   &:hover {
-    background-color: ${({ theme }) => theme.color.background.tertiary};
+    background-color: ${t.color.background.tertiary};
   }
 
   &:active {
@@ -57,7 +56,7 @@ const Handle = withTheme(styled.button<PropsWithTheme>`
   }
 
   &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.color.border.selected};
+    outline: 2px solid ${t.color.border.focused};
     outline-offset: -2px;
   }
 
@@ -65,7 +64,7 @@ const Handle = withTheme(styled.button<PropsWithTheme>`
     background-color: transparent;
     cursor: default;
   }
-`);
+`;
 
 const stopPropagation = (event: MouseEvent) => event.stopPropagation();
 
@@ -103,7 +102,7 @@ const PipelineTransformFieldsStepHeader = ({
       }
       action={
         onToggle ? (
-          <Rotate isRotated={isOpen} deg={CARET_ROTATION_DEG} speed={CARET_ROTATION_SPEED}>
+          <Rotate isRotated={isOpen} deg={CARET_ROTATION_DEG}>
             <Button
               icon={CaretDownIcon}
               variant={ButtonVariant.TERTIARY}

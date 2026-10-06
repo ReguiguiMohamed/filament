@@ -2,9 +2,12 @@ import type { ReactNode } from "react";
 
 import { styled } from "@linaria/react";
 
-import FlexWrapper, { FlexDirection, FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
+import Flex, { AlignItems, FlexDirection } from "@galaxy-io/dls/layout/Flex";
 
 import {
   TRANSFORM_CONDITION_STACK_WIDTH,
@@ -92,7 +95,7 @@ const PipelineTransformFieldsConditionRow = ({
     fn && !operators.some((candidate) => candidate.name === fn.name)
       ? [...operators, fn]
       : operators;
-  const operatorOptions: SelectInputOption[] = [
+  const operatorOptions: SelectOption[] = [
     ...(columnType === "bool"
       ? [{ id: DIRECT_OPERATOR_ID, label: "is true", value: DIRECT_OPERATOR_ID }]
       : []),
@@ -139,7 +142,7 @@ const PipelineTransformFieldsConditionRow = ({
       gutter={gutter}
       action={action}
     >
-      <FlexWrapper direction={FlexDirection.COLUMN} gap={FlexGap.SMALL} fillWidth>
+      <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} gap={8} fillWidth>
         <PipelineTransformFieldsLeaf
           expr={root}
           onChange={setColumn}
@@ -150,12 +153,16 @@ const PipelineTransformFieldsConditionRow = ({
         <OperatorValue>
           <SelectInput
             options={operatorOptions}
-            value={operatorOptions.find((option) => option.id === selectedOperatorId) ?? null}
+            /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+              operatorOptions.find((option) => option.id === selectedOperatorId) ?? null
+            }
             onChange={(option) => setOperator(option.id)}
-            onReset={() => onChange(root)}
+            /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
+              onChange(root)
+            }
             placeholder="Choose an operator"
-            variant={InputVariant.TERTIARY}
-            size={InputSize.MEDIUM}
+            variant={SelectInputVariant.TERTIARY}
+            size={SelectInputSize.MEDIUM}
             error={call && editor.errors.has(path) ? TRANSFORM_SELECT_ERROR_MARK : undefined}
             isDisabled={editor.isDisabled || column === undefined}
             fillWidth
@@ -173,7 +180,7 @@ const PipelineTransformFieldsConditionRow = ({
             />
           )}
         </OperatorValue>
-      </FlexWrapper>
+      </Flex>
     </PipelineTransformFieldsRow>
   );
 };

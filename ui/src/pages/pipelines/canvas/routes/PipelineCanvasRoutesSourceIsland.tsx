@@ -2,8 +2,9 @@ import { styled } from "@linaria/react";
 import { PlusIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 import Text, { TextSize, TextVariant, TextWeight } from "@galaxy-io/dls/text/Text";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
 
 import { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 
@@ -49,15 +50,15 @@ const PipelineCanvasRoutesSourceIsland = ({
     <FlexItem shrink={0}>
       <Text size={TextSize.BODY_SM}>{route.sourceConnection?.name ?? route.edge.source}</Text>
     </FlexItem>
-    <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} isMonospace>
+    <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} family={FontFamily.MONO}>
       /
     </Text>
     <FlexItem grow={1} minWidth={0}>
       <Text
         size={TextSize.BODY_SM}
         weight={TextWeight.MEDIUM}
-        isMonospace={route.isNamedResource}
-        isEllipsis
+        family={route.isNamedResource ? FontFamily.MONO : FontFamily.SANS}
+        lineClamp={1}
       >
         {route.resourceLabel}
       </Text>

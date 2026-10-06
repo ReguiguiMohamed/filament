@@ -1,9 +1,8 @@
 import { styled } from "@linaria/react";
 import { FunctionIcon } from "@phosphor-icons/react";
 
-import Chip, { ChipSize, ChipVariant } from "@galaxy-io/dls/chips/Chip";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import Chip, { ChipSize } from "@galaxy-io/dls/chips/Chip";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import {
   PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP,
@@ -22,7 +21,7 @@ import {
 
 const EDGE_HIT_HEIGHT = 1 + PIPELINE_CANVAS_ROUTES_EDGE_HIT_PADDING * 2;
 
-const EdgeArea = withTheme(styled.div<PropsWithTheme>`
+const EdgeArea = styled.div`
   position: relative;
   flex: 1;
   min-width: ${PIPELINE_CANVAS_ROUTES_EDGE_MIN_WIDTH}px;
@@ -35,9 +34,9 @@ const EdgeArea = withTheme(styled.div<PropsWithTheme>`
 
   &:has([data-edge-hit]:hover) [data-edge]:not([data-selected="true"]) line,
   &:has([data-edge-hit]:hover) [data-edge]:not([data-selected="true"]) path {
-    stroke: ${({ theme }) => theme.color.text.tertiary};
+    stroke: ${t.color.text.tertiary};
   }
-`);
+`;
 
 const EdgeHitArea = styled.div`
   position: absolute;
@@ -88,7 +87,7 @@ const PipelineCanvasRoutesRowEdge = ({
           <Chip
             label={getPipelineCanvasRouteTransformLabel(route.transformStepCount)}
             icon={FunctionIcon}
-            variant={ChipVariant.BLUE}
+            color="blue"
             size={ChipSize.SMALL}
             isPill
           />

@@ -2,7 +2,7 @@ import { createElement } from "react";
 
 import { match } from "ts-pattern";
 
-import type { SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import type { SelectOption } from "@galaxy-io/dls/inputs/SelectInput";
 
 import type { Resource, ResourceColumn } from "@/gen/ingestion/v1/connectors_pb";
 import type { TransformFunction } from "@/gen/ingestion/v1/transformations_pb";
@@ -319,13 +319,10 @@ export const getTransformTypeSummary = (
   return { typeSummary, warning };
 };
 
-export const filterTransformOptions = (
-  term: string,
-  options: SelectInputOption[],
-): SelectInputOption[] =>
+export const filterTransformOptions = (term: string, options: SelectOption[]): SelectOption[] =>
   options.filter((option) => option.label.toLowerCase().includes(term.toLowerCase()));
 
-export const createTransformFunctionOption = (fn: TransformFunction): SelectInputOption => {
+export const createTransformFunctionOption = (fn: TransformFunction): SelectOption => {
   const icon = TRANSFORM_FUNCTION_TO_ICON_MAP.get(fn.name);
   return {
     id: fn.name,
@@ -335,7 +332,7 @@ export const createTransformFunctionOption = (fn: TransformFunction): SelectInpu
   };
 };
 
-export const createTransformBooleanOptions = (): SelectInputOption[] =>
+export const createTransformBooleanOptions = (): SelectOption[] =>
   ["true", "false"].map((value) => ({
     id: value,
     label: value,

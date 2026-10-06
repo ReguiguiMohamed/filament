@@ -4,7 +4,7 @@ import { create, fromJsonString, toJsonString } from "@bufbuild/protobuf";
 import { keepPreviousData } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 
-import { useDebouncedValue } from "@galaxy-io/dls/inputs/hooks";
+import { useDebouncedValue } from "@galaxy-io/dls/hooks/useDebouncedValue";
 
 import {
   type EdgeValidation,

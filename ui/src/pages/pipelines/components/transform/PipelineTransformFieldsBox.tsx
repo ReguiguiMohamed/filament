@@ -33,7 +33,13 @@ const Rows = styled.div`
 
 const PipelineTransformFieldsBox = ({ children }: PropsWithChildren) => (
   <Container>
-    <Widget variant={WidgetVariant.TERTIARY} noHover padding={`${TRANSFORM_BOX_PAD}px`} fillWidth>
+    <Widget
+      variant={
+        WidgetVariant.TERTIARY
+      } /* @dls-migrate widget.padding-other: The body inset is fixed at 12px: remove `padding` (use `isFlush` for 0). */
+      padding={`${TRANSFORM_BOX_PAD}px`} /* @dls-migrate widget.fillWidth: Grow the card with a `FlexItem` or a `Grid` track. */
+      fillWidth
+    >
       <Rows>{children}</Rows>
     </Widget>
   </Container>

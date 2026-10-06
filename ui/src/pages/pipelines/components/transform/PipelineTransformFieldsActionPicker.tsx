@@ -1,7 +1,10 @@
 import { CopyIcon, PencilSimpleIcon, TrashSimpleIcon } from "@phosphor-icons/react";
 
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
 
 import {
   TRANSFORM_LITERAL_KIND_TO_ICON_MAP,
@@ -32,10 +35,10 @@ const COPY_ACTION: TransformAction = { kind: TransformActionKind.COPY };
 const createActionOption = (
   action: TransformAction,
   label: string,
-  icon?: SelectInputOption["icon"],
-): SelectInputOption => ({ id: getTransformActionId(action), label, value: action, icon });
+  icon?: SelectOption["icon"],
+): SelectOption => ({ id: getTransformActionId(action), label, value: action, icon });
 
-const KIND_OPTIONS: SelectInputOption[] = [
+const KIND_OPTIONS: SelectOption[] = [
   createActionOption(
     { kind: TransformActionKind.RENAME },
     "Rename",
@@ -52,7 +55,7 @@ const COPY_OPTION = createActionOption(
   "Duplicate",
   <PipelineTransformFieldsOptionIcon icon={CopyIcon} />,
 );
-const LITERAL_OPTIONS: SelectInputOption[] = TRANSFORM_LITERAL_KINDS.map((literalKind) =>
+const LITERAL_OPTIONS: SelectOption[] = TRANSFORM_LITERAL_KINDS.map((literalKind) =>
   createActionOption(
     { kind: TransformActionKind.LITERAL, literalKind },
     TRANSFORM_LITERAL_KIND_TO_LABEL_MAP[literalKind],
@@ -80,7 +83,7 @@ const PipelineTransformFieldsActionPicker = ({
   const { isDisabled } = usePipelineTransformFieldsEditor();
   const { functionsByName } = usePipelineTransformFieldsEnvironment();
   const currentFn = action.kind === TransformActionKind.FUNCTION ? action.fn : "";
-  const options: SelectInputOption[] = [
+  const options: SelectOption[] = [
     ...(offersKinds ? KIND_OPTIONS : []),
     COPY_OPTION,
     ...LITERAL_OPTIONS,
@@ -98,15 +101,19 @@ const PipelineTransformFieldsActionPicker = ({
   return (
     <SelectInput
       options={options}
-      value={options.find((option) => option.id === selectedId) ?? null}
+      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+        options.find((option) => option.id === selectedId) ?? null
+      }
       onChange={(option) => onChange(option.value as TransformAction)}
-      onReset={() => onChange(COPY_ACTION)}
-      onSearch={
+      /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
+        onChange(COPY_ACTION)
+      }
+      /* @dls-migrate selectinput.onSearch: Add `isSearchable`; the DLS filters, `onSearch` only receives the term. */ onSearch={
         options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD ? filterTransformOptions : undefined
       }
       placeholder="Choose an action"
-      variant={InputVariant.TERTIARY}
-      size={InputSize.MEDIUM}
+      variant={SelectInputVariant.TERTIARY}
+      size={SelectInputSize.MEDIUM}
       error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
       isDisabled={isDisabled}
       fillWidth

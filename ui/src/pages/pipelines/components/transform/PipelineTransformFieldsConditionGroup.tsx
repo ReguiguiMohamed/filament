@@ -1,9 +1,12 @@
 import { PlusIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import FlexWrapper, { FlexGap, FlexWrap } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
+import Flex, { AlignItems, FlexWrap } from "@galaxy-io/dls/layout/Flex";
 
 import { TRANSFORM_EMPTY_EXPR } from "@/pages/pipelines/components/transform/grammar/chain";
 import {
@@ -30,7 +33,7 @@ import {
   type TransformExpr,
 } from "@/pages/pipelines/components/transform/types";
 
-const JOIN_OPTIONS: SelectInputOption[] = Object.values(TransformConditionJoin).map((join) => ({
+const JOIN_OPTIONS: SelectOption[] = Object.values(TransformConditionJoin).map((join) => ({
   id: join,
   label: join,
   value: join,
@@ -87,11 +90,15 @@ const PipelineTransformFieldsConditionGroup = ({
     ) : index === 1 ? (
       <SelectInput
         options={JOIN_OPTIONS}
-        value={JOIN_OPTIONS.find((option) => option.id === group.join) ?? null}
+        /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+          JOIN_OPTIONS.find((option) => option.id === group.join) ?? null
+        }
         onChange={(option) => commit({ ...group, join: option.id as TransformConditionJoin })}
-        onReset={() => commit({ ...group, join: TransformConditionJoin.AND })}
-        variant={InputVariant.TERTIARY}
-        size={InputSize.SMALL}
+        /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
+          commit({ ...group, join: TransformConditionJoin.AND })
+        }
+        variant={SelectInputVariant.TERTIARY}
+        size={SelectInputSize.SMALL}
         isDisabled={isDisabled}
       />
     ) : (
@@ -134,7 +141,7 @@ const PipelineTransformFieldsConditionGroup = ({
         gutter={null}
         isAddRow
       >
-        <FlexWrapper gap={FlexGap.SMALL} wrap={FlexWrap.WRAP}>
+        <Flex alignItems={AlignItems.START} gap={8} wrap={FlexWrap.WRAP}>
           <Button
             label="Add condition"
             icon={PlusIcon}
@@ -151,7 +158,7 @@ const PipelineTransformFieldsConditionGroup = ({
             onClick={() => append(createTransformConditionGroupExpr(group.join))}
             isDisabled={isDisabled}
           />
-        </FlexWrapper>
+        </Flex>
       </PipelineTransformFieldsRow>
     </PipelineTransformFieldsBox>
   );

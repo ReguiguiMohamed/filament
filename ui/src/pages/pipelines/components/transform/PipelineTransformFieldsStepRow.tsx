@@ -1,6 +1,6 @@
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, { AlignItems, FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
-import { TooltipPosition } from "@galaxy-io/dls/tooltip/Tooltip";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
+import { Placement } from "@galaxy-io/dls/theme/enums";
 
 import { TRANSFORM_ACTION } from "@/pages/pipelines/components/transform/constants";
 import PipelineTransformFieldsIssuesChip from "@/pages/pipelines/components/transform/PipelineTransformFieldsIssuesChip";
@@ -27,14 +27,14 @@ const PipelineTransformFieldsStepRow = ({
 }: PipelineTransformFieldsStepRowProps) => (
   <PipelineTransformFieldsStepSurface $isHoverable={onOpen !== undefined}>
     <PipelineTransformFieldsStepHeader isOpen={false} onToggle={onOpen} handle={handle}>
-      <FlexWrapper alignItems={AlignItems.START} gap={FlexGap.SMALL} fillWidth>
+      <Flex alignItems={AlignItems.START} gap={8} fillWidth>
         <FlexItem grow={1} minWidth={0}>
           <PipelineTransformFieldsStepSummary step={step} />
         </FlexItem>
-        <FlexWrapper alignItems={AlignItems.CENTER} height={TRANSFORM_ACTION} shrink={0}>
-          <PipelineTransformFieldsIssuesChip issues={issues} position={TooltipPosition.TOP_END} />
-        </FlexWrapper>
-      </FlexWrapper>
+        <Flex alignItems={AlignItems.CENTER} height={TRANSFORM_ACTION} shrink={0}>
+          <PipelineTransformFieldsIssuesChip issues={issues} position={Placement.TOP_END} />
+        </Flex>
+      </Flex>
     </PipelineTransformFieldsStepHeader>
   </PipelineTransformFieldsStepSurface>
 );

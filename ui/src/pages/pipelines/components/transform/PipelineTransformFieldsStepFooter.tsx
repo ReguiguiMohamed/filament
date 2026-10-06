@@ -1,14 +1,10 @@
 import { TrashIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, {
-  AlignItems,
-  FlexGap,
-  JustifyContent,
-} from "@galaxy-io/dls/containers/FlexWrapper";
+import Flex, { AlignItems, JustifyContent } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
-import { TooltipPosition } from "@galaxy-io/dls/tooltip/Tooltip";
+import { FontFamily, Placement } from "@galaxy-io/dls/theme/enums";
 
 import PipelineTransformFieldsIssuesChip from "@/pages/pipelines/components/transform/PipelineTransformFieldsIssuesChip";
 
@@ -33,32 +29,37 @@ const PipelineTransformFieldsStepFooter = ({
   onCancel,
   onDelete,
 }: PipelineTransformFieldsStepFooterProps) => (
-  <FlexWrapper
+  <Flex
     alignItems={AlignItems.CENTER}
     justifyContent={JustifyContent.SPACE_BETWEEN}
-    gap={FlexGap.SMALL}
+    gap={8}
     fillWidth
   >
-    <FlexWrapper alignItems={AlignItems.CENTER} gap={FlexGap.SMALL} grow={1} minWidth={0}>
+    <Flex alignItems={AlignItems.CENTER} gap={8} grow={1} minWidth={0}>
       <PipelineTransformFieldsIssuesChip
         issues={issues}
         warnings={warnings}
-        position={TooltipPosition.TOP_START}
+        position={Placement.TOP_START}
       />
       {issues.length === 0 && typeSummary !== "" && (
-        <FlexWrapper alignItems={AlignItems.CENTER} gap={FlexGap.XSMALL} minWidth={0}>
+        <Flex alignItems={AlignItems.CENTER} gap={4} minWidth={0}>
           <FlexItem shrink={0}>
             <Text size={TextSize.CAPTION} variant={TextVariant.PRIMARY}>
               Output type
             </Text>
           </FlexItem>
-          <Text size={TextSize.CAPTION} variant={TextVariant.SECONDARY} isMonospace isEllipsis>
+          <Text
+            size={TextSize.CAPTION}
+            variant={TextVariant.SECONDARY}
+            family={FontFamily.MONO}
+            lineClamp={1}
+          >
             {typeSummary}
           </Text>
-        </FlexWrapper>
+        </Flex>
       )}
-    </FlexWrapper>
-    <FlexWrapper alignItems={AlignItems.CENTER} gap={FlexGap.SMALL} shrink={0}>
+    </Flex>
+    <Flex alignItems={AlignItems.CENTER} gap={8} shrink={0}>
       {onDelete && (
         <Button
           icon={TrashIcon}
@@ -77,8 +78,8 @@ const PipelineTransformFieldsStepFooter = ({
         isDisabled={isDisabled}
       />
       <Button label="Save" size={ButtonSize.MEDIUM} onClick={onSave} isDisabled={isSaveDisabled} />
-    </FlexWrapper>
-  </FlexWrapper>
+    </Flex>
+  </Flex>
 );
 
 export default PipelineTransformFieldsStepFooter;

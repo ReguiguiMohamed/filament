@@ -5,15 +5,19 @@ import { styled } from "@linaria/react";
 import { CheckIcon, XIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, { AlignItems } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import { InputSize } from "@galaxy-io/dls/inputs/Input";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
 import TextInput from "@galaxy-io/dls/inputs/TextInput";
+import Box from "@galaxy-io/dls/layout/Box";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
-import { TooltipPosition } from "@galaxy-io/dls/tooltip/Tooltip";
+import { FontFamily, Placement } from "@galaxy-io/dls/theme/enums";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 import Widget, { WidgetVariant } from "@galaxy-io/dls/widget/Widget";
 
 import { ConnectorKind, ReadMode, WriteMode } from "@/gen/ingestion/v1/common_pb";
@@ -84,16 +88,16 @@ const CenterSlot = styled.div`
   justify-content: center;
 `;
 
-const DraftLine = withTheme(styled.div<PropsWithTheme>`
+const DraftLine = styled.div`
   position: absolute;
   left: -${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
   right: -${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
   top: 50%;
 
-  border-top: 1px dashed ${({ theme }) => theme.color.border.primary};
-`);
+  border-top: 1px dashed ${t.color.border.primary};
+`;
 
-const ControlsGroup = withTheme(styled.div<PropsWithTheme>`
+const ControlsGroup = styled.div`
   position: relative;
   z-index: 1;
   flex-shrink: 0;
@@ -102,11 +106,11 @@ const ControlsGroup = withTheme(styled.div<PropsWithTheme>`
   align-items: center;
   gap: ${PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}px;
 
-  background-color: ${({ theme }) => theme.color.background.secondary};
+  background-color: ${t.color.background.secondary};
   border-radius: 5px;
-`);
+`;
 
-const searchOptions = (term: string, options: SelectInputOption[]) =>
+const searchOptions = (term: string, options: SelectOption[]) =>
   options.filter((option) => isSearchMatch(term, option.label));
 
 interface PipelineCanvasRoutesDraftRowProps {
@@ -145,11 +149,11 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
     isLoading,
   } = options;
 
-  const resourceOptions = useMemo<SelectInputOption[]>(
+  const resourceOptions = useMemo<SelectOption[]>(
     () => (resourceNames ?? []).map((name) => ({ id: name, label: name, value: name })),
     [resourceNames],
   );
-  const sinkOptions = useMemo<SelectInputOption[]>(
+  const sinkOptions = useMemo<SelectOption[]>(
     () =>
       sinks.map((sink) => ({
         id: sink.nodeId,
@@ -223,142 +227,166 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
 
   return (
     <RowWrapper onKeyDown={handleKeyDown}>
-      <Widget
-        variant={WidgetVariant.SECONDARY}
-        padding={`0 ${PIPELINE_CANVAS_ROUTES_DRAFT_PADDING_X}px`}
-        minWidth="max-content"
-        fillWidth
-        noHover
-      >
-        <FlexWrapper
-          alignItems={AlignItems.CENTER}
-          gap={PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP}
-          fillWidth
-          fillHeight
+      <Box minWidth="max-content">
+        <Widget
+          variant={WidgetVariant.SECONDARY}
+          /* @dls-migrate widget.padding-other: The body inset is fixed at 12px: remove `padding` (use `isFlush` for 0). */ padding={`0 ${PIPELINE_CANVAS_ROUTES_DRAFT_PADDING_X}px`}
+          /* @dls-migrate widget.fillWidth: Grow the card with a `FlexItem` or a `Grid` track. */ fillWidth
         >
-          <FlexWrapper
+          <Flex
             alignItems={AlignItems.CENTER}
-            gap={8}
-            width={PIPELINE_CANVAS_ROUTES_SOURCE_ISLAND_WIDTH}
-            shrink={0}
+            /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ gap={
+              PIPELINE_CANVAS_ROUTES_EDGE_CONTROL_GAP
+            }
+            fillWidth
+            height="100%"
           >
-            <ConnectorTile
-              connector={sourceConnection?.connector ?? ""}
-              kind={ConnectorKind.SOURCE}
-              size={ConnectorTileSize.SMALL}
-              isDeleted={!!sourceConnection?.deletedAt}
-            />
-            <FlexItem shrink={0}>
-              <Text size={TextSize.BODY_SM}>{sourceConnection?.name ?? sourceNodeId}</Text>
-            </FlexItem>
-            <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} isMonospace>
-              /
-            </Text>
-            <FlexItem grow={1} minWidth={0}>
-              {resourceNames ? (
-                <SelectInput
-                  options={resourceOptions}
-                  value={resourceOptions.find((option) => option.id === resource) ?? null}
-                  onChange={(option) => draftState.setResource(option.value as string)}
-                  onSearch={searchOptions}
-                  placeholder="Resource"
-                  size={InputSize.MEDIUM}
-                  isDisabled={draft.isResourceLocked}
-                  fillWidth
-                />
-              ) : (
-                <TextInput
-                  value={resource}
-                  onChange={draftState.setResource}
-                  placeholder="orders.>"
-                  size={InputSize.MEDIUM}
-                  isDisabled={draft.isResourceLocked}
-                  autoFocus
-                  fillWidth
-                />
-              )}
-            </FlexItem>
-          </FlexWrapper>
-          <EdgeArea>
-            <DraftLine />
-            <ControlsGroup>
-              {hasReadLevers && (
-                <SelectInput
-                  options={readModeSelectOptions}
-                  value={readModeSelectOptions.find((option) => option.value === readMode) ?? null}
-                  onChange={(option) =>
-                    draftState.setConfig({ readMode: option.value as ReadMode })
-                  }
-                  variant={InputVariant.TERTIARY}
-                  size={InputSize.SMALL}
-                  placeholder="Read mode"
-                  width={PIPELINE_CANVAS_ROUTES_READ_MODE_SELECT_WIDTH}
-                  isDisabled={isLoading}
-                />
-              )}
-              {hasCursorSelect && (
-                <SelectInput
-                  options={cursorSelectOptions}
-                  value={cursorSelectOptions.find((option) => option.value === cursor) ?? null}
-                  onChange={(option) => draftState.setConfig({ cursor: option.value as string })}
-                  variant={InputVariant.TERTIARY}
-                  size={InputSize.SMALL}
-                  placeholder="Cursor"
-                  width={PIPELINE_CANVAS_ROUTES_CURSOR_SELECT_WIDTH}
-                  isDisabled={isLoading}
-                />
-              )}
-            </ControlsGroup>
-            <CenterSlot>
-              <PipelineTransformFieldsIssuesChip
-                issues={blockingStatuses.map((status) => status.message)}
-                warnings={statuses
-                  .filter((status) => !status.isBlocking)
-                  .map((status) => status.message)}
-                position={TooltipPosition.TOP}
+            <Flex
+              alignItems={AlignItems.CENTER}
+              gap={8}
+              width={PIPELINE_CANVAS_ROUTES_SOURCE_ISLAND_WIDTH}
+              shrink={0}
+            >
+              <ConnectorTile
+                connector={sourceConnection?.connector ?? ""}
+                kind={ConnectorKind.SOURCE}
+                size={ConnectorTileSize.SMALL}
+                isDeleted={!!sourceConnection?.deletedAt}
               />
-            </CenterSlot>
-            <ControlsGroup>
+              <FlexItem shrink={0}>
+                <Text size={TextSize.BODY_SM}>{sourceConnection?.name ?? sourceNodeId}</Text>
+              </FlexItem>
+              <Text size={TextSize.BODY_SM} variant={TextVariant.TERTIARY} family={FontFamily.MONO}>
+                /
+              </Text>
+              <FlexItem grow={1} minWidth={0}>
+                {resourceNames ? (
+                  <SelectInput
+                    options={resourceOptions}
+                    /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+                      resourceOptions.find((option) => option.id === resource) ?? null
+                    }
+                    onChange={(option) => draftState.setResource(option.value as string)}
+                    /* @dls-migrate selectinput.onSearch: Add `isSearchable`; the DLS filters, `onSearch` only receives the term. */ onSearch={
+                      searchOptions
+                    }
+                    placeholder="Resource"
+                    size={SelectInputSize.MEDIUM}
+                    isDisabled={draft.isResourceLocked}
+                    fillWidth
+                  />
+                ) : (
+                  <TextInput
+                    value={resource}
+                    onChange={draftState.setResource}
+                    placeholder="orders.>"
+                    size={InputSize.MEDIUM}
+                    isDisabled={draft.isResourceLocked}
+                    autoFocus
+                    fillWidth
+                  />
+                )}
+              </FlexItem>
+            </Flex>
+            <EdgeArea>
+              <DraftLine />
+              <ControlsGroup>
+                {hasReadLevers && (
+                  <Box width={PIPELINE_CANVAS_ROUTES_READ_MODE_SELECT_WIDTH}>
+                    <SelectInput
+                      fillWidth
+                      options={readModeSelectOptions}
+                      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+                        readModeSelectOptions.find((option) => option.value === readMode) ?? null
+                      }
+                      onChange={(option) =>
+                        draftState.setConfig({ readMode: option.value as ReadMode })
+                      }
+                      variant={SelectInputVariant.TERTIARY}
+                      size={SelectInputSize.SMALL}
+                      placeholder="Read mode"
+                      isDisabled={isLoading}
+                    />
+                  </Box>
+                )}
+                {hasCursorSelect && (
+                  <Box width={PIPELINE_CANVAS_ROUTES_CURSOR_SELECT_WIDTH}>
+                    <SelectInput
+                      fillWidth
+                      options={cursorSelectOptions}
+                      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+                        cursorSelectOptions.find((option) => option.value === cursor) ?? null
+                      }
+                      onChange={(option) =>
+                        draftState.setConfig({ cursor: option.value as string })
+                      }
+                      variant={SelectInputVariant.TERTIARY}
+                      size={SelectInputSize.SMALL}
+                      placeholder="Cursor"
+                      isDisabled={isLoading}
+                    />
+                  </Box>
+                )}
+              </ControlsGroup>
+              <CenterSlot>
+                <PipelineTransformFieldsIssuesChip
+                  issues={blockingStatuses.map((status) => status.message)}
+                  warnings={statuses
+                    .filter((status) => !status.isBlocking)
+                    .map((status) => status.message)}
+                  position={Placement.TOP}
+                />
+              </CenterSlot>
+              <ControlsGroup>
+                <Box width={PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH}>
+                  <SelectInput
+                    fillWidth
+                    options={writeModeSelectOptions}
+                    /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+                      writeModeSelectOptions.find((option) => option.value === writeMode) ?? null
+                    }
+                    onChange={(option) =>
+                      draftState.setConfig({ writeMode: option.value as WriteMode })
+                    }
+                    variant={SelectInputVariant.TERTIARY}
+                    size={SelectInputSize.SMALL}
+                    placeholder="Write mode"
+                    isDisabled={isLoading}
+                  />
+                </Box>
+              </ControlsGroup>
+            </EdgeArea>
+            <Box width={PIPELINE_CANVAS_ROUTES_SINK_ISLAND_WIDTH}>
               <SelectInput
-                options={writeModeSelectOptions}
-                value={writeModeSelectOptions.find((option) => option.value === writeMode) ?? null}
-                onChange={(option) =>
-                  draftState.setConfig({ writeMode: option.value as WriteMode })
+                fillWidth
+                options={sinkOptions}
+                /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+                  sinkOptions.find((option) => option.id === draft.sinkId) ?? null
                 }
-                variant={InputVariant.TERTIARY}
-                size={InputSize.SMALL}
-                placeholder="Write mode"
-                width={PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH}
-                isDisabled={isLoading}
+                onChange={(option) => draftState.setSinkId(option.value as CanvasNode["id"])}
+                placeholder="Sink"
+                size={SelectInputSize.MEDIUM}
+                isDisabled={sinkOptions.length <= 1}
               />
-            </ControlsGroup>
-          </EdgeArea>
-          <SelectInput
-            options={sinkOptions}
-            value={sinkOptions.find((option) => option.id === draft.sinkId) ?? null}
-            onChange={(option) => draftState.setSinkId(option.value as CanvasNode["id"])}
-            placeholder="Sink"
-            size={InputSize.MEDIUM}
-            width={PIPELINE_CANVAS_ROUTES_SINK_ISLAND_WIDTH}
-            isDisabled={sinkOptions.length <= 1}
-          />
-          <Button
-            icon={XIcon}
-            ariaLabel="Cancel"
-            variant={ButtonVariant.TERTIARY}
-            size={ButtonSize.SMALL}
-            onClick={draftState.close}
-          />
-          <Button
-            icon={CheckIcon}
-            ariaLabel="Add route"
-            variant={ButtonVariant.PRIMARY_ALT}
-            size={ButtonSize.SMALL}
-            onClick={handleAdd}
-            isDisabled={!draftState.canAdd || isLoading || blockingStatuses.length > 0}
-          />
-        </FlexWrapper>
-      </Widget>
+            </Box>
+            <Button
+              icon={XIcon}
+              ariaLabel="Cancel"
+              variant={ButtonVariant.TERTIARY}
+              size={ButtonSize.SMALL}
+              onClick={draftState.close}
+            />
+            <Button
+              icon={CheckIcon}
+              ariaLabel="Add route"
+              variant={ButtonVariant.PRIMARY}
+              size={ButtonSize.SMALL}
+              onClick={handleAdd}
+              isDisabled={!draftState.canAdd || isLoading || blockingStatuses.length > 0}
+            />
+          </Flex>
+        </Widget>
+      </Box>
     </RowWrapper>
   );
 };

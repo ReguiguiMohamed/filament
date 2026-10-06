@@ -1,8 +1,12 @@
 import { XIcon } from "@phosphor-icons/react";
 
 import Input, { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+} from "@galaxy-io/dls/inputs/SelectInput";
 import TextInput from "@galaxy-io/dls/inputs/TextInput";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
 
 import {
   TRANSFORM_LITERAL_KIND_TO_ICON_MAP,
@@ -45,12 +49,16 @@ const PipelineTransformFieldsLiteral = ({
     return (
       <SelectInput
         options={BOOLEAN_OPTIONS}
-        value={BOOLEAN_OPTIONS.find((option) => option.id === expr.value) ?? null}
+        /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+          BOOLEAN_OPTIONS.find((option) => option.id === expr.value) ?? null
+        }
         onChange={(option) => onChange({ ...expr, value: option.id })}
-        onReset={onClear ?? (() => onChange({ ...expr, value: null }))}
+        /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={
+          onClear ?? (() => onChange({ ...expr, value: null }))
+        }
         placeholder={placeholder}
-        variant={InputVariant.TERTIARY}
-        size={InputSize.MEDIUM}
+        variant={SelectInputVariant.TERTIARY}
+        size={SelectInputSize.MEDIUM}
         error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
         isDisabled={isDisabled}
         fillWidth
@@ -64,19 +72,21 @@ const PipelineTransformFieldsLiteral = ({
         ? null
         : getTransformNumberError(expr.value, isTransformIntegerOnly(logicalTypes));
     return (
-      <Input<string>
+      <Input<string> /* @dls-migrate input-base.generic: Input is not generic: keep the value a string, or use `NumberInput`. */
         type="text"
-        parse={(value) => value}
+        /* @dls-migrate input-base.parse: Removed: the value is the DOM string; `NumberInput` parses numbers. */ parse={(
+          value,
+        ) => value}
         value={expr.value ?? ""}
         onChange={(value) => onChange({ ...expr, value: value === "" ? null : value })}
         placeholder={placeholder}
-        leading={{ icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.NUMBER] }}
+        icon={TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.NUMBER]}
         trailing={trailing}
         isError={isError || numberError !== null}
         variant={InputVariant.TERTIARY}
         size={InputSize.MEDIUM}
         isDisabled={isDisabled}
-        isMonospace
+        family={FontFamily.MONO}
         fillWidth
       />
     );
@@ -87,7 +97,7 @@ const PipelineTransformFieldsLiteral = ({
       value={expr.value ?? ""}
       onChange={(value) => onChange({ ...expr, value })}
       placeholder={placeholder}
-      leading={{ icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.STRING] }}
+      icon={TRANSFORM_LITERAL_KIND_TO_ICON_MAP[TransformLiteralKind.STRING]}
       trailing={trailing}
       isError={isError}
       variant={InputVariant.TERTIARY}

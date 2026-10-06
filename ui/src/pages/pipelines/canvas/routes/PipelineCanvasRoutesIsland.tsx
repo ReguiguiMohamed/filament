@@ -2,13 +2,12 @@ import type { PropsWithChildren } from "react";
 
 import { styled } from "@linaria/react";
 
-import { withTheme } from "@galaxy-io/dls/theme/GalaxyTheme";
-import type { PropsWithTheme } from "@galaxy-io/dls/theme/types";
+import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import { PIPELINE_CANVAS_ROUTES_ISLAND_HEIGHT } from "@/pages/pipelines/canvas/routes/constants";
 import { getPipelineCanvasRoutesActivateHandler } from "@/pages/pipelines/canvas/routes/utils";
 
-const Island = withTheme(styled.div<PropsWithTheme<{ $width: number; $isSelected: boolean }>>`
+const Island = styled.div<{ $width: number; $isSelected: boolean }>`
   width: ${({ $width }) => $width}px;
   height: ${PIPELINE_CANVAS_ROUTES_ISLAND_HEIGHT}px;
   padding: 0 10px 0 5px;
@@ -19,26 +18,26 @@ const Island = withTheme(styled.div<PropsWithTheme<{ $width: number; $isSelected
   gap: 8px;
   min-width: 0;
 
-  background-color: ${({ theme }) => theme.color.background.primary};
+  background-color: ${t.color.background.primary};
   border: 0.5px solid
-    ${({ theme, $isSelected }) =>
-      $isSelected ? theme.color.background.galaxy : theme.color.border.primary};
+    ${({ $isSelected }) =>
+      $isSelected ? t.color.solid.primary.background : t.color.border.primary};
   border-radius: 5px;
-  outline: ${({ theme, $isSelected }) =>
-    $isSelected ? `1px solid ${theme.color.background.galaxy}` : "none"};
+  outline: ${({ $isSelected }) =>
+    $isSelected ? `1px solid ${t.color.solid.primary.background}` : "none"};
   outline-offset: -1px;
 
   cursor: pointer;
   transition: border-color 100ms ease;
 
   &:hover:not([data-selected="true"]) {
-    border-color: ${({ theme }) => theme.color.border.tertiary};
+    border-color: ${t.color.border.tertiary};
   }
 
   &:focus-visible {
-    border-color: ${({ theme }) => theme.color.background.galaxy};
+    border-color: ${t.color.solid.primary.background};
   }
-`);
+`;
 
 interface PipelineCanvasRoutesIslandProps extends PropsWithChildren {
   width: number;

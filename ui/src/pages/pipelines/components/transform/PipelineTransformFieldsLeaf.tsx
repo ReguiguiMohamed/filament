@@ -1,5 +1,8 @@
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
 
 import {
@@ -97,7 +100,7 @@ const PipelineTransformFieldsLeaf = ({
       : logicalTypes.length > 0
         ? []
         : TRANSFORM_LITERAL_KINDS;
-  const literalOptions: SelectInputOption[] = literalKinds.flatMap((kind) =>
+  const literalOptions: SelectOption[] = literalKinds.flatMap((kind) =>
     kind === TransformLiteralKind.BOOLEAN
       ? BOOLEAN_OPTIONS
       : [
@@ -120,7 +123,7 @@ const PipelineTransformFieldsLeaf = ({
     selectedColumn !== undefined && !accepted.includes(selectedColumn)
       ? [...accepted, selectedColumn]
       : accepted;
-  const columnOptions: SelectInputOption[] = columnNames.map((name) => ({
+  const columnOptions: SelectOption[] = columnNames.map((name) => ({
     id: `${COLUMN_OPTION_PREFIX}${name}`,
     label: name,
     value: createTransformColumnExpr(name),
@@ -128,7 +131,7 @@ const PipelineTransformFieldsLeaf = ({
   const hasNoValueForm =
     !isColumnOnly && logicalTypes.length > 0 && literalKinds.length === 0 && accepted.length === 0;
   const canApplyFunction = onApplyFunction !== undefined && expr.kind !== TransformExprKind.EMPTY;
-  const options: SelectInputOption[] = [
+  const options: SelectOption[] = [
     ...literalOptions,
     ...(hasNoValueForm
       ? [
@@ -155,20 +158,24 @@ const PipelineTransformFieldsLeaf = ({
   return (
     <SelectInput
       options={options}
-      value={options.find((option) => option.id === selectedId) ?? null}
+      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+        options.find((option) => option.id === selectedId) ?? null
+      }
       onChange={(option) => {
         if (option.id === APPLY_FUNCTION_OPTION_ID) onApplyFunction?.();
         else if (option.id !== NO_VALUE_FORM_OPTION_ID) onChange(option.value as TransformLeafExpr);
       }}
-      onSearch={
+      /* @dls-migrate selectinput.onSearch: Add `isSearchable`; the DLS filters, `onSearch` only receives the term. */ onSearch={
         literalOptions.length + columnOptions.length > TRANSFORM_SELECT_SEARCH_THRESHOLD
           ? filterTransformOptions
           : undefined
       }
-      onReset={() => onChange(TRANSFORM_EMPTY_EXPR)}
+      /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
+        onChange(TRANSFORM_EMPTY_EXPR)
+      }
       placeholder={placeholder ?? (isOptional ? "Optional" : "Choose a column or value")}
-      variant={InputVariant.TERTIARY}
-      size={InputSize.MEDIUM}
+      variant={SelectInputVariant.TERTIARY}
+      size={SelectInputSize.MEDIUM}
       error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
       isDisabled={isDisabled}
       fillWidth

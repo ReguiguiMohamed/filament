@@ -1,8 +1,11 @@
 import { match } from "ts-pattern";
 
-import FlexWrapper, { FlexDirection, FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import SelectInput, { type SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import SelectInput, {
+  SelectInputSize,
+  SelectInputVariant,
+  type SelectOption,
+} from "@galaxy-io/dls/inputs/SelectInput";
+import Flex, { AlignItems, FlexDirection } from "@galaxy-io/dls/layout/Flex";
 
 import {
   TRANSFORM_BODY_INSET,
@@ -43,7 +46,7 @@ const PipelineTransformFieldsStepCard = ({
   const { setDraft, setResource, cancel, save, removeStep } = usePipelineTransformFieldsActions();
   const { editor, issues, warnings, typeSummary, isSaveDisabled } =
     usePipelineTransformFieldsValidation(draft);
-  const resourceOptions: SelectInputOption[] = resources.map((resource) => ({
+  const resourceOptions: SelectOption[] = resources.map((resource) => ({
     id: resource,
     label: resource,
     value: resource,
@@ -56,11 +59,12 @@ const PipelineTransformFieldsStepCard = ({
         <PipelineTransformFieldsStepHeader isOpen onToggle={cancel} handle={handle}>
           <PipelineTransformFieldsSubject step={step} outputIndex={0} onChange={setDraft} />
         </PipelineTransformFieldsStepHeader>
-        <FlexWrapper
-          padding={`0 ${TRANSFORM_HEADER_PADDING_X}px ${TRANSFORM_HEADER_PADDING_X}px ${TRANSFORM_BODY_INSET}px`}
+        <Flex
+          alignItems={AlignItems.START}
+          /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ padding={`0 ${TRANSFORM_HEADER_PADDING_X}px ${TRANSFORM_HEADER_PADDING_X}px ${TRANSFORM_BODY_INSET}px`}
           fillWidth
         >
-          <FlexWrapper direction={FlexDirection.COLUMN} gap={FlexGap.SMALL} fillWidth>
+          <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} gap={8} fillWidth>
             {id === null && resources.length > 1 && (
               <PipelineTransformFieldsRow
                 variant={PipelineTransformFieldsRowVariant.STEP}
@@ -68,11 +72,13 @@ const PipelineTransformFieldsStepCard = ({
               >
                 <SelectInput
                   options={resourceOptions}
-                  value={resourceOptions.find((option) => option.id === draft.resource) ?? null}
+                  /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+                    resourceOptions.find((option) => option.id === draft.resource) ?? null
+                  }
                   onChange={(option) => setResource(option.id)}
                   placeholder="Choose a resource"
-                  variant={InputVariant.TERTIARY}
-                  size={InputSize.MEDIUM}
+                  variant={SelectInputVariant.TERTIARY}
+                  size={SelectInputSize.MEDIUM}
                   isDisabled={isReadOnly}
                   fillWidth
                 />
@@ -99,8 +105,8 @@ const PipelineTransformFieldsStepCard = ({
               onCancel={cancel}
               onDelete={id === null ? undefined : () => removeStep(id)}
             />
-          </FlexWrapper>
-        </FlexWrapper>
+          </Flex>
+        </Flex>
       </PipelineTransformFieldsStepSurface>
     </PipelineTransformFieldsEditorContext.Provider>
   );

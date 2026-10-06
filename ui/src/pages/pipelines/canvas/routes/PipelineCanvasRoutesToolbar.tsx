@@ -4,12 +4,16 @@ import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import pluralize from "pluralize";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import FlexItem from "@galaxy-io/dls/containers/FlexItem";
-import FlexWrapper, { AlignItems, FlexGap } from "@galaxy-io/dls/containers/FlexWrapper";
-import { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
-import MultiSelectInput from "@galaxy-io/dls/inputs/MultiSelectInput";
-import type { SelectInputOption } from "@galaxy-io/dls/inputs/SelectInput";
+import { InputSize } from "@galaxy-io/dls/inputs/Input";
+import MultiSelectInput, {
+  MultiSelectInputSize,
+  MultiSelectInputVariant,
+} from "@galaxy-io/dls/inputs/MultiSelectInput";
+import type { SelectOption } from "@galaxy-io/dls/inputs/SelectInput";
 import TextInput from "@galaxy-io/dls/inputs/TextInput";
+import Box from "@galaxy-io/dls/layout/Box";
+import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
+import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 
 import { ConnectorKind } from "@/gen/ingestion/v1/common_pb";
 
@@ -41,7 +45,7 @@ const PipelineCanvasRoutesToolbar = ({
   const { sinkIds, setSinkIds } = usePipelineCanvasSelection();
   const sinks = usePipelineCanvasRoutesSinks();
 
-  const sinkOptions = useMemo<SelectInputOption[]>(
+  const sinkOptions = useMemo<SelectOption[]>(
     () =>
       sinks.map((sink) => ({
         id: sink.nodeId,
@@ -67,7 +71,7 @@ const PipelineCanvasRoutesToolbar = ({
     },
   ];
 
-  const handleSinksChange = (selected: SelectInputOption[]) =>
+  const handleSinksChange = (selected: SelectOption[]) =>
     setSinkIds(
       selected.length === sinkOptions.length
         ? []
@@ -75,35 +79,44 @@ const PipelineCanvasRoutesToolbar = ({
     );
 
   return (
-    <FlexWrapper
+    <Flex
       alignItems={AlignItems.CENTER}
-      gap={FlexGap.MEDIUM}
-      padding={`${PIPELINE_CANVAS_VIEW_SWITCHER_INSET}px`}
+      gap={12}
+      /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ padding={`${PIPELINE_CANVAS_VIEW_SWITCHER_INSET}px`}
       shrink={0}
       fillWidth
     >
       <PipelineCanvasViewSwitcher />
-      <TextInput
-        value={search}
-        onChange={onSearchChange}
-        placeholder="Search resources"
-        leading={{ icon: MagnifyingGlassIcon }}
-        size={InputSize.MEDIUM}
-        width={PIPELINE_CANVAS_ROUTES_SEARCH_WIDTH}
-      />
-      <MultiSelectInput
-        options={sinkOptions}
-        value={selectedSinkOptions}
-        onChange={handleSinksChange}
-        placeholder="Sinks"
-        variant={InputVariant.TERTIARY}
-        size={InputSize.MEDIUM}
-        width={PIPELINE_CANVAS_ROUTES_SINK_FILTER_WIDTH}
-        pinnedOptions={pinnedOptions}
-        renderSelectedText={(selected, placeholder) =>
-          selected.length ? pluralize("sink", selected.length, true) : placeholder
-        }
-      />
+      <Box width={PIPELINE_CANVAS_ROUTES_SEARCH_WIDTH}>
+        <TextInput
+          fillWidth
+          value={search}
+          onChange={onSearchChange}
+          placeholder="Search resources"
+          icon={MagnifyingGlassIcon}
+          size={InputSize.MEDIUM}
+        />
+      </Box>
+      <Box width={PIPELINE_CANVAS_ROUTES_SINK_FILTER_WIDTH}>
+        <MultiSelectInput
+          fillWidth
+          options={sinkOptions}
+          /* @dls-migrate multiselectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
+            selectedSinkOptions
+          }
+          onChange={handleSinksChange}
+          placeholder="Sinks"
+          variant={MultiSelectInputVariant.TERTIARY}
+          size={MultiSelectInputSize.MEDIUM}
+          /* @dls-migrate multiselectinput.pinnedOptions: Pinned rows are now option ids: pass `pinnedIds`. */ pinnedOptions={
+            pinnedOptions
+          }
+          /* @dls-migrate multiselectinput.renderSelectedText: Merged into `renderValue(options)`. */ renderSelectedText={(
+            selected,
+            placeholder,
+          ) => (selected.length ? pluralize("sink", selected.length, true) : placeholder)}
+        />
+      </Box>
       <FlexItem grow={1} />
       {canAddRoute && (
         <Button
@@ -114,7 +127,7 @@ const PipelineCanvasRoutesToolbar = ({
           onClick={onAddRoute}
         />
       )}
-    </FlexWrapper>
+    </Flex>
   );
 };
 

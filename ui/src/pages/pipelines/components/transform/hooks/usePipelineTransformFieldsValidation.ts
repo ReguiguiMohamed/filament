@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { create } from "@bufbuild/protobuf";
 import { keepPreviousData } from "@tanstack/react-query";
 
-import { useDebouncedValue } from "@galaxy-io/dls/inputs/hooks";
+import { useDebouncedValue } from "@galaxy-io/dls/hooks/useDebouncedValue";
 
 import type { ResourceColumn } from "@/gen/ingestion/v1/connectors_pb";
 import { ValidateTransformRequestSchema } from "@/gen/ingestion/v1/transformations_pb";
