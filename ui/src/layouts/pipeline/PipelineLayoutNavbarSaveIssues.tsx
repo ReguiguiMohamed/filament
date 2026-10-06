@@ -5,6 +5,7 @@ import pluralize from "pluralize";
 import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
 import Flex, { AlignItems, FlexDirection, JustifyContent } from "@galaxy-io/dls/layout/Flex";
 import FlexItem from "@galaxy-io/dls/layout/FlexItem";
+import { FOCUS_RING, HAIRLINE_WIDTH, INTERACTIVE_RESET } from "@galaxy-io/dls/styles/mixins";
 import Text, { TextSize, TextVariant, TextWeight } from "@galaxy-io/dls/text/Text";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 
@@ -13,26 +14,30 @@ import {
   PipelineCanvasValidationIssueKind,
 } from "@/pages/pipelines/canvas/hooks/usePipelineCanvasValidation";
 
-const MAX_ISSUES_IN_TOOLTIP = 3;
+const MAX_VISIBLE_SAVE_ISSUES = 3;
 
-const PipelineLayoutNavbarSaveIssueRow = styled.div<{ $isClickable: boolean }>`
+const PipelineLayoutNavbarSaveIssueRow = styled.button`
+  ${INTERACTIVE_RESET}
+  ${FOCUS_RING}
   width: 100%;
 
-  padding: 6px;
+  padding: 8px;
 
   display: flex;
   align-items: center;
 
-  border: 0.5px solid ${t.color.border.primary};
-  border-radius: 4px;
+  border: ${HAIRLINE_WIDTH} solid ${t.color.border.primary};
+  border-radius: ${t.radius.lg};
 
   background-color: ${t.color.background.primary};
+  transition: background-color ${t.duration.fast};
 
-  cursor: ${({ $isClickable }) => ($isClickable ? "pointer" : "default")};
+  &:hover:not(:disabled) {
+    background-color: ${t.color.background.hovered};
+  }
 
-  &:hover {
-    background-color: ${({ $isClickable }) =>
-      $isClickable ? t.color.background.secondary : t.color.background.primary};
+  &:disabled {
+    cursor: default;
   }
 `;
 
@@ -41,25 +46,25 @@ interface PipelineLayoutNavbarSaveIssuesProps {
   onSelectResource: (edgeId: string) => void;
 }
 
-// Lists what blocks Save: one row per invalid resource, then any graph-level
-// problem, capped with a "+N more" line.
 const PipelineLayoutNavbarSaveIssues = ({
   issues,
   onSelectResource,
 }: PipelineLayoutNavbarSaveIssuesProps) => {
-  const hidden = issues.length - MAX_ISSUES_IN_TOOLTIP;
+  const hidden = issues.length - MAX_VISIBLE_SAVE_ISSUES;
   return (
     <Flex
       direction={FlexDirection.COLUMN}
       alignItems={AlignItems.CENTER}
       gap={4}
-      minWidth="240px"
-      maxWidth="320px"
+      padding={8}
+      minWidth={240}
+      maxWidth={320}
     >
-      {issues.slice(0, MAX_ISSUES_IN_TOOLTIP).map(({ edgeId, ...issue }) => (
+      {issues.slice(0, MAX_VISIBLE_SAVE_ISSUES).map(({ edgeId, ...issue }) => (
         <PipelineLayoutNavbarSaveIssueRow
           key={`${edgeId ?? ""}|${issue.resource ?? ""}|${issue.message}`}
-          $isClickable={edgeId !== undefined}
+          type="button"
+          disabled={edgeId === undefined}
           onClick={edgeId === undefined ? undefined : () => onSelectResource(edgeId)}
         >
           <Flex
@@ -95,12 +100,7 @@ const PipelineLayoutNavbarSaveIssues = ({
         </PipelineLayoutNavbarSaveIssueRow>
       ))}
       {hidden > 0 && (
-        <Flex
-          alignItems={
-            AlignItems.START
-          } /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */
-          padding="6px 0"
-        >
+        <Flex alignItems={AlignItems.START} padding={[4, 0]}>
           <Text variant={TextVariant.TERTIARY} size={TextSize.BODY_SM}>
             +{hidden} more {pluralize("issue", hidden)}
           </Text>
