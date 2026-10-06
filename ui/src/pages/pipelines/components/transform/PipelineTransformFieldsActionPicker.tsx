@@ -93,7 +93,7 @@ const PipelineTransformFieldsActionPicker = ({
       value={getTransformActionId(action)}
       onChange={(id) => onChange((id === null ? undefined : payloadById.get(id)) ?? COPY_ACTION)}
       isClearable
-      isSearchable={options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD}
+      isSearchable={!isDisabled && options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD}
       placeholder="Choose an action..."
       variant={SelectInputVariant.TERTIARY}
       size={SelectInputSize.MEDIUM}

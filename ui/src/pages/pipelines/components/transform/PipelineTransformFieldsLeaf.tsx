@@ -185,6 +185,7 @@ const PipelineTransformFieldsLeaf = ({
       }}
       isClearable
       isSearchable={
+        !isDisabled &&
         literalEntries.length + columnEntries.length > TRANSFORM_SELECT_SEARCH_THRESHOLD
       }
       placeholder={placeholder ?? (isOptional ? "Optional..." : "Choose a column or value...")}

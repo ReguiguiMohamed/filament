@@ -36,7 +36,7 @@ const ChipSlot = styled.span`
   padding: 0 2px;
   vertical-align: top;
 
-  & p {
+  & span {
     font-family: ${t.font.mono.family};
     letter-spacing: ${t.font.mono.spacing.caption};
   }
