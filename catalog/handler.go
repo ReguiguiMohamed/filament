@@ -10,6 +10,7 @@ import (
 	"github.com/galaxy-io/filament"
 	catalogv1 "github.com/galaxy-io/filament/api/catalog/v1"
 	"github.com/galaxy-io/filament/api/catalog/v1/catalogv1connect"
+	ingestionv1 "github.com/galaxy-io/filament/api/ingestion/v1"
 )
 
 // Handler serves a Catalog over ConnectRPC. A worker mounts it so the
@@ -52,9 +53,9 @@ func (h handler) Describe(ctx context.Context, req *connect.Request[catalogv1.De
 		var connector *catalogv1.Connector
 		var err error
 		switch kind {
-		case catalogv1.Kind_KIND_SOURCE:
+		case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
 			connector, err = h.source(ctx, name)
-		case catalogv1.Kind_KIND_SINK:
+		case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
 			connector, err = h.sink(ctx, name)
 		default:
 			return nil, errKindRequired
@@ -65,7 +66,7 @@ func (h handler) Describe(ctx context.Context, req *connect.Request[catalogv1.De
 		resp.Connectors = append(resp.Connectors, connector)
 		return connect.NewResponse(resp), nil
 	}
-	if kind != catalogv1.Kind_KIND_SINK {
+	if kind != ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK {
 		specs, err := h.catalog.SourceSpecs(ctx)
 		if err != nil {
 			return nil, ConnectError(err)
@@ -80,7 +81,7 @@ func (h handler) Describe(ctx context.Context, req *connect.Request[catalogv1.De
 			resp.Connectors = append(resp.Connectors, connector)
 		}
 	}
-	if kind != catalogv1.Kind_KIND_SOURCE {
+	if kind != ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE {
 		specs, err := h.catalog.SinkSpecs(ctx)
 		if err != nil {
 			return nil, ConnectError(err)
@@ -124,7 +125,7 @@ func (h handler) sourceConnector(ctx context.Context, spec filament.ConnectorSpe
 		return nil, err
 	}
 	return &catalogv1.Connector{
-		Kind: catalogv1.Kind_KIND_SOURCE, Name: spec.Name, Spec: &catalogv1.Connector_Source{Source: wire},
+		Kind: ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE, Name: spec.Name, Spec: &catalogv1.Connector_Source{Source: wire},
 		PlansStreams: contracts.PlansStreams, Streams: contracts.Streams,
 	}, nil
 }
@@ -138,7 +139,7 @@ func (h handler) sinkConnector(ctx context.Context, spec filament.SinkSpec) (*ca
 	if err != nil {
 		return nil, err
 	}
-	return &catalogv1.Connector{Kind: catalogv1.Kind_KIND_SINK, Name: spec.Name, Spec: &catalogv1.Connector_Sink{Sink: wire}, Streams: contracts.Streams}, nil
+	return &catalogv1.Connector{Kind: ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK, Name: spec.Name, Spec: &catalogv1.Connector_Sink{Sink: wire}, Streams: contracts.Streams}, nil
 }
 
 func (h handler) PlanReplicationStream(ctx context.Context, req *connect.Request[catalogv1.PlanReplicationStreamRequest]) (*connect.Response[catalogv1.PlanReplicationStreamResponse], error) {

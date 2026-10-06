@@ -173,14 +173,14 @@ func (r *remote) refresh(ctx context.Context) (any, error) {
 	listed := map[string]sourceEntry{}
 	for _, connector := range resp.Msg.GetConnectors() {
 		switch connector.GetKind() {
-		case catalogv1.Kind_KIND_SOURCE:
+		case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
 			entry, err := decodeSource(connector)
 			if err != nil {
 				return nil, err
 			}
 			next.sources = append(next.sources, entry.spec)
 			listed[connector.GetName()] = entry
-		case catalogv1.Kind_KIND_SINK:
+		case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
 			entry, err := decodeSink(connector)
 			if err != nil {
 				return nil, err
@@ -206,7 +206,7 @@ func (r *remote) refresh(ctx context.Context) (any, error) {
 // lookup answers one name from the snapshot. A name the listing lacks is
 // asked for individually, outside the lock, and remembered either way for
 // the snapshot's life.
-func lookup[E any](ctx context.Context, r *remote, kind catalogv1.Kind, name string, names func(*snapshot) map[string]E, decode func(*catalogv1.Connector) (E, error)) (E, error) {
+func lookup[E any](ctx context.Context, r *remote, kind ingestionv1.ConnectorKind, name string, names func(*snapshot) map[string]E, decode func(*catalogv1.Connector) (E, error)) (E, error) {
 	var zero E
 	snap, err := r.described(ctx)
 	if err != nil {
@@ -247,11 +247,11 @@ func lookup[E any](ctx context.Context, r *remote, kind catalogv1.Kind, name str
 }
 
 func (r *remote) source(ctx context.Context, name string) (sourceEntry, error) {
-	return lookup(ctx, r, catalogv1.Kind_KIND_SOURCE, name, func(s *snapshot) map[string]sourceEntry { return s.sourceNames }, decodeSource)
+	return lookup(ctx, r, ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE, name, func(s *snapshot) map[string]sourceEntry { return s.sourceNames }, decodeSource)
 }
 
 func (r *remote) sink(ctx context.Context, name string) (sinkEntry, error) {
-	return lookup(ctx, r, catalogv1.Kind_KIND_SINK, name, func(s *snapshot) map[string]sinkEntry { return s.sinkNames }, decodeSink)
+	return lookup(ctx, r, ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK, name, func(s *snapshot) map[string]sinkEntry { return s.sinkNames }, decodeSink)
 }
 
 func (r *remote) SourceSpecs(ctx context.Context) ([]filament.ConnectorSpec, error) {

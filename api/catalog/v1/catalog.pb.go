@@ -24,55 +24,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Kind int32
-
-const (
-	Kind_KIND_UNSPECIFIED Kind = 0
-	Kind_KIND_SOURCE      Kind = 1
-	Kind_KIND_SINK        Kind = 2
-)
-
-// Enum value maps for Kind.
-var (
-	Kind_name = map[int32]string{
-		0: "KIND_UNSPECIFIED",
-		1: "KIND_SOURCE",
-		2: "KIND_SINK",
-	}
-	Kind_value = map[string]int32{
-		"KIND_UNSPECIFIED": 0,
-		"KIND_SOURCE":      1,
-		"KIND_SINK":        2,
-	}
-)
-
-func (x Kind) Enum() *Kind {
-	p := new(Kind)
-	*p = x
-	return p
-}
-
-func (x Kind) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Kind) Descriptor() protoreflect.EnumDescriptor {
-	return file_catalog_v1_catalog_proto_enumTypes[0].Descriptor()
-}
-
-func (Kind) Type() protoreflect.EnumType {
-	return &file_catalog_v1_catalog_proto_enumTypes[0]
-}
-
-func (x Kind) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Kind.Descriptor instead.
-func (Kind) EnumDescriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
-}
-
 // ReadMode is filament.ReadMode.
 type ReadMode int32
 
@@ -110,11 +61,11 @@ func (x ReadMode) String() string {
 }
 
 func (ReadMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_catalog_v1_catalog_proto_enumTypes[1].Descriptor()
+	return file_catalog_v1_catalog_proto_enumTypes[0].Descriptor()
 }
 
 func (ReadMode) Type() protoreflect.EnumType {
-	return &file_catalog_v1_catalog_proto_enumTypes[1]
+	return &file_catalog_v1_catalog_proto_enumTypes[0]
 }
 
 func (x ReadMode) Number() protoreflect.EnumNumber {
@@ -123,7 +74,7 @@ func (x ReadMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ReadMode.Descriptor instead.
 func (ReadMode) EnumDescriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
 }
 
 // Operation is filament.Operation.
@@ -163,11 +114,11 @@ func (x Operation) String() string {
 }
 
 func (Operation) Descriptor() protoreflect.EnumDescriptor {
-	return file_catalog_v1_catalog_proto_enumTypes[2].Descriptor()
+	return file_catalog_v1_catalog_proto_enumTypes[1].Descriptor()
 }
 
 func (Operation) Type() protoreflect.EnumType {
-	return &file_catalog_v1_catalog_proto_enumTypes[2]
+	return &file_catalog_v1_catalog_proto_enumTypes[1]
 }
 
 func (x Operation) Number() protoreflect.EnumNumber {
@@ -176,13 +127,13 @@ func (x Operation) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Operation.Descriptor instead.
 func (Operation) EnumDescriptor() ([]byte, []int) {
-	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{2}
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{1}
 }
 
 // Connector is one registered connector as the catalog describes it.
 type Connector struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Kind  Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
+	Kind  v1.ConnectorKind       `protobuf:"varint,1,opt,name=kind,proto3,enum=ingestion.v1.ConnectorKind" json:"kind,omitempty"`
 	// name is the lookup name: an alias in a listing, the concrete name when
 	// asked for one connector.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -230,11 +181,11 @@ func (*Connector) Descriptor() ([]byte, []int) {
 	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Connector) GetKind() Kind {
+func (x *Connector) GetKind() v1.ConnectorKind {
 	if x != nil {
 		return x.Kind
 	}
-	return Kind_KIND_UNSPECIFIED
+	return v1.ConnectorKind(0)
 }
 
 func (x *Connector) GetName() string {
@@ -310,7 +261,7 @@ type SourceSpec struct {
 	LightLogoUrl   string                 `protobuf:"bytes,6,opt,name=light_logo_url,json=lightLogoUrl,proto3" json:"light_logo_url,omitempty"`
 	Version        string                 `protobuf:"bytes,7,opt,name=version,proto3" json:"version,omitempty"`
 	ApiVersion     string                 `protobuf:"bytes,8,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
-	Maturity       string                 `protobuf:"bytes,9,opt,name=maturity,proto3" json:"maturity,omitempty"`
+	Maturity       v1.ConnectorMaturity   `protobuf:"varint,9,opt,name=maturity,proto3,enum=ingestion.v1.ConnectorMaturity" json:"maturity,omitempty"`
 	Modes          []ReadMode             `protobuf:"varint,10,rep,packed,name=modes,proto3,enum=catalog.v1.ReadMode" json:"modes,omitempty"`
 	SourcePolicies []*SourcePolicy        `protobuf:"bytes,11,rep,name=source_policies,json=sourcePolicies,proto3" json:"source_policies,omitempty"`
 	Config         *v1.ConfigSchema       `protobuf:"bytes,12,opt,name=config,proto3" json:"config,omitempty"`
@@ -407,11 +358,11 @@ func (x *SourceSpec) GetApiVersion() string {
 	return ""
 }
 
-func (x *SourceSpec) GetMaturity() string {
+func (x *SourceSpec) GetMaturity() v1.ConnectorMaturity {
 	if x != nil {
 		return x.Maturity
 	}
-	return ""
+	return v1.ConnectorMaturity(0)
 }
 
 func (x *SourceSpec) GetModes() []ReadMode {
@@ -649,7 +600,7 @@ type SinkSpec struct {
 	DarkLogoUrl   string                 `protobuf:"bytes,4,opt,name=dark_logo_url,json=darkLogoUrl,proto3" json:"dark_logo_url,omitempty"`
 	LightLogoUrl  string                 `protobuf:"bytes,5,opt,name=light_logo_url,json=lightLogoUrl,proto3" json:"light_logo_url,omitempty"`
 	Version       string                 `protobuf:"bytes,6,opt,name=version,proto3" json:"version,omitempty"`
-	Maturity      string                 `protobuf:"bytes,7,opt,name=maturity,proto3" json:"maturity,omitempty"`
+	Maturity      v1.ConnectorMaturity   `protobuf:"varint,7,opt,name=maturity,proto3,enum=ingestion.v1.ConnectorMaturity" json:"maturity,omitempty"`
 	Config        *v1.ConfigSchema       `protobuf:"bytes,8,opt,name=config,proto3" json:"config,omitempty"`
 	Capabilities  *SinkCapabilities      `protobuf:"bytes,9,opt,name=capabilities,proto3" json:"capabilities,omitempty"`
 	SchemaField   string                 `protobuf:"bytes,10,opt,name=schema_field,json=schemaField,proto3" json:"schema_field,omitempty"`
@@ -729,11 +680,11 @@ func (x *SinkSpec) GetVersion() string {
 	return ""
 }
 
-func (x *SinkSpec) GetMaturity() string {
+func (x *SinkSpec) GetMaturity() v1.ConnectorMaturity {
 	if x != nil {
 		return x.Maturity
 	}
-	return ""
+	return v1.ConnectorMaturity(0)
 }
 
 func (x *SinkSpec) GetConfig() *v1.ConfigSchema {
@@ -1086,7 +1037,7 @@ func (x *ReplicationStreamPlan) GetContinuityConfig() *structpb.Struct {
 type DescribeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// kind narrows the listing. It is required when name is set.
-	Kind Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
+	Kind v1.ConnectorKind `protobuf:"varint,1,opt,name=kind,proto3,enum=ingestion.v1.ConnectorKind" json:"kind,omitempty"`
 	// name selects one connector and resolves aliases. Empty lists every
 	// registered connector.
 	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -1124,11 +1075,11 @@ func (*DescribeRequest) Descriptor() ([]byte, []int) {
 	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *DescribeRequest) GetKind() Kind {
+func (x *DescribeRequest) GetKind() v1.ConnectorKind {
 	if x != nil {
 		return x.Kind
 	}
-	return Kind_KIND_UNSPECIFIED
+	return v1.ConnectorKind(0)
 }
 
 func (x *DescribeRequest) GetName() string {
@@ -1304,7 +1255,7 @@ func (x *PlanReplicationStreamResponse) GetPlan() *ReplicationStreamPlan {
 
 type ValidateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Kind          Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
+	Kind          v1.ConnectorKind       `protobuf:"varint,1,opt,name=kind,proto3,enum=ingestion.v1.ConnectorKind" json:"kind,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Config        *structpb.Struct       `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1341,11 +1292,11 @@ func (*ValidateRequest) Descriptor() ([]byte, []int) {
 	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *ValidateRequest) GetKind() Kind {
+func (x *ValidateRequest) GetKind() v1.ConnectorKind {
 	if x != nil {
 		return x.Kind
 	}
-	return Kind_KIND_UNSPECIFIED
+	return v1.ConnectorKind(0)
 }
 
 func (x *ValidateRequest) GetName() string {
@@ -1409,7 +1360,7 @@ func (x *ValidateResponse) GetFailure() string {
 
 type TestConnectionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Kind          Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=catalog.v1.Kind" json:"kind,omitempty"`
+	Kind          v1.ConnectorKind       `protobuf:"varint,1,opt,name=kind,proto3,enum=ingestion.v1.ConnectorKind" json:"kind,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Config        *structpb.Struct       `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1446,11 +1397,11 @@ func (*TestConnectionRequest) Descriptor() ([]byte, []int) {
 	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *TestConnectionRequest) GetKind() Kind {
+func (x *TestConnectionRequest) GetKind() v1.ConnectorKind {
 	if x != nil {
 		return x.Kind
 	}
-	return Kind_KIND_UNSPECIFIED
+	return v1.ConnectorKind(0)
 }
 
 func (x *TestConnectionRequest) GetName() string {
@@ -1832,15 +1783,15 @@ var File_catalog_v1_catalog_proto protoreflect.FileDescriptor
 const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\n" +
 	"\x18catalog/v1/catalog.proto\x12\n" +
-	"catalog.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x19ingestion/v1/common.proto\x1a\x1dingestion/v1/connectors.proto\"\xea\x01\n" +
-	"\tConnector\x12$\n" +
-	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
+	"catalog.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x19ingestion/v1/common.proto\x1a\x1dingestion/v1/connectors.proto\"\xf5\x01\n" +
+	"\tConnector\x12/\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1b.ingestion.v1.ConnectorKindR\x04kind\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x120\n" +
 	"\x06source\x18\x03 \x01(\v2\x16.catalog.v1.SourceSpecH\x00R\x06source\x12*\n" +
 	"\x04sink\x18\x04 \x01(\v2\x14.catalog.v1.SinkSpecH\x00R\x04sink\x12#\n" +
 	"\rplans_streams\x18\x05 \x01(\bR\fplansStreams\x12\x18\n" +
 	"\astreams\x18\x06 \x01(\bR\astreamsB\x06\n" +
-	"\x04spec\"\xc4\x04\n" +
+	"\x04spec\"\xe5\x04\n" +
 	"\n" +
 	"SourceSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
@@ -1851,8 +1802,8 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x0elight_logo_url\x18\x06 \x01(\tR\flightLogoUrl\x12\x18\n" +
 	"\aversion\x18\a \x01(\tR\aversion\x12\x1f\n" +
 	"\vapi_version\x18\b \x01(\tR\n" +
-	"apiVersion\x12\x1a\n" +
-	"\bmaturity\x18\t \x01(\tR\bmaturity\x12*\n" +
+	"apiVersion\x12;\n" +
+	"\bmaturity\x18\t \x01(\x0e2\x1f.ingestion.v1.ConnectorMaturityR\bmaturity\x12*\n" +
 	"\x05modes\x18\n" +
 	" \x03(\x0e2\x14.catalog.v1.ReadModeR\x05modes\x12A\n" +
 	"\x0fsource_policies\x18\v \x03(\v2\x18.catalog.v1.SourcePolicyR\x0esourcePolicies\x122\n" +
@@ -1871,15 +1822,15 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\temits_ops\x18\x01 \x03(\x0e2\x15.catalog.v1.OperationR\bemitsOps\x12\x14\n" +
 	"\x05input\x18\x02 \x01(\tR\x05input\x12\x1a\n" +
 	"\bordering\x18\x03 \x03(\tR\bordering\x12\x1a\n" +
-	"\bdelivery\x18\x04 \x01(\tR\bdelivery\"\xfc\x02\n" +
+	"\bdelivery\x18\x04 \x01(\tR\bdelivery\"\x9d\x03\n" +
 	"\bSinkSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\"\n" +
 	"\rdark_logo_url\x18\x04 \x01(\tR\vdarkLogoUrl\x12$\n" +
 	"\x0elight_logo_url\x18\x05 \x01(\tR\flightLogoUrl\x12\x18\n" +
-	"\aversion\x18\x06 \x01(\tR\aversion\x12\x1a\n" +
-	"\bmaturity\x18\a \x01(\tR\bmaturity\x122\n" +
+	"\aversion\x18\x06 \x01(\tR\aversion\x12;\n" +
+	"\bmaturity\x18\a \x01(\x0e2\x1f.ingestion.v1.ConnectorMaturityR\bmaturity\x122\n" +
 	"\x06config\x18\b \x01(\v2\x1a.ingestion.v1.ConfigSchemaR\x06config\x12@\n" +
 	"\fcapabilities\x18\t \x01(\v2\x1c.catalog.v1.SinkCapabilitiesR\fcapabilities\x12!\n" +
 	"\fschema_field\x18\n" +
@@ -1913,9 +1864,9 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\tresources\x18\x01 \x03(\tR\tresources\x12#\n" +
 	"\rconsumer_name\x18\x02 \x01(\tR\fconsumerName\x12@\n" +
 	"\x0fconsumer_config\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x0econsumerConfig\x12D\n" +
-	"\x11continuity_config\x18\x04 \x01(\v2\x17.google.protobuf.StructR\x10continuityConfig\"K\n" +
-	"\x0fDescribeRequest\x12$\n" +
-	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
+	"\x11continuity_config\x18\x04 \x01(\v2\x17.google.protobuf.StructR\x10continuityConfig\"V\n" +
+	"\x0fDescribeRequest\x12/\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1b.ingestion.v1.ConnectorKindR\x04kind\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"I\n" +
 	"\x10DescribeResponse\x125\n" +
 	"\n" +
@@ -1928,15 +1879,15 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x06config\x18\x04 \x01(\v2\x17.google.protobuf.StructR\x06config\x12\x1c\n" +
 	"\tresources\x18\x05 \x03(\tR\tresources\"V\n" +
 	"\x1dPlanReplicationStreamResponse\x125\n" +
-	"\x04plan\x18\x01 \x01(\v2!.catalog.v1.ReplicationStreamPlanR\x04plan\"|\n" +
-	"\x0fValidateRequest\x12$\n" +
-	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
+	"\x04plan\x18\x01 \x01(\v2!.catalog.v1.ReplicationStreamPlanR\x04plan\"\x87\x01\n" +
+	"\x0fValidateRequest\x12/\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1b.ingestion.v1.ConnectorKindR\x04kind\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
 	"\x06config\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x06config\",\n" +
 	"\x10ValidateResponse\x12\x18\n" +
-	"\afailure\x18\x01 \x01(\tR\afailure\"\x82\x01\n" +
-	"\x15TestConnectionRequest\x12$\n" +
-	"\x04kind\x18\x01 \x01(\x0e2\x10.catalog.v1.KindR\x04kind\x12\x12\n" +
+	"\afailure\x18\x01 \x01(\tR\afailure\"\x8d\x01\n" +
+	"\x15TestConnectionRequest\x12/\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1b.ingestion.v1.ConnectorKindR\x04kind\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
 	"\x06config\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x06config\"2\n" +
 	"\x16TestConnectionResponse\x12\x18\n" +
@@ -1962,11 +1913,7 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x13columns_unsupported\x18\a \x01(\bR\x12columnsUnsupported\x12/\n" +
 	"\x13managed_incremental\x18\b \x01(\bR\x12managedIncremental\"O\n" +
 	"\x0fInspectResponse\x12<\n" +
-	"\tresources\x18\x01 \x03(\v2\x1e.catalog.v1.ResourceInspectionR\tresources*<\n" +
-	"\x04Kind\x12\x14\n" +
-	"\x10KIND_UNSPECIFIED\x10\x00\x12\x0f\n" +
-	"\vKIND_SOURCE\x10\x01\x12\r\n" +
-	"\tKIND_SINK\x10\x02*g\n" +
+	"\tresources\x18\x01 \x03(\v2\x1e.catalog.v1.ResourceInspectionR\tresources*g\n" +
 	"\bReadMode\x12\x19\n" +
 	"\x15READ_MODE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eREAD_MODE_FULL\x10\x01\x12\x19\n" +
@@ -2000,93 +1947,96 @@ func file_catalog_v1_catalog_proto_rawDescGZIP() []byte {
 	return file_catalog_v1_catalog_proto_rawDescData
 }
 
-var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_catalog_v1_catalog_proto_goTypes = []any{
-	(Kind)(0),                             // 0: catalog.v1.Kind
-	(ReadMode)(0),                         // 1: catalog.v1.ReadMode
-	(Operation)(0),                        // 2: catalog.v1.Operation
-	(*Connector)(nil),                     // 3: catalog.v1.Connector
-	(*SourceSpec)(nil),                    // 4: catalog.v1.SourceSpec
-	(*SourcePolicy)(nil),                  // 5: catalog.v1.SourcePolicy
-	(*ResourceCapabilities)(nil),          // 6: catalog.v1.ResourceCapabilities
-	(*StreamCapabilities)(nil),            // 7: catalog.v1.StreamCapabilities
-	(*SinkSpec)(nil),                      // 8: catalog.v1.SinkSpec
-	(*SinkCapabilities)(nil),              // 9: catalog.v1.SinkCapabilities
-	(*StreamingSinkCapabilities)(nil),     // 10: catalog.v1.StreamingSinkCapabilities
-	(*WritePolicyCapability)(nil),         // 11: catalog.v1.WritePolicyCapability
-	(*ReplicationStreamPlan)(nil),         // 12: catalog.v1.ReplicationStreamPlan
-	(*DescribeRequest)(nil),               // 13: catalog.v1.DescribeRequest
-	(*DescribeResponse)(nil),              // 14: catalog.v1.DescribeResponse
-	(*PlanReplicationStreamRequest)(nil),  // 15: catalog.v1.PlanReplicationStreamRequest
-	(*PlanReplicationStreamResponse)(nil), // 16: catalog.v1.PlanReplicationStreamResponse
-	(*ValidateRequest)(nil),               // 17: catalog.v1.ValidateRequest
-	(*ValidateResponse)(nil),              // 18: catalog.v1.ValidateResponse
-	(*TestConnectionRequest)(nil),         // 19: catalog.v1.TestConnectionRequest
-	(*TestConnectionResponse)(nil),        // 20: catalog.v1.TestConnectionResponse
-	(*DiscoverRequest)(nil),               // 21: catalog.v1.DiscoverRequest
-	(*DiscoverResponse)(nil),              // 22: catalog.v1.DiscoverResponse
-	(*InspectRequest)(nil),                // 23: catalog.v1.InspectRequest
-	(*ResourceInspection)(nil),            // 24: catalog.v1.ResourceInspection
-	(*InspectResponse)(nil),               // 25: catalog.v1.InspectResponse
-	(*v1.ConfigSchema)(nil),               // 26: ingestion.v1.ConfigSchema
-	(*durationpb.Duration)(nil),           // 27: google.protobuf.Duration
-	(*structpb.Struct)(nil),               // 28: google.protobuf.Struct
-	(*v1.Resource)(nil),                   // 29: ingestion.v1.Resource
-	(*v1.ResourceColumn)(nil),             // 30: ingestion.v1.ResourceColumn
+	(ReadMode)(0),                         // 0: catalog.v1.ReadMode
+	(Operation)(0),                        // 1: catalog.v1.Operation
+	(*Connector)(nil),                     // 2: catalog.v1.Connector
+	(*SourceSpec)(nil),                    // 3: catalog.v1.SourceSpec
+	(*SourcePolicy)(nil),                  // 4: catalog.v1.SourcePolicy
+	(*ResourceCapabilities)(nil),          // 5: catalog.v1.ResourceCapabilities
+	(*StreamCapabilities)(nil),            // 6: catalog.v1.StreamCapabilities
+	(*SinkSpec)(nil),                      // 7: catalog.v1.SinkSpec
+	(*SinkCapabilities)(nil),              // 8: catalog.v1.SinkCapabilities
+	(*StreamingSinkCapabilities)(nil),     // 9: catalog.v1.StreamingSinkCapabilities
+	(*WritePolicyCapability)(nil),         // 10: catalog.v1.WritePolicyCapability
+	(*ReplicationStreamPlan)(nil),         // 11: catalog.v1.ReplicationStreamPlan
+	(*DescribeRequest)(nil),               // 12: catalog.v1.DescribeRequest
+	(*DescribeResponse)(nil),              // 13: catalog.v1.DescribeResponse
+	(*PlanReplicationStreamRequest)(nil),  // 14: catalog.v1.PlanReplicationStreamRequest
+	(*PlanReplicationStreamResponse)(nil), // 15: catalog.v1.PlanReplicationStreamResponse
+	(*ValidateRequest)(nil),               // 16: catalog.v1.ValidateRequest
+	(*ValidateResponse)(nil),              // 17: catalog.v1.ValidateResponse
+	(*TestConnectionRequest)(nil),         // 18: catalog.v1.TestConnectionRequest
+	(*TestConnectionResponse)(nil),        // 19: catalog.v1.TestConnectionResponse
+	(*DiscoverRequest)(nil),               // 20: catalog.v1.DiscoverRequest
+	(*DiscoverResponse)(nil),              // 21: catalog.v1.DiscoverResponse
+	(*InspectRequest)(nil),                // 22: catalog.v1.InspectRequest
+	(*ResourceInspection)(nil),            // 23: catalog.v1.ResourceInspection
+	(*InspectResponse)(nil),               // 24: catalog.v1.InspectResponse
+	(v1.ConnectorKind)(0),                 // 25: ingestion.v1.ConnectorKind
+	(v1.ConnectorMaturity)(0),             // 26: ingestion.v1.ConnectorMaturity
+	(*v1.ConfigSchema)(nil),               // 27: ingestion.v1.ConfigSchema
+	(*durationpb.Duration)(nil),           // 28: google.protobuf.Duration
+	(*structpb.Struct)(nil),               // 29: google.protobuf.Struct
+	(*v1.Resource)(nil),                   // 30: ingestion.v1.Resource
+	(*v1.ResourceColumn)(nil),             // 31: ingestion.v1.ResourceColumn
 }
 var file_catalog_v1_catalog_proto_depIdxs = []int32{
-	0,  // 0: catalog.v1.Connector.kind:type_name -> catalog.v1.Kind
-	4,  // 1: catalog.v1.Connector.source:type_name -> catalog.v1.SourceSpec
-	8,  // 2: catalog.v1.Connector.sink:type_name -> catalog.v1.SinkSpec
-	1,  // 3: catalog.v1.SourceSpec.modes:type_name -> catalog.v1.ReadMode
-	5,  // 4: catalog.v1.SourceSpec.source_policies:type_name -> catalog.v1.SourcePolicy
-	26, // 5: catalog.v1.SourceSpec.config:type_name -> ingestion.v1.ConfigSchema
-	6,  // 6: catalog.v1.SourceSpec.resources:type_name -> catalog.v1.ResourceCapabilities
-	7,  // 7: catalog.v1.SourceSpec.stream:type_name -> catalog.v1.StreamCapabilities
-	1,  // 8: catalog.v1.SourcePolicy.mode:type_name -> catalog.v1.ReadMode
-	2,  // 9: catalog.v1.SourcePolicy.emits_ops:type_name -> catalog.v1.Operation
-	2,  // 10: catalog.v1.StreamCapabilities.emits_ops:type_name -> catalog.v1.Operation
-	26, // 11: catalog.v1.SinkSpec.config:type_name -> ingestion.v1.ConfigSchema
-	9,  // 12: catalog.v1.SinkSpec.capabilities:type_name -> catalog.v1.SinkCapabilities
-	10, // 13: catalog.v1.SinkCapabilities.stream:type_name -> catalog.v1.StreamingSinkCapabilities
-	11, // 14: catalog.v1.SinkCapabilities.write_policies:type_name -> catalog.v1.WritePolicyCapability
-	27, // 15: catalog.v1.SinkCapabilities.preferred_flush_interval:type_name -> google.protobuf.Duration
-	11, // 16: catalog.v1.StreamingSinkCapabilities.write_policies:type_name -> catalog.v1.WritePolicyCapability
-	27, // 17: catalog.v1.StreamingSinkCapabilities.in_flight_bound:type_name -> google.protobuf.Duration
-	2,  // 18: catalog.v1.WritePolicyCapability.accepts_ops:type_name -> catalog.v1.Operation
-	28, // 19: catalog.v1.ReplicationStreamPlan.consumer_config:type_name -> google.protobuf.Struct
-	28, // 20: catalog.v1.ReplicationStreamPlan.continuity_config:type_name -> google.protobuf.Struct
-	0,  // 21: catalog.v1.DescribeRequest.kind:type_name -> catalog.v1.Kind
-	3,  // 22: catalog.v1.DescribeResponse.connectors:type_name -> catalog.v1.Connector
-	28, // 23: catalog.v1.PlanReplicationStreamRequest.config:type_name -> google.protobuf.Struct
-	12, // 24: catalog.v1.PlanReplicationStreamResponse.plan:type_name -> catalog.v1.ReplicationStreamPlan
-	0,  // 25: catalog.v1.ValidateRequest.kind:type_name -> catalog.v1.Kind
-	28, // 26: catalog.v1.ValidateRequest.config:type_name -> google.protobuf.Struct
-	0,  // 27: catalog.v1.TestConnectionRequest.kind:type_name -> catalog.v1.Kind
-	28, // 28: catalog.v1.TestConnectionRequest.config:type_name -> google.protobuf.Struct
-	28, // 29: catalog.v1.DiscoverRequest.config:type_name -> google.protobuf.Struct
-	29, // 30: catalog.v1.DiscoverResponse.resources:type_name -> ingestion.v1.Resource
-	28, // 31: catalog.v1.InspectRequest.config:type_name -> google.protobuf.Struct
-	30, // 32: catalog.v1.ResourceInspection.columns:type_name -> ingestion.v1.ResourceColumn
-	24, // 33: catalog.v1.InspectResponse.resources:type_name -> catalog.v1.ResourceInspection
-	13, // 34: catalog.v1.CatalogService.Describe:input_type -> catalog.v1.DescribeRequest
-	15, // 35: catalog.v1.CatalogService.PlanReplicationStream:input_type -> catalog.v1.PlanReplicationStreamRequest
-	17, // 36: catalog.v1.CatalogService.Validate:input_type -> catalog.v1.ValidateRequest
-	19, // 37: catalog.v1.CatalogService.TestConnection:input_type -> catalog.v1.TestConnectionRequest
-	21, // 38: catalog.v1.CatalogService.Discover:input_type -> catalog.v1.DiscoverRequest
-	23, // 39: catalog.v1.CatalogService.Inspect:input_type -> catalog.v1.InspectRequest
-	14, // 40: catalog.v1.CatalogService.Describe:output_type -> catalog.v1.DescribeResponse
-	16, // 41: catalog.v1.CatalogService.PlanReplicationStream:output_type -> catalog.v1.PlanReplicationStreamResponse
-	18, // 42: catalog.v1.CatalogService.Validate:output_type -> catalog.v1.ValidateResponse
-	20, // 43: catalog.v1.CatalogService.TestConnection:output_type -> catalog.v1.TestConnectionResponse
-	22, // 44: catalog.v1.CatalogService.Discover:output_type -> catalog.v1.DiscoverResponse
-	25, // 45: catalog.v1.CatalogService.Inspect:output_type -> catalog.v1.InspectResponse
-	40, // [40:46] is the sub-list for method output_type
-	34, // [34:40] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	25, // 0: catalog.v1.Connector.kind:type_name -> ingestion.v1.ConnectorKind
+	3,  // 1: catalog.v1.Connector.source:type_name -> catalog.v1.SourceSpec
+	7,  // 2: catalog.v1.Connector.sink:type_name -> catalog.v1.SinkSpec
+	26, // 3: catalog.v1.SourceSpec.maturity:type_name -> ingestion.v1.ConnectorMaturity
+	0,  // 4: catalog.v1.SourceSpec.modes:type_name -> catalog.v1.ReadMode
+	4,  // 5: catalog.v1.SourceSpec.source_policies:type_name -> catalog.v1.SourcePolicy
+	27, // 6: catalog.v1.SourceSpec.config:type_name -> ingestion.v1.ConfigSchema
+	5,  // 7: catalog.v1.SourceSpec.resources:type_name -> catalog.v1.ResourceCapabilities
+	6,  // 8: catalog.v1.SourceSpec.stream:type_name -> catalog.v1.StreamCapabilities
+	0,  // 9: catalog.v1.SourcePolicy.mode:type_name -> catalog.v1.ReadMode
+	1,  // 10: catalog.v1.SourcePolicy.emits_ops:type_name -> catalog.v1.Operation
+	1,  // 11: catalog.v1.StreamCapabilities.emits_ops:type_name -> catalog.v1.Operation
+	26, // 12: catalog.v1.SinkSpec.maturity:type_name -> ingestion.v1.ConnectorMaturity
+	27, // 13: catalog.v1.SinkSpec.config:type_name -> ingestion.v1.ConfigSchema
+	8,  // 14: catalog.v1.SinkSpec.capabilities:type_name -> catalog.v1.SinkCapabilities
+	9,  // 15: catalog.v1.SinkCapabilities.stream:type_name -> catalog.v1.StreamingSinkCapabilities
+	10, // 16: catalog.v1.SinkCapabilities.write_policies:type_name -> catalog.v1.WritePolicyCapability
+	28, // 17: catalog.v1.SinkCapabilities.preferred_flush_interval:type_name -> google.protobuf.Duration
+	10, // 18: catalog.v1.StreamingSinkCapabilities.write_policies:type_name -> catalog.v1.WritePolicyCapability
+	28, // 19: catalog.v1.StreamingSinkCapabilities.in_flight_bound:type_name -> google.protobuf.Duration
+	1,  // 20: catalog.v1.WritePolicyCapability.accepts_ops:type_name -> catalog.v1.Operation
+	29, // 21: catalog.v1.ReplicationStreamPlan.consumer_config:type_name -> google.protobuf.Struct
+	29, // 22: catalog.v1.ReplicationStreamPlan.continuity_config:type_name -> google.protobuf.Struct
+	25, // 23: catalog.v1.DescribeRequest.kind:type_name -> ingestion.v1.ConnectorKind
+	2,  // 24: catalog.v1.DescribeResponse.connectors:type_name -> catalog.v1.Connector
+	29, // 25: catalog.v1.PlanReplicationStreamRequest.config:type_name -> google.protobuf.Struct
+	11, // 26: catalog.v1.PlanReplicationStreamResponse.plan:type_name -> catalog.v1.ReplicationStreamPlan
+	25, // 27: catalog.v1.ValidateRequest.kind:type_name -> ingestion.v1.ConnectorKind
+	29, // 28: catalog.v1.ValidateRequest.config:type_name -> google.protobuf.Struct
+	25, // 29: catalog.v1.TestConnectionRequest.kind:type_name -> ingestion.v1.ConnectorKind
+	29, // 30: catalog.v1.TestConnectionRequest.config:type_name -> google.protobuf.Struct
+	29, // 31: catalog.v1.DiscoverRequest.config:type_name -> google.protobuf.Struct
+	30, // 32: catalog.v1.DiscoverResponse.resources:type_name -> ingestion.v1.Resource
+	29, // 33: catalog.v1.InspectRequest.config:type_name -> google.protobuf.Struct
+	31, // 34: catalog.v1.ResourceInspection.columns:type_name -> ingestion.v1.ResourceColumn
+	23, // 35: catalog.v1.InspectResponse.resources:type_name -> catalog.v1.ResourceInspection
+	12, // 36: catalog.v1.CatalogService.Describe:input_type -> catalog.v1.DescribeRequest
+	14, // 37: catalog.v1.CatalogService.PlanReplicationStream:input_type -> catalog.v1.PlanReplicationStreamRequest
+	16, // 38: catalog.v1.CatalogService.Validate:input_type -> catalog.v1.ValidateRequest
+	18, // 39: catalog.v1.CatalogService.TestConnection:input_type -> catalog.v1.TestConnectionRequest
+	20, // 40: catalog.v1.CatalogService.Discover:input_type -> catalog.v1.DiscoverRequest
+	22, // 41: catalog.v1.CatalogService.Inspect:input_type -> catalog.v1.InspectRequest
+	13, // 42: catalog.v1.CatalogService.Describe:output_type -> catalog.v1.DescribeResponse
+	15, // 43: catalog.v1.CatalogService.PlanReplicationStream:output_type -> catalog.v1.PlanReplicationStreamResponse
+	17, // 44: catalog.v1.CatalogService.Validate:output_type -> catalog.v1.ValidateResponse
+	19, // 45: catalog.v1.CatalogService.TestConnection:output_type -> catalog.v1.TestConnectionResponse
+	21, // 46: catalog.v1.CatalogService.Discover:output_type -> catalog.v1.DiscoverResponse
+	24, // 47: catalog.v1.CatalogService.Inspect:output_type -> catalog.v1.InspectResponse
+	42, // [42:48] is the sub-list for method output_type
+	36, // [36:42] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_catalog_v1_catalog_proto_init() }
@@ -2103,7 +2053,7 @@ func file_catalog_v1_catalog_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catalog_v1_catalog_proto_rawDesc), len(file_catalog_v1_catalog_proto_rawDesc)),
-			NumEnums:      3,
+			NumEnums:      2,
 			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,

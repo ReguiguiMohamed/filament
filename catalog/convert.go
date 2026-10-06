@@ -99,22 +99,22 @@ func decodeSink(connector *catalogv1.Connector) (sinkEntry, error) {
 	return sinkEntry{spec: spec, contracts: filament.SinkContracts{Streams: connector.GetStreams()}}, nil
 }
 
-func kindToProto(kind filament.ConnectorKind) catalogv1.Kind {
+func kindToProto(kind filament.ConnectorKind) ingestionv1.ConnectorKind {
 	switch kind {
 	case filament.ConnectorKindSource:
-		return catalogv1.Kind_KIND_SOURCE
+		return ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE
 	case filament.ConnectorKindSink:
-		return catalogv1.Kind_KIND_SINK
+		return ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK
 	default:
-		return catalogv1.Kind_KIND_UNSPECIFIED
+		return ingestionv1.ConnectorKind_CONNECTOR_KIND_UNSPECIFIED
 	}
 }
 
-func kindFromProto(kind catalogv1.Kind) filament.ConnectorKind {
+func kindFromProto(kind ingestionv1.ConnectorKind) filament.ConnectorKind {
 	switch kind {
-	case catalogv1.Kind_KIND_SOURCE:
+	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SOURCE:
 		return filament.ConnectorKindSource
-	case catalogv1.Kind_KIND_SINK:
+	case ingestionv1.ConnectorKind_CONNECTOR_KIND_SINK:
 		return filament.ConnectorKindSink
 	default:
 		return filament.ConnectorKindUnspecified
@@ -129,7 +129,7 @@ func sourceSpecToProto(spec filament.ConnectorSpec) (*catalogv1.SourceSpec, erro
 	out := &catalogv1.SourceSpec{
 		Name: spec.Name, AliasTarget: spec.AliasTarget, DisplayName: spec.DisplayName, Description: spec.Description,
 		DarkLogoUrl: spec.DarkLogoURL, LightLogoUrl: spec.LightLogoURL, Version: spec.Version, ApiVersion: spec.APIVersion,
-		Maturity: string(spec.Maturity), Config: config,
+		Maturity: maturityToProto(spec.Maturity), Config: config,
 		Resources: &catalogv1.ResourceCapabilities{Discoverable: spec.Resources.Discoverable, PerResourceCursor: spec.Resources.PerResourceCursor},
 	}
 	for _, mode := range spec.Modes {
@@ -161,7 +161,7 @@ func sourceSpecFromProto(spec *catalogv1.SourceSpec) (filament.ConnectorSpec, er
 	out := filament.ConnectorSpec{
 		Name: spec.GetName(), AliasTarget: spec.GetAliasTarget(), DisplayName: spec.GetDisplayName(), Description: spec.GetDescription(),
 		DarkLogoURL: spec.GetDarkLogoUrl(), LightLogoURL: spec.GetLightLogoUrl(), Version: spec.GetVersion(), APIVersion: spec.GetApiVersion(),
-		Maturity: filament.ConnectorMaturity(spec.GetMaturity()), Config: config,
+		Maturity: maturityFromProto(spec.GetMaturity()), Config: config,
 		Resources: filament.ResourceCapabilities{Discoverable: spec.GetResources().GetDiscoverable(), PerResourceCursor: spec.GetResources().GetPerResourceCursor()},
 	}
 	for _, mode := range spec.GetModes() {
@@ -206,7 +206,7 @@ func sinkSpecToProto(spec filament.SinkSpec) (*catalogv1.SinkSpec, error) {
 	out := &catalogv1.SinkSpec{
 		Name: spec.Name, DisplayName: spec.DisplayName, Description: spec.Description,
 		DarkLogoUrl: spec.DarkLogoURL, LightLogoUrl: spec.LightLogoURL, Version: spec.Version,
-		Maturity: string(spec.Maturity), Config: config, SchemaField: spec.SchemaField,
+		Maturity: maturityToProto(spec.Maturity), Config: config, SchemaField: spec.SchemaField,
 		Capabilities: &catalogv1.SinkCapabilities{
 			Transactional: caps.Transactional, Schematized: caps.Schematized, EncodedIntegrity: caps.EncodedIntegrity,
 			WritePolicies:      writePoliciesToProto(caps.WritePolicies),
@@ -242,7 +242,7 @@ func sinkSpecFromProto(spec *catalogv1.SinkSpec) (filament.SinkSpec, error) {
 	out := filament.SinkSpec{
 		Name: spec.GetName(), DisplayName: spec.GetDisplayName(), Description: spec.GetDescription(),
 		DarkLogoURL: spec.GetDarkLogoUrl(), LightLogoURL: spec.GetLightLogoUrl(), Version: spec.GetVersion(),
-		Maturity: filament.ConnectorMaturity(spec.GetMaturity()), Config: config, SchemaField: spec.GetSchemaField(),
+		Maturity: maturityFromProto(spec.GetMaturity()), Config: config, SchemaField: spec.GetSchemaField(),
 		Capabilities: filament.SinkCapabilities{
 			Transactional: caps.GetTransactional(), Schematized: caps.GetSchematized(), EncodedIntegrity: caps.GetEncodedIntegrity(),
 			WritePolicies:      policies,
@@ -444,6 +444,32 @@ func operationsFromProto(ops []catalogv1.Operation) ([]filament.Operation, error
 		}
 	}
 	return out, nil
+}
+
+func maturityToProto(maturity filament.ConnectorMaturity) ingestionv1.ConnectorMaturity {
+	switch maturity {
+	case filament.MaturityAlpha:
+		return ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_ALPHA
+	case filament.MaturityBeta:
+		return ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_BETA
+	case filament.MaturityStable:
+		return ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_STABLE
+	default:
+		return ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_UNSPECIFIED
+	}
+}
+
+func maturityFromProto(maturity ingestionv1.ConnectorMaturity) filament.ConnectorMaturity {
+	switch maturity {
+	case ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_ALPHA:
+		return filament.MaturityAlpha
+	case ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_BETA:
+		return filament.MaturityBeta
+	case ingestionv1.ConnectorMaturity_CONNECTOR_MATURITY_STABLE:
+		return filament.MaturityStable
+	default:
+		return ""
+	}
 }
 
 func fieldTypeToProto(fieldType filament.FieldType) ingestionv1.FieldType {

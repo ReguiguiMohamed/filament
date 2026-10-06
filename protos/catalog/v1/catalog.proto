@@ -31,12 +31,6 @@ service CatalogService {
   rpc Inspect(InspectRequest) returns (InspectResponse);
 }
 
-enum Kind {
-  KIND_UNSPECIFIED = 0;
-  KIND_SOURCE = 1;
-  KIND_SINK = 2;
-}
-
 // ReadMode is filament.ReadMode.
 enum ReadMode {
   READ_MODE_UNSPECIFIED = 0;
@@ -55,7 +49,7 @@ enum Operation {
 
 // Connector is one registered connector as the catalog describes it.
 message Connector {
-  Kind kind = 1;
+  ingestion.v1.ConnectorKind kind = 1;
   // name is the lookup name: an alias in a listing, the concrete name when
   // asked for one connector.
   string name = 2;
@@ -80,7 +74,7 @@ message SourceSpec {
   string light_logo_url = 6;
   string version = 7;
   string api_version = 8;
-  string maturity = 9;
+  ingestion.v1.ConnectorMaturity maturity = 9;
   repeated ReadMode modes = 10;
   repeated SourcePolicy source_policies = 11;
   ingestion.v1.ConfigSchema config = 12;
@@ -119,7 +113,7 @@ message SinkSpec {
   string dark_logo_url = 4;
   string light_logo_url = 5;
   string version = 6;
-  string maturity = 7;
+  ingestion.v1.ConnectorMaturity maturity = 7;
   ingestion.v1.ConfigSchema config = 8;
   SinkCapabilities capabilities = 9;
   string schema_field = 10;
@@ -167,7 +161,7 @@ message ReplicationStreamPlan {
 
 message DescribeRequest {
   // kind narrows the listing. It is required when name is set.
-  Kind kind = 1;
+  ingestion.v1.ConnectorKind kind = 1;
   // name selects one connector and resolves aliases. Empty lists every
   // registered connector.
   string name = 2;
@@ -190,7 +184,7 @@ message PlanReplicationStreamResponse {
 }
 
 message ValidateRequest {
-  Kind kind = 1;
+  ingestion.v1.ConnectorKind kind = 1;
   string name = 2;
   google.protobuf.Struct config = 3;
 }
@@ -201,7 +195,7 @@ message ValidateResponse {
 }
 
 message TestConnectionRequest {
-  Kind kind = 1;
+  ingestion.v1.ConnectorKind kind = 1;
   string name = 2;
   google.protobuf.Struct config = 3;
 }
