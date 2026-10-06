@@ -67,7 +67,7 @@ func (c *Compiler) compileContinuous(ctx context.Context, tenant filament.Tenant
 		if err != nil {
 			return nil, err
 		}
-		if err := filament.ValidateContinuousConnectors(source, sink); err != nil {
+		if err := filament.ValidateContinuous(source.Spec(), sink.Spec()); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrPrecondition, err)
 		}
 		resources, _ := routeResources(group)

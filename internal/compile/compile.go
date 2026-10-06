@@ -111,7 +111,7 @@ func (c *Compiler) Compile(ctx context.Context, tenant filament.TenantID, pipeli
 		if err != nil {
 			return nil, err
 		}
-		cdc := filament.ReplicationOf(source, filament.NewConfig(sourceRef.Config)) == filament.ReplicationCDC
+		cdc := filament.ReplicationFor(source.Spec(), filament.NewConfig(sourceRef.Config)) == filament.ReplicationCDC
 		ingestionTypes, err := compileIngestionTypes(group, cdc)
 		if err != nil {
 			return nil, err

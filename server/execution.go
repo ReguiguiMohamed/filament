@@ -47,9 +47,7 @@ func (a *Server) sourceExecutionModes(source filament.Source) []ingestionv1.Exec
 	if len(spec.SourcePolicies) > 0 || spec.Stream == nil {
 		modes = append(modes, ingestionv1.ExecutionMode_EXECUTION_MODE_BOUNDED)
 	}
-	_, planningSupported := source.(filament.ReplicationStreamPlanner)
-	_, streamSupported := source.(filament.StreamSource)
-	if a.continuousSupported() && planningSupported && streamSupported {
+	if a.continuousSupported() && spec.Stream != nil {
 		modes = append(modes, ingestionv1.ExecutionMode_EXECUTION_MODE_CONTINUOUS)
 	}
 	return modes
@@ -62,8 +60,7 @@ func (a *Server) sinkExecutionModes(sink filament.Sink) []ingestionv1.ExecutionM
 	if len(sink.Spec().Capabilities.WritePolicies) > 0 {
 		modes = append(modes, ingestionv1.ExecutionMode_EXECUTION_MODE_BOUNDED)
 	}
-	_, streamingSupported := sink.(filament.StreamingSink)
-	if a.continuousSupported() && streamingSupported && sink.Spec().Capabilities.Stream != nil {
+	if a.continuousSupported() && sink.Spec().Capabilities.Stream != nil {
 		modes = append(modes, ingestionv1.ExecutionMode_EXECUTION_MODE_CONTINUOUS)
 	}
 	return modes

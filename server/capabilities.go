@@ -170,7 +170,7 @@ func (a *Server) validateEdge(ctx context.Context, edge *ingestionv1.PipelineEdg
 		return nil
 	}
 	srcSpec, snkSpec := source.Spec(), sink.Spec()
-	replication := filament.ReplicationOf(source, filament.NewConfig(srcConn.Config))
+	replication := filament.ReplicationFor(srcSpec, filament.NewConfig(srcConn.Config))
 	ev.Replication = replicationToProto(replication)
 
 	// CDC connections fix the read side to the change stream and expose append
@@ -594,7 +594,7 @@ func validateContinuousEdge(ctx context.Context, edge *ingestionv1.PipelineEdge,
 	if !runtimeSupported {
 		edgeError(ev, "execution_mode", filament.ErrContinuousDisabled.Error())
 	}
-	if err := filament.ValidateContinuousConnectors(source, sink); err != nil {
+	if err := filament.ValidateContinuous(source.Spec(), sink.Spec()); err != nil {
 		edgeError(ev, "execution_mode", err.Error())
 	}
 	writeMode, err := writeModeFromProto(selected)
@@ -646,7 +646,7 @@ func (a *Server) edgeExecutionModes(source filament.Source, sink filament.Sink, 
 		if candidate == ingestionv1.ExecutionMode_EXECUTION_MODE_BOUNDED && !boundedPairSupported(source.Spec(), sink.Spec()) {
 			continue
 		}
-		if candidate == ingestionv1.ExecutionMode_EXECUTION_MODE_CONTINUOUS && filament.ValidateContinuousConnectors(source, sink) != nil {
+		if candidate == ingestionv1.ExecutionMode_EXECUTION_MODE_CONTINUOUS && filament.ValidateContinuous(source.Spec(), sink.Spec()) != nil {
 			continue
 		}
 		ev.SupportedExecutionModes = append(ev.SupportedExecutionModes, candidate)

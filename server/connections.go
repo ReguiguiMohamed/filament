@@ -135,8 +135,8 @@ func (a *Server) UpdateConnection(ctx context.Context, req *connect.Request[inge
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInvalidArgument, err)
 		}
-		before := filament.ReplicationOf(source, filament.NewConfig(stored.Config))
-		after := filament.ReplicationOf(source, filament.NewConfig(cfg))
+		before := filament.ReplicationFor(source.Spec(), filament.NewConfig(stored.Config))
+		after := filament.ReplicationFor(source.Spec(), filament.NewConfig(cfg))
 		if before != after {
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("connection replication mode is immutable; create a new connection to change from %s to %s", before, after))
 		}
@@ -238,7 +238,7 @@ func (a *Server) connectionForResponse(conn filament.Connection) *ingestionv1.Co
 		if err != nil {
 			return out
 		}
-		out.Replication = replicationToProto(filament.ReplicationOf(source, filament.NewConfig(conn.Config)))
+		out.Replication = replicationToProto(filament.ReplicationFor(source.Spec(), filament.NewConfig(conn.Config)))
 		out.ExecutionModes = a.sourceExecutionModes(source)
 	case filament.ConnectorKindSink:
 		sink, err := a.sinks.Resolve(conn.Connector)

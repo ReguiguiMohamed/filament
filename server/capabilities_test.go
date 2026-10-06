@@ -43,13 +43,6 @@ func (leverSource) Extract(context.Context, filament.RecordSink, filament.Extrac
 	return nil
 }
 
-func (leverSource) Replication(cfg filament.Config) filament.ReplicationMode {
-	if cfg.String("replication") == string(filament.ReplicationCDC) {
-		return filament.ReplicationCDC
-	}
-	return filament.ReplicationStandard
-}
-
 func (leverSource) Discover(context.Context, filament.DiscoverOpts) (filament.DiscoverResult, error) {
 	return filament.DiscoverResult{Resources: []filament.Resource{
 		{Name: "orders", Selectable: true, PrimaryKey: []string{"id"}},

@@ -185,7 +185,7 @@ func (a *Server) normalizeEdgeModes(ctx context.Context, tenant filament.TenantI
 		}
 
 		var ingestionType filament.IngestionType
-		if filament.ReplicationOf(source, filament.NewConfig(sourceConn.Config)) == filament.ReplicationCDC {
+		if filament.ReplicationFor(source.Spec(), filament.NewConfig(sourceConn.Config)) == filament.ReplicationCDC {
 			if edge.GetReadMode() != ingestionv1.ReadMode_READ_MODE_UNSPECIFIED {
 				return fmt.Errorf("edge %s -> %s: CDC connections do not accept a read mode", edge.GetFromNode(), edge.GetToNode())
 			}
