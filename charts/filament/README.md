@@ -56,6 +56,19 @@ helm upgrade --install filament \
   --set-string eventBus.nats.url='nats://filament-nats:4222'
 ```
 
+## Worker access
+
+The persistent worker's NetworkPolicy is enabled by default. Only this release's
+server and control plane in the same namespace can reach `worker.service.port`.
+The policy is ingress-only, so connector operations retain outbound access to
+their databases, brokers, and APIs. It does not select dispatched worker Jobs.
+
+The cluster's network plugin must enforce NetworkPolicy. Other policies can
+allow additional traffic. Configure `worker.networkPolicy.extraIngress` for
+additional callers, or disable this policy when access is managed externally.
+NetworkPolicy does not encrypt the RPC connection; use TLS or service mesh
+encryption to protect resolved connection credentials in transit.
+
 ## Overrides
 
 | Key | Type | Default | Description |
@@ -137,6 +150,8 @@ helm upgrade --install filament \
 | worker.job.terminationGraceSeconds | int | `30` | Worker Job termination grace period in seconds. |
 | worker.job.ttlSecondsAfterFinished | int | `3600` | Seconds to retain completed dispatched worker Jobs. |
 | worker.logLevel | string | `"INFO"` | Minimum worker log level. Valid values: INFO, DEBUG, TRACE. |
+| worker.networkPolicy.enabled | bool | `true` | Restrict persistent worker ingress to this release's server and control plane. Requires a network plugin that enforces NetworkPolicy. |
+| worker.networkPolicy.extraIngress | list | `[]` | Additional ingress rules for the persistent worker, passed through verbatim. |
 | worker.replicas | int | `1` | Number of persistent worker replicas. The persistent worker is stateless. |
 | worker.resources | object | `{}` (See [values.yaml]) | Persistent worker resource requests and limits. |
 | worker.service.port | int | `8080` | Persistent worker service and container port. |
