@@ -20,13 +20,16 @@ import (
 	"github.com/galaxy-io/filament/eventbus/host"
 	"github.com/galaxy-io/filament/module"
 	"github.com/galaxy-io/filament/registry"
+	"github.com/galaxy-io/filament/worker"
 )
 
 // Deps are the providers every deployed binary resolves from the environment.
 type Deps struct {
 	Sources filament.SourceRegistry
-	Log     filament.Logger
-	Store   filament.DataStore
+	// Worker answers connector questions for the API and scheduler.
+	Worker filament.Worker
+	Log    filament.Logger
+	Store  filament.DataStore
 	// StreamStore is the same underlying store exposed through its stream interface.
 	StreamStore filament.ContinuousRunStore
 	Secrets     filament.Secrets
@@ -86,7 +89,7 @@ func FromEnv(ctx context.Context) (Deps, func(), error) {
 		closeSecrets()
 		closeStore()
 	}
-	return Deps{Sources: sources, Log: lg, Store: store, StreamStore: streamStore, Secrets: secrets, Metrics: metrics, Tracer: tracer}, shutdown, nil
+	return Deps{Sources: sources, Worker: worker.Local(sources, registry.DefaultSinks), Log: lg, Store: store, StreamStore: streamStore, Secrets: secrets, Metrics: metrics, Tracer: tracer}, shutdown, nil
 }
 
 // Bus connects the event bus. The returned close closes it when closable.
@@ -111,6 +114,7 @@ func Mount(ctx context.Context, d Deps, b bus.Bus, mods ...module.Module) (*host
 		Secrets:   d.Secrets,
 		Sources:   d.Sources,
 		Sinks:     registry.DefaultSinks,
+		Worker:    d.Worker,
 		Log:       d.Log,
 		Metrics:   d.Metrics,
 		Tracer:    d.Tracer,
