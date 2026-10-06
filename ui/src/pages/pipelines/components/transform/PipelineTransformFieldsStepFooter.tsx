@@ -4,7 +4,7 @@ import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button
 import Flex, { AlignItems, JustifyContent } from "@galaxy-io/dls/layout/Flex";
 import FlexItem from "@galaxy-io/dls/layout/FlexItem";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
-import { FontFamily, Placement } from "@galaxy-io/dls/theme/enums";
+import { FontFamily } from "@galaxy-io/dls/theme/enums";
 
 import PipelineTransformFieldsIssuesChip from "@/pages/pipelines/components/transform/PipelineTransformFieldsIssuesChip";
 
@@ -36,11 +36,7 @@ const PipelineTransformFieldsStepFooter = ({
     fillWidth
   >
     <Flex alignItems={AlignItems.CENTER} gap={8} grow={1} minWidth={0}>
-      <PipelineTransformFieldsIssuesChip
-        issues={issues}
-        warnings={warnings}
-        position={Placement.TOP_START}
-      />
+      <PipelineTransformFieldsIssuesChip issues={issues} warnings={warnings} />
       {issues.length === 0 && typeSummary !== "" && (
         <Flex alignItems={AlignItems.CENTER} gap={4} minWidth={0}>
           <FlexItem shrink={0}>
@@ -68,6 +64,7 @@ const PipelineTransformFieldsStepFooter = ({
           onClick={onDelete}
           isDisabled={isDisabled}
           ariaLabel="Delete step"
+          tooltip="Delete step"
         />
       )}
       <Button

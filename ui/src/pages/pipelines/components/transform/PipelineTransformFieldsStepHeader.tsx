@@ -5,6 +5,7 @@ import { CaretDownIcon, DotsSixVerticalIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
 import Icon, { IconVariant } from "@galaxy-io/dls/icons/Icon";
+import { FOCUS_RING, INTERACTIVE_RESET } from "@galaxy-io/dls/styles/mixins";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 import Rotate from "@galaxy-io/dls/transform/Rotate";
 
@@ -21,8 +22,6 @@ import PipelineTransformFieldsRow, {
 import type { PipelineTransformFieldsStepHandle } from "@/pages/pipelines/components/transform/types";
 
 const CARET_ROTATION_DEG = -180;
-const CARET_ROTATION_SPEED = 0.2;
-
 const Header = styled.div<{ $isClickable: boolean; $isOpen: boolean }>`
   width: 100%;
   min-width: 0;
@@ -33,31 +32,24 @@ const Header = styled.div<{ $isClickable: boolean; $isOpen: boolean }>`
 `;
 
 const Handle = styled.button`
+  ${INTERACTIVE_RESET}
+  ${FOCUS_RING}
   display: flex;
   align-items: center;
   justify-content: center;
   width: ${TRANSFORM_HANDLE}px;
   height: ${TRANSFORM_ACTION}px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
+  border-radius: ${t.radius.md};
 
-  background-color: transparent;
-  color: inherit;
   cursor: grab;
-  transition: background-color 100ms ease;
+  transition: background-color ${t.duration.fast};
 
   &:hover {
-    background-color: ${t.color.background.tertiary};
+    background-color: ${t.color.background.hovered};
   }
 
   &:active {
     cursor: grabbing;
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${t.color.border.focused};
-    outline-offset: -2px;
   }
 
   &:disabled {
@@ -112,6 +104,7 @@ const PipelineTransformFieldsStepHeader = ({
                 onToggle();
               }}
               ariaLabel={isOpen ? "Collapse" : "Expand"}
+              tooltip={isOpen ? "Collapse" : "Expand"}
             />
           </Rotate>
         ) : undefined

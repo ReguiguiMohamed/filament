@@ -5,10 +5,7 @@ import SelectInput, {
 
 import type { TransformFunction } from "@/gen/ingestion/v1/transformations_pb";
 
-import {
-  TRANSFORM_SELECT_ERROR_MARK,
-  TRANSFORM_SELECT_SEARCH_THRESHOLD,
-} from "@/pages/pipelines/components/transform/constants";
+import { TRANSFORM_SELECT_SEARCH_THRESHOLD } from "@/pages/pipelines/components/transform/constants";
 import {
   getTransformFunctionChoices,
   isTransformExprComplete,
@@ -21,10 +18,7 @@ import {
   type TransformExpr,
   TransformExprKind,
 } from "@/pages/pipelines/components/transform/types";
-import {
-  createTransformFunctionOption,
-  filterTransformOptions,
-} from "@/pages/pipelines/components/transform/utils";
+import { createTransformFunctionOption } from "@/pages/pipelines/components/transform/utils";
 
 interface PipelineTransformFieldsFunctionPickerProps {
   input: TransformExpr;
@@ -52,20 +46,14 @@ const PipelineTransformFieldsFunctionPicker = ({
   return (
     <SelectInput
       options={options}
-      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-        options.find((option) => option.id === fn) ?? null
-      }
-      onChange={(option) => onChange(option.id)}
-      /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
-        onChange("")
-      }
-      /* @dls-migrate selectinput.onSearch: Add `isSearchable`; the DLS filters, `onSearch` only receives the term. */ onSearch={
-        options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD ? filterTransformOptions : undefined
-      }
+      value={fn || null}
+      onChange={(id) => onChange(id ?? "")}
+      isClearable
+      isSearchable={options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD}
       placeholder={isInputPending ? "Complete the input first" : "Choose a function"}
       variant={SelectInputVariant.TERTIARY}
       size={SelectInputSize.MEDIUM}
-      error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+      isError={isError}
       isDisabled={isDisabled || isInputPending}
       fillWidth
     />

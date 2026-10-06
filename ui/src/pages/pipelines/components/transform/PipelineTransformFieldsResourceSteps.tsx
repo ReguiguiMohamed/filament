@@ -67,7 +67,7 @@ const PipelineTransformFieldsResourceSteps = ({
       {resources.length > 1 && (
         <Flex
           alignItems={AlignItems.START}
-          /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ padding={`${TRANSFORM_GAP}px ${TRANSFORM_HEADER_PADDING_X}px 0 ${TRANSFORM_BODY_INSET}px`}
+          padding={[TRANSFORM_GAP, TRANSFORM_HEADER_PADDING_X, 0, TRANSFORM_BODY_INSET]}
         >
           <Text size={TextSize.CAPTION} variant={TextVariant.SECONDARY} family={FontFamily.MONO}>
             {resource}

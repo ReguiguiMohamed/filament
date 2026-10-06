@@ -1,13 +1,9 @@
 import { PlusIcon } from "@phosphor-icons/react";
 
 import Button, { ButtonSize, ButtonVariant } from "@galaxy-io/dls/buttons/Button";
-import SelectInput, {
-  SelectInputSize,
-  SelectInputVariant,
-  type SelectOption,
-} from "@galaxy-io/dls/inputs/SelectInput";
 import Flex, { AlignItems, FlexWrap } from "@galaxy-io/dls/layout/Flex";
 
+import { TRANSFORM_CONDITION_JOIN_TO_OPPOSITE_MAP } from "@/pages/pipelines/components/transform/constants";
 import { TRANSFORM_EMPTY_EXPR } from "@/pages/pipelines/components/transform/grammar/chain";
 import {
   createTransformConditionExpr,
@@ -28,16 +24,7 @@ import PipelineTransformFieldsRemoveButton from "@/pages/pipelines/components/tr
 import PipelineTransformFieldsRow, {
   PipelineTransformFieldsRowVariant,
 } from "@/pages/pipelines/components/transform/PipelineTransformFieldsRow";
-import {
-  TransformConditionJoin,
-  type TransformExpr,
-} from "@/pages/pipelines/components/transform/types";
-
-const JOIN_OPTIONS: SelectOption[] = Object.values(TransformConditionJoin).map((join) => ({
-  id: join,
-  label: join,
-  value: join,
-}));
+import type { TransformExpr } from "@/pages/pipelines/components/transform/types";
 
 interface PipelineTransformFieldsConditionGroupProps {
   where: TransformExpr;
@@ -88,18 +75,15 @@ const PipelineTransformFieldsConditionGroup = ({
     index === 0 ? (
       "where"
     ) : index === 1 ? (
-      <SelectInput
-        options={JOIN_OPTIONS}
-        /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-          JOIN_OPTIONS.find((option) => option.id === group.join) ?? null
-        }
-        onChange={(option) => commit({ ...group, join: option.id as TransformConditionJoin })}
-        /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
-          commit({ ...group, join: TransformConditionJoin.AND })
-        }
-        variant={SelectInputVariant.TERTIARY}
-        size={SelectInputSize.SMALL}
+      <Button
+        label={group.join}
+        tooltip={`Switch to ${TRANSFORM_CONDITION_JOIN_TO_OPPOSITE_MAP[group.join]}`}
+        variant={ButtonVariant.TERTIARY}
+        size={ButtonSize.X_SMALL}
         isDisabled={isDisabled}
+        onClick={() =>
+          commit({ ...group, join: TRANSFORM_CONDITION_JOIN_TO_OPPOSITE_MAP[group.join] })
+        }
       />
     ) : (
       group.join

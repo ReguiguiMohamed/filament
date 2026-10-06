@@ -47,8 +47,7 @@ const SUMMARY_PART_KIND_TO_CHIP_VARIANT_MAP: Record<
   TransformSummaryPartKind.COLUMN | TransformSummaryPartKind.OUTPUT,
   ChipVariant
 > = {
-  // @dls-migrate shared-enums.color-other: `variant` is meaning only (`PRIMARY SECONDARY TERTIARY SUCCESS WARNING ERROR DISABLED INHERIT`): pick the meaning, or put the category on a component that takes `color`.
-  [TransformSummaryPartKind.COLUMN]: ChipVariant.BLUE,
+  [TransformSummaryPartKind.COLUMN]: ChipVariant.SECONDARY,
   [TransformSummaryPartKind.OUTPUT]: ChipVariant.PRIMARY,
 };
 

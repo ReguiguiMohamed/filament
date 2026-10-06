@@ -1,6 +1,5 @@
 import Flex, { AlignItems } from "@galaxy-io/dls/layout/Flex";
 import FlexItem from "@galaxy-io/dls/layout/FlexItem";
-import { Placement } from "@galaxy-io/dls/theme/enums";
 
 import { TRANSFORM_ACTION } from "@/pages/pipelines/components/transform/constants";
 import PipelineTransformFieldsIssuesChip from "@/pages/pipelines/components/transform/PipelineTransformFieldsIssuesChip";
@@ -32,7 +31,7 @@ const PipelineTransformFieldsStepRow = ({
           <PipelineTransformFieldsStepSummary step={step} />
         </FlexItem>
         <Flex alignItems={AlignItems.CENTER} height={TRANSFORM_ACTION} shrink={0}>
-          <PipelineTransformFieldsIssuesChip issues={issues} position={Placement.TOP_END} />
+          <PipelineTransformFieldsIssuesChip issues={issues} />
         </Flex>
       </Flex>
     </PipelineTransformFieldsStepHeader>

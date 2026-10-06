@@ -12,7 +12,6 @@ import Flex, { AlignItems, FlexDirection } from "@galaxy-io/dls/layout/Flex";
 import {
   TRANSFORM_CONDITION_STACK_WIDTH,
   TRANSFORM_GAP,
-  TRANSFORM_SELECT_ERROR_MARK,
 } from "@/pages/pipelines/components/transform/constants";
 import {
   getCompatibleTransformFunctions,
@@ -96,9 +95,7 @@ const PipelineTransformFieldsConditionRow = ({
       ? [...operators, fn]
       : operators;
   const operatorOptions: SelectOption[] = [
-    ...(columnType === "bool"
-      ? [{ id: DIRECT_OPERATOR_ID, label: "is true", value: DIRECT_OPERATOR_ID }]
-      : []),
+    ...(columnType === "bool" ? [{ id: DIRECT_OPERATOR_ID, label: "is true" }] : []),
     ...listed.map((candidate) => {
       const option = createTransformFunctionOption(candidate);
       return { ...option, label: lowerFirst(option.label) };
@@ -153,17 +150,13 @@ const PipelineTransformFieldsConditionRow = ({
         <OperatorValue>
           <SelectInput
             options={operatorOptions}
-            /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-              operatorOptions.find((option) => option.id === selectedOperatorId) ?? null
-            }
-            onChange={(option) => setOperator(option.id)}
-            /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
-              onChange(root)
-            }
+            value={selectedOperatorId || null}
+            onChange={(id) => (id === null ? onChange(root) : setOperator(id))}
+            isClearable
             placeholder="Choose an operator"
             variant={SelectInputVariant.TERTIARY}
             size={SelectInputSize.MEDIUM}
-            error={call && editor.errors.has(path) ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+            isError={call !== undefined && editor.errors.has(path)}
             isDisabled={editor.isDisabled || column === undefined}
             fillWidth
           />

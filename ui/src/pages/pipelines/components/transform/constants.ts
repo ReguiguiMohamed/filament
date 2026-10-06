@@ -39,6 +39,8 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 
+import type { Space } from "@galaxy-io/dls/theme/enums";
+
 import type { TransformFunction } from "@/gen/ingestion/v1/transformations_pb";
 
 import {
@@ -52,18 +54,17 @@ import {
 export const TRANSFORM_HANDLE = 28;
 export const TRANSFORM_GUTTER = 36;
 export const TRANSFORM_COND_GUTTER = 56;
-export const TRANSFORM_ACTION = 28;
+export const TRANSFORM_ACTION = 32;
 export const TRANSFORM_ADD_ROW = 24;
-export const TRANSFORM_GAP = 8;
-export const TRANSFORM_BOX_PAD = 6;
-export const TRANSFORM_HEADER_PADDING_X = 12;
-export const TRANSFORM_HEADER_PADDING_Y = 10;
-export const TRANSFORM_BODY_INSET = TRANSFORM_HEADER_PADDING_X + TRANSFORM_HANDLE + TRANSFORM_GAP;
+export const TRANSFORM_GAP: Space = 8;
+export const TRANSFORM_BOX_PAD: Space = 8;
+export const TRANSFORM_HEADER_PADDING_X: Space = 12;
+export const TRANSFORM_HEADER_PADDING_Y: Space = 8;
+export const TRANSFORM_BODY_INSET: Space = 48;
 export const TRANSFORM_CONDITION_STACK_WIDTH = 300;
 export const TRANSFORM_VALIDATION_DEBOUNCE_MS = 250;
 export const TRANSFORM_SELECT_SEARCH_THRESHOLD = 8;
 export const TRANSFORM_DRAG_DISTANCE = 4;
-export const TRANSFORM_SELECT_ERROR_MARK = " ";
 export const TRANSFORM_NEW_COLUMN_SUFFIX = "_v2";
 export const TRANSFORM_RAW_STEP_LABEL = "Defined outside the builder";
 

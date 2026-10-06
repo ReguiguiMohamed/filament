@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import Skeleton from "@galaxy-io/dls/feedback/Skeleton";
+import Skeleton, { SkeletonSize } from "@galaxy-io/dls/feedback/Skeleton";
 import Box from "@galaxy-io/dls/layout/Box";
 import Divider from "@galaxy-io/dls/layout/Divider";
 import Flex, { AlignItems, FlexDirection, JustifyContent } from "@galaxy-io/dls/layout/Flex";
@@ -16,7 +16,6 @@ import PipelineTransformFieldsRow, {
 
 const PENDING_ROW_WIDTHS = ["60%", "45%"];
 const PENDING_HANDLE_SIZE = 16;
-const PENDING_LINE_HEIGHT = 14;
 
 const PipelineTransformFieldsPending = () => (
   <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} fillWidth>
@@ -25,7 +24,7 @@ const PipelineTransformFieldsPending = () => (
         {index > 0 && <Divider />}
         <Flex
           alignItems={AlignItems.START}
-          /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ padding={`${TRANSFORM_HEADER_PADDING_Y}px ${TRANSFORM_HEADER_PADDING_X}px`}
+          padding={[TRANSFORM_HEADER_PADDING_Y, TRANSFORM_HEADER_PADDING_X]}
           fillWidth
         >
           <PipelineTransformFieldsRow
@@ -33,18 +32,14 @@ const PipelineTransformFieldsPending = () => (
             gutter={
               <Flex alignItems={AlignItems.START} justifyContent={JustifyContent.CENTER} fillWidth>
                 <Box width={PENDING_HANDLE_SIZE}>
-                  <Skeleton /* @dls-migrate skeleton.TextShimmer.height-other: Pick a rung, or wrap the real `Text` in `<Skeleton isLoading>` (wrapper mode). */
-                    height={PENDING_HANDLE_SIZE}
-                  />
+                  <Skeleton size={SkeletonSize.SMALL} />
                 </Box>
               </Flex>
             }
           >
             <Flex alignItems={AlignItems.CENTER} height={TRANSFORM_ACTION}>
               <Box width={width}>
-                <Skeleton /* @dls-migrate skeleton.TextShimmer.height-other: Pick a rung, or wrap the real `Text` in `<Skeleton isLoading>` (wrapper mode). */
-                  height={PENDING_LINE_HEIGHT}
-                />
+                <Skeleton size={SkeletonSize.SMALL} />
               </Box>
             </Flex>
           </PipelineTransformFieldsRow>

@@ -1,17 +1,13 @@
-import SelectInput, {
-  SelectInputSize,
-  SelectInputVariant,
-  type SelectOption,
-} from "@galaxy-io/dls/inputs/SelectInput";
+import ToggleInput, { type ToggleOption } from "@galaxy-io/dls/inputs/ToggleInput";
 
 import { usePipelineTransformFieldsEditor } from "@/pages/pipelines/components/transform/PipelineTransformFieldsProvider";
 
 const ALL_ROWS_ID = "all";
 const MATCHING_ROWS_ID = "matching";
 
-const SCOPE_OPTIONS: SelectOption[] = [
-  { id: ALL_ROWS_ID, label: "All rows", value: ALL_ROWS_ID },
-  { id: MATCHING_ROWS_ID, label: "Matching rows", value: MATCHING_ROWS_ID },
+const SCOPE_OPTIONS: ToggleOption[] = [
+  { id: ALL_ROWS_ID, label: "All rows" },
+  { id: MATCHING_ROWS_ID, label: "Matching rows" },
 ];
 
 interface PipelineTransformFieldsConditionScopeProps {
@@ -25,17 +21,11 @@ const PipelineTransformFieldsConditionScope = ({
 }: PipelineTransformFieldsConditionScopeProps) => {
   const { isDisabled } = usePipelineTransformFieldsEditor();
   return (
-    <SelectInput
+    <ToggleInput
       options={SCOPE_OPTIONS}
-      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-        SCOPE_OPTIONS[isMatching ? 1 : 0]
-      }
-      onChange={(option) => onChange(option.id === MATCHING_ROWS_ID)}
-      /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
-        onChange(false)
-      }
-      variant={SelectInputVariant.TERTIARY}
-      size={SelectInputSize.MEDIUM}
+      value={isMatching ? MATCHING_ROWS_ID : ALL_ROWS_ID}
+      onChange={(id) => onChange(id === MATCHING_ROWS_ID)}
+      ariaLabel="Rows"
       isDisabled={isDisabled}
       fillWidth
     />

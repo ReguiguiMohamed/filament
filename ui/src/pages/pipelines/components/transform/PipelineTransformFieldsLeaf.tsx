@@ -1,7 +1,6 @@
 import SelectInput, {
   SelectInputSize,
   SelectInputVariant,
-  type SelectOption,
 } from "@galaxy-io/dls/inputs/SelectInput";
 import Text, { TextSize, TextVariant } from "@galaxy-io/dls/text/Text";
 
@@ -9,7 +8,6 @@ import {
   TRANSFORM_LITERAL_KIND_TO_ICON_MAP,
   TRANSFORM_LITERAL_KIND_TO_PLACEHOLDER_MAP,
   TRANSFORM_LITERAL_KINDS,
-  TRANSFORM_SELECT_ERROR_MARK,
   TRANSFORM_SELECT_SEARCH_THRESHOLD,
 } from "@/pages/pipelines/components/transform/constants";
 import {
@@ -21,24 +19,32 @@ import {
   TRANSFORM_EMPTY_EXPR,
 } from "@/pages/pipelines/components/transform/grammar/chain";
 import PipelineTransformFieldsLiteral from "@/pages/pipelines/components/transform/PipelineTransformFieldsLiteral";
-import PipelineTransformFieldsOptionIcon from "@/pages/pipelines/components/transform/PipelineTransformFieldsOptionIcon";
 import { usePipelineTransformFieldsEditor } from "@/pages/pipelines/components/transform/PipelineTransformFieldsProvider";
 import {
   TransformExprKind,
   type TransformLeafExpr,
   TransformLiteralKind,
+  type TransformSelectEntry,
 } from "@/pages/pipelines/components/transform/types";
 import {
   createTransformBooleanOptions,
   createTransformLiteral,
-  filterTransformOptions,
+  createTransformSelectModel,
 } from "@/pages/pipelines/components/transform/utils";
 
 const COLUMN_OPTION_PREFIX = "column:";
 const APPLY_FUNCTION_OPTION_ID = "apply-function";
 const NO_VALUE_FORM_OPTION_ID = "no-value-form";
 const NO_TYPES: string[] = [];
-const BOOLEAN_OPTIONS = createTransformBooleanOptions();
+const BOOLEAN_ENTRIES: TransformSelectEntry<TransformLeafExpr | null>[] =
+  createTransformBooleanOptions().map((option) => ({
+    option,
+    payload: {
+      kind: TransformExprKind.LITERAL,
+      literalKind: TransformLiteralKind.BOOLEAN,
+      value: option.id,
+    },
+  }));
 
 interface PipelineTransformFieldsLeafProps {
   expr: TransformLeafExpr;
@@ -100,22 +106,23 @@ const PipelineTransformFieldsLeaf = ({
       : logicalTypes.length > 0
         ? []
         : TRANSFORM_LITERAL_KINDS;
-  const literalOptions: SelectOption[] = literalKinds.flatMap((kind) =>
-    kind === TransformLiteralKind.BOOLEAN
-      ? BOOLEAN_OPTIONS
-      : [
-          {
-            id: kind,
-            label:
-              logicalTypes.length > 0
-                ? "Enter a value"
-                : TRANSFORM_LITERAL_KIND_TO_PLACEHOLDER_MAP[kind],
-            value: createTransformLiteral(kind),
-            icon: (
-              <PipelineTransformFieldsOptionIcon icon={TRANSFORM_LITERAL_KIND_TO_ICON_MAP[kind]} />
-            ),
-          },
-        ],
+  const literalEntries: TransformSelectEntry<TransformLeafExpr | null>[] = literalKinds.flatMap(
+    (kind) =>
+      kind === TransformLiteralKind.BOOLEAN
+        ? BOOLEAN_ENTRIES
+        : [
+            {
+              option: {
+                id: kind,
+                label:
+                  logicalTypes.length > 0
+                    ? "Enter a value"
+                    : TRANSFORM_LITERAL_KIND_TO_PLACEHOLDER_MAP[kind],
+                icon: TRANSFORM_LITERAL_KIND_TO_ICON_MAP[kind],
+              },
+              payload: createTransformLiteral(kind),
+            },
+          ],
   );
   const selectedColumn = expr.kind === TransformExprKind.COLUMN ? expr.name : undefined;
   const accepted = getTransformAcceptedColumns(columns, logicalTypes).map((column) => column.name);
@@ -123,31 +130,39 @@ const PipelineTransformFieldsLeaf = ({
     selectedColumn !== undefined && !accepted.includes(selectedColumn)
       ? [...accepted, selectedColumn]
       : accepted;
-  const columnOptions: SelectOption[] = columnNames.map((name) => ({
-    id: `${COLUMN_OPTION_PREFIX}${name}`,
-    label: name,
-    value: createTransformColumnExpr(name),
-  }));
+  const columnEntries: TransformSelectEntry<TransformLeafExpr | null>[] = columnNames.map(
+    (name) => ({
+      option: { id: `${COLUMN_OPTION_PREFIX}${name}`, label: name },
+      payload: createTransformColumnExpr(name),
+    }),
+  );
   const hasNoValueForm =
     !isColumnOnly && logicalTypes.length > 0 && literalKinds.length === 0 && accepted.length === 0;
   const canApplyFunction = onApplyFunction !== undefined && expr.kind !== TransformExprKind.EMPTY;
-  const options: SelectOption[] = [
-    ...literalOptions,
+  const { options, payloadById } = createTransformSelectModel([
+    ...literalEntries,
     ...(hasNoValueForm
       ? [
           {
-            id: NO_VALUE_FORM_OPTION_ID,
-            label: `No value form for ${logicalTypes.join(" / ")}`,
-            value: null,
-            variant: TextVariant.TERTIARY,
+            option: {
+              id: NO_VALUE_FORM_OPTION_ID,
+              label: `No value form for ${logicalTypes.join(" / ")}`,
+              isDisabled: true,
+            },
+            payload: null,
           },
         ]
       : []),
-    ...columnOptions,
+    ...columnEntries,
     ...(canApplyFunction
-      ? [{ id: APPLY_FUNCTION_OPTION_ID, label: "Apply a function to this…", value: null }]
+      ? [
+          {
+            option: { id: APPLY_FUNCTION_OPTION_ID, label: "Apply a function to this…" },
+            payload: null,
+          },
+        ]
       : []),
-  ];
+  ]);
   const selectedId =
     expr.kind === TransformExprKind.COLUMN
       ? `${COLUMN_OPTION_PREFIX}${expr.name}`
@@ -158,25 +173,23 @@ const PipelineTransformFieldsLeaf = ({
   return (
     <SelectInput
       options={options}
-      /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-        options.find((option) => option.id === selectedId) ?? null
-      }
-      onChange={(option) => {
-        if (option.id === APPLY_FUNCTION_OPTION_ID) onApplyFunction?.();
-        else if (option.id !== NO_VALUE_FORM_OPTION_ID) onChange(option.value as TransformLeafExpr);
+      value={selectedId || null}
+      onChange={(id) => {
+        if (id === null) onChange(TRANSFORM_EMPTY_EXPR);
+        else if (id === APPLY_FUNCTION_OPTION_ID) onApplyFunction?.();
+        else {
+          const next = payloadById.get(id);
+          if (next) onChange(next);
+        }
       }}
-      /* @dls-migrate selectinput.onSearch: Add `isSearchable`; the DLS filters, `onSearch` only receives the term. */ onSearch={
-        literalOptions.length + columnOptions.length > TRANSFORM_SELECT_SEARCH_THRESHOLD
-          ? filterTransformOptions
-          : undefined
-      }
-      /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={() =>
-        onChange(TRANSFORM_EMPTY_EXPR)
+      isClearable
+      isSearchable={
+        literalEntries.length + columnEntries.length > TRANSFORM_SELECT_SEARCH_THRESHOLD
       }
       placeholder={placeholder ?? (isOptional ? "Optional" : "Choose a column or value")}
       variant={SelectInputVariant.TERTIARY}
       size={SelectInputSize.MEDIUM}
-      error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+      isError={isError}
       isDisabled={isDisabled}
       fillWidth
     />

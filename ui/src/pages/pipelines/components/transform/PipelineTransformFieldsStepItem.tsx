@@ -23,7 +23,7 @@ const Slot = styled.div<{ $transform: string; $transition: string; $isDragging: 
   min-width: 0;
 
   background-color: ${({ $isDragging }) =>
-    $isDragging ? t.color.background.secondary : "transparent"};
+    $isDragging ? t.color.background.hovered : "transparent"};
   transform: ${({ $transform }) => $transform};
   transition: ${({ $transition }) => $transition};
 `;

@@ -49,7 +49,6 @@ const PipelineTransformFieldsStepCard = ({
   const resourceOptions: SelectOption[] = resources.map((resource) => ({
     id: resource,
     label: resource,
-    value: resource,
   }));
   const { id, step } = draft;
 
@@ -61,7 +60,12 @@ const PipelineTransformFieldsStepCard = ({
         </PipelineTransformFieldsStepHeader>
         <Flex
           alignItems={AlignItems.START}
-          /* @dls-migrate layout.off-scale: Pick a value on the space scale (or a CSS-order tuple of them). */ padding={`0 ${TRANSFORM_HEADER_PADDING_X}px ${TRANSFORM_HEADER_PADDING_X}px ${TRANSFORM_BODY_INSET}px`}
+          padding={[
+            0,
+            TRANSFORM_HEADER_PADDING_X,
+            TRANSFORM_HEADER_PADDING_X,
+            TRANSFORM_BODY_INSET,
+          ]}
           fillWidth
         >
           <Flex alignItems={AlignItems.START} direction={FlexDirection.COLUMN} gap={8} fillWidth>
@@ -72,10 +76,10 @@ const PipelineTransformFieldsStepCard = ({
               >
                 <SelectInput
                   options={resourceOptions}
-                  /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-                    resourceOptions.find((option) => option.id === draft.resource) ?? null
-                  }
-                  onChange={(option) => setResource(option.id)}
+                  value={draft.resource || null}
+                  onChange={(id) => {
+                    if (id !== null) setResource(id);
+                  }}
                   placeholder="Choose a resource"
                   variant={SelectInputVariant.TERTIARY}
                   size={SelectInputSize.MEDIUM}

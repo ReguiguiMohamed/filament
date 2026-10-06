@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 
 import { styled } from "@linaria/react";
 
-import Widget, { WidgetVariant } from "@galaxy-io/dls/widget/Widget";
+import Widget, { WidgetSize, WidgetVariant } from "@galaxy-io/dls/widget/Widget";
 
 import {
   TRANSFORM_ACTION,
@@ -33,13 +33,7 @@ const Rows = styled.div`
 
 const PipelineTransformFieldsBox = ({ children }: PropsWithChildren) => (
   <Container>
-    <Widget
-      variant={
-        WidgetVariant.TERTIARY
-      } /* @dls-migrate widget.padding-other: The body inset is fixed at 12px: remove `padding` (use `isFlush` for 0). */
-      padding={`${TRANSFORM_BOX_PAD}px`} /* @dls-migrate widget.fillWidth: Grow the card with a `FlexItem` or a `Grid` track. */
-      fillWidth
-    >
+    <Widget variant={WidgetVariant.TERTIARY} size={WidgetSize.SMALL}>
       <Rows>{children}</Rows>
     </Widget>
   </Container>

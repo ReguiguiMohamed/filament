@@ -1,6 +1,11 @@
 import { XIcon } from "@phosphor-icons/react";
 
-import Input, { InputSize, InputVariant } from "@galaxy-io/dls/inputs/Input";
+import Button, { ButtonVariant } from "@galaxy-io/dls/buttons/Button";
+import {
+  INPUT_SIZE_TO_BUTTON_SIZE_MAP,
+  InputSize,
+  InputVariant,
+} from "@galaxy-io/dls/inputs/Input";
 import SelectInput, {
   SelectInputSize,
   SelectInputVariant,
@@ -8,10 +13,7 @@ import SelectInput, {
 import TextInput from "@galaxy-io/dls/inputs/TextInput";
 import { FontFamily } from "@galaxy-io/dls/theme/enums";
 
-import {
-  TRANSFORM_LITERAL_KIND_TO_ICON_MAP,
-  TRANSFORM_SELECT_ERROR_MARK,
-} from "@/pages/pipelines/components/transform/constants";
+import { TRANSFORM_LITERAL_KIND_TO_ICON_MAP } from "@/pages/pipelines/components/transform/constants";
 import { isTransformIntegerOnly } from "@/pages/pipelines/components/transform/grammar/catalog";
 import { usePipelineTransformFieldsEditor } from "@/pages/pipelines/components/transform/PipelineTransformFieldsProvider";
 import {
@@ -43,23 +45,35 @@ const PipelineTransformFieldsLiteral = ({
   onClear,
 }: PipelineTransformFieldsLiteralProps) => {
   const { isDisabled } = usePipelineTransformFieldsEditor();
-  const trailing = onClear ? { icon: XIcon, onClick: onClear } : undefined;
+  const trailing = onClear ? (
+    <Button
+      icon={XIcon}
+      ariaLabel="Clear value"
+      tooltip="Clear value"
+      variant={ButtonVariant.TERTIARY}
+      size={INPUT_SIZE_TO_BUTTON_SIZE_MAP[InputSize.SMALL]}
+      isDisabled={isDisabled}
+      onClick={onClear}
+    />
+  ) : undefined;
+
+  const handleBooleanChange = (id: string | null) => {
+    if (id !== null) onChange({ ...expr, value: id });
+    else if (onClear) onClear();
+    else onChange({ ...expr, value: null });
+  };
 
   if (expr.literalKind === TransformLiteralKind.BOOLEAN) {
     return (
       <SelectInput
         options={BOOLEAN_OPTIONS}
-        /* @dls-migrate selectinput.value: `value` and `onChange` now carry option ids, not option objects. */ value={
-          BOOLEAN_OPTIONS.find((option) => option.id === expr.value) ?? null
-        }
-        onChange={(option) => onChange({ ...expr, value: option.id })}
-        /* @dls-migrate selectinput.onReset: The clear button calls `onChange` with an empty value: move side effects there and add `isClearable`. */ onReset={
-          onClear ?? (() => onChange({ ...expr, value: null }))
-        }
+        value={expr.value}
+        onChange={handleBooleanChange}
+        isClearable
         placeholder={placeholder}
         variant={SelectInputVariant.TERTIARY}
         size={SelectInputSize.MEDIUM}
-        error={isError ? TRANSFORM_SELECT_ERROR_MARK : undefined}
+        isError={isError}
         isDisabled={isDisabled}
         fillWidth
       />
@@ -72,11 +86,8 @@ const PipelineTransformFieldsLiteral = ({
         ? null
         : getTransformNumberError(expr.value, isTransformIntegerOnly(logicalTypes));
     return (
-      <Input<string> /* @dls-migrate input-base.generic: Input is not generic: keep the value a string, or use `NumberInput`. */
-        type="text"
-        /* @dls-migrate input-base.parse: Removed: the value is the DOM string; `NumberInput` parses numbers. */ parse={(
-          value,
-        ) => value}
+      <TextInput
+        inputMode="decimal"
         value={expr.value ?? ""}
         onChange={(value) => onChange({ ...expr, value: value === "" ? null : value })}
         placeholder={placeholder}

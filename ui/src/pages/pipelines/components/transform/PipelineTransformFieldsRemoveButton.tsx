@@ -22,6 +22,7 @@ const PipelineTransformFieldsRemoveButton = ({
       onClick={onClick}
       isDisabled={isDisabled}
       ariaLabel={label}
+      tooltip={label}
     />
   );
 };

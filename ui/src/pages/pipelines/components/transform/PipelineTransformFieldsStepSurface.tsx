@@ -6,11 +6,11 @@ const PipelineTransformFieldsStepSurface = styled.div<{ $isHoverable: boolean }>
   width: 100%;
   min-width: 0;
 
-  transition: background-color 100ms ease;
+  transition: background-color ${t.duration.fast};
 
   &:hover {
     background-color: ${({ $isHoverable }) =>
-      $isHoverable ? t.color.background.secondary : "transparent"};
+      $isHoverable ? t.color.background.hovered : "transparent"};
   }
 `;
 
