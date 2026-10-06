@@ -91,7 +91,7 @@ const PipelineTransformFieldsLeaf = ({
       <PipelineTransformFieldsLiteral
         expr={literal}
         logicalTypes={logicalTypes}
-        placeholder={isOptional ? "Optional" : isLiteralOnly ? placeholder : "Enter value"}
+        placeholder={isOptional ? "Optional..." : isLiteralOnly ? placeholder : "Enter value..."}
         isError={isError}
         onChange={onChange}
         onClear={canClear ? () => onChange(TRANSFORM_EMPTY_EXPR) : undefined}
@@ -172,6 +172,7 @@ const PipelineTransformFieldsLeaf = ({
 
   return (
     <SelectInput
+      ariaLabel="Value"
       options={options}
       value={selectedId || null}
       onChange={(id) => {
@@ -186,7 +187,7 @@ const PipelineTransformFieldsLeaf = ({
       isSearchable={
         literalEntries.length + columnEntries.length > TRANSFORM_SELECT_SEARCH_THRESHOLD
       }
-      placeholder={placeholder ?? (isOptional ? "Optional" : "Choose a column or value")}
+      placeholder={placeholder ?? (isOptional ? "Optional..." : "Choose a column or value...")}
       variant={SelectInputVariant.TERTIARY}
       size={SelectInputSize.MEDIUM}
       isError={isError}

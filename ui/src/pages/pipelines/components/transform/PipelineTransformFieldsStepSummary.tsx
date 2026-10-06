@@ -1,7 +1,10 @@
+import { Fragment } from "react";
+
 import { styled } from "@linaria/react";
 import { match } from "ts-pattern";
 
 import Chip, { ChipSize, ChipVariant } from "@galaxy-io/dls/chips/Chip";
+import Span, { SpanVariant } from "@galaxy-io/dls/text/Span";
 import { t } from "@galaxy-io/dls/theme/tokens/t";
 
 import { TRANSFORM_ACTION } from "@/pages/pipelines/components/transform/constants";
@@ -24,10 +27,6 @@ const Sentence = styled.div`
   letter-spacing: ${t.font.sans.spacing.body_md};
   color: ${t.color.text.secondary};
   overflow-wrap: anywhere;
-`;
-
-const Verb = styled.span`
-  color: ${t.color.text.primary};
 `;
 
 const ChipSlot = styled.span`
@@ -59,7 +58,7 @@ const PipelineTransformFieldsStepSummary = ({ step }: PipelineTransformFieldsSte
   const { functionsByName } = usePipelineTransformFieldsEnvironment();
   return (
     <Sentence>
-      <span>
+      <Span>
         {formatTransformStep(step, functionsByName).map((part, index) =>
           match(part.kind)
             .with(TransformSummaryPartKind.COLUMN, TransformSummaryPartKind.OUTPUT, (kind) => (
@@ -74,15 +73,17 @@ const PipelineTransformFieldsStepSummary = ({ step }: PipelineTransformFieldsSte
             ))
             .with(TransformSummaryPartKind.VERB, () => (
               // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional
-              <Verb key={index}>{part.text}</Verb>
+              <Span key={index} variant={SpanVariant.PRIMARY}>
+                {part.text}
+              </Span>
             ))
             .with(TransformSummaryPartKind.TEXT, () => (
               // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional
-              <span key={index}>{part.text}</span>
+              <Fragment key={index}>{part.text}</Fragment>
             ))
             .exhaustive(),
         )}
-      </span>
+      </Span>
     </Sentence>
   );
 };

@@ -120,6 +120,7 @@ const PipelineCanvasRoutesRowControls = ({
         {route.hasReadLevers && (
           <Box width={PIPELINE_CANVAS_ROUTES_READ_MODE_SELECT_WIDTH}>
             <SelectInput
+              ariaLabel="Read mode"
               fillWidth
               options={readModeSelectOptions}
               value={String(readMode)}
@@ -128,7 +129,7 @@ const PipelineCanvasRoutesRowControls = ({
               }}
               variant={SelectInputVariant.TERTIARY}
               size={SelectInputSize.SMALL}
-              placeholder="Read mode"
+              placeholder="Read mode..."
               isDisabled={isReadOnly}
             />
           </Box>
@@ -136,6 +137,7 @@ const PipelineCanvasRoutesRowControls = ({
         {hasCursorSelect && (
           <Box width={PIPELINE_CANVAS_ROUTES_CURSOR_SELECT_WIDTH}>
             <SelectInput
+              ariaLabel="Cursor"
               fillWidth
               options={cursorSelectOptions}
               value={cursorValue || null}
@@ -144,7 +146,7 @@ const PipelineCanvasRoutesRowControls = ({
               }}
               variant={SelectInputVariant.TERTIARY}
               size={SelectInputSize.SMALL}
-              placeholder="Cursor"
+              placeholder="Cursor..."
               isDisabled={isReadOnly || isLoadingColumns}
             />
           </Box>
@@ -161,6 +163,7 @@ const PipelineCanvasRoutesRowControls = ({
       >
         <Box width={PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH}>
           <SelectInput
+            ariaLabel="Write mode"
             fillWidth
             options={writeModeSelectOptions}
             value={String(writeMode)}
@@ -169,7 +172,7 @@ const PipelineCanvasRoutesRowControls = ({
             }}
             variant={SelectInputVariant.TERTIARY}
             size={SelectInputSize.SMALL}
-            placeholder="Write mode"
+            placeholder="Write mode..."
             isDisabled={isReadOnly}
           />
         </Box>

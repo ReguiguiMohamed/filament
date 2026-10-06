@@ -77,10 +77,6 @@ const isGrammarValue = (value: JsonValue): boolean =>
         ? Object.entries(value).every(([key, entry]) => key !== "" && isGrammarValue(entry))
         : true;
 
-// A draft the grammar would reject yields no types or columns, so it is not
-// worth a round trip. A partial draft that still serializes cleanly is: the
-// compiler types whatever did compile, and the builder needs that for the
-// next function in a chain.
 export const isTransformDraftValidatable = (draft: PipelineTransformFieldsDraft): boolean =>
   draft.resource !== "" && isGrammarValue(serializeTransformStep(draft.step));
 

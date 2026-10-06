@@ -66,6 +66,7 @@ const PipelineTransformFieldsLiteral = ({
   if (expr.literalKind === TransformLiteralKind.BOOLEAN) {
     return (
       <SelectInput
+        ariaLabel="Value"
         options={BOOLEAN_OPTIONS}
         value={expr.value}
         onChange={handleBooleanChange}
@@ -87,6 +88,7 @@ const PipelineTransformFieldsLiteral = ({
         : getTransformNumberError(expr.value, isTransformIntegerOnly(logicalTypes));
     return (
       <TextInput
+        ariaLabel="Value"
         inputMode="decimal"
         value={expr.value ?? ""}
         onChange={(value) => onChange({ ...expr, value: value === "" ? null : value })}
@@ -105,6 +107,7 @@ const PipelineTransformFieldsLiteral = ({
 
   return (
     <TextInput
+      ariaLabel="Value"
       value={expr.value ?? ""}
       onChange={(value) => onChange({ ...expr, value })}
       placeholder={placeholder}

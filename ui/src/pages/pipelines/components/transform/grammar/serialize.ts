@@ -81,7 +81,6 @@ export const serializeTransformStep = (step: TransformStep): JsonValue =>
     })
     .exhaustive();
 
-// Resources the builder does not cover keep their entries from base verbatim.
 export const serializeTransformDefinition = (
   stepsByResource: Map<Resource["name"], TransformStep[]>,
   grammarVersion: number,

@@ -86,6 +86,7 @@ const PipelineCanvasRoutesToolbar = ({
       <PipelineCanvasViewSwitcher />
       <Box width={PIPELINE_CANVAS_ROUTES_SEARCH_WIDTH}>
         <SearchInput
+          ariaLabel="Search resources"
           debounceMs={LIST_SEARCH_DEBOUNCE_MS}
           onSearch={onSearch}
           placeholder="Search resources..."
@@ -94,12 +95,13 @@ const PipelineCanvasRoutesToolbar = ({
       </Box>
       <Box width={PIPELINE_CANVAS_ROUTES_SINK_FILTER_WIDTH}>
         <MultiSelectInput
+          ariaLabel="Sinks"
           fillWidth
           options={getSelectAllOptions(selectAll, sinkOptions)}
           pinnedIds={[selectAll.id]}
           value={getSelectAllValue(selectAll, selectedSinkIds)}
           onChange={handleSinksChange}
-          placeholder="Sinks"
+          placeholder="Sinks..."
           variant={MultiSelectInputVariant.TERTIARY}
           size={MultiSelectInputSize.MEDIUM}
           renderValue={(options) => (

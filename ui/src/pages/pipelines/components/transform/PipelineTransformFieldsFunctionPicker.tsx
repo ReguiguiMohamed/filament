@@ -45,12 +45,13 @@ const PipelineTransformFieldsFunctionPicker = ({
 
   return (
     <SelectInput
+      ariaLabel="Function"
       options={options}
       value={fn || null}
       onChange={(id) => onChange(id ?? "")}
       isClearable
       isSearchable={options.length > TRANSFORM_SELECT_SEARCH_THRESHOLD}
-      placeholder={isInputPending ? "Complete the input first" : "Choose a function"}
+      placeholder={isInputPending ? "Complete the input first..." : "Choose a function..."}
       variant={SelectInputVariant.TERTIARY}
       size={SelectInputSize.MEDIUM}
       isError={isError}

@@ -133,8 +133,6 @@ const PipelineTransformFieldsProvider = ({
     createInitialPipelineTransformFieldsState,
   );
 
-  // Reload when the definition changes underneath us (not from our own emit)
-  // or when the edge covers a different set of resources.
   const emitted = useRef(definition);
   const [loaded, setLoaded] = useState({ definition, resources });
   if (loaded.definition !== definition || loaded.resources !== resources) {

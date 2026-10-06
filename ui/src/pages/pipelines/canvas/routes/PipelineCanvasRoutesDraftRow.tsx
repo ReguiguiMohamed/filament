@@ -252,19 +252,21 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
               <FlexItem grow={1} minWidth={0}>
                 {resourceNames ? (
                   <SelectInput
+                    ariaLabel="Resource"
                     options={resourceOptions}
                     value={resource || null}
                     onChange={(id) => {
                       if (id !== null) draftState.setResource(id);
                     }}
                     isSearchable
-                    placeholder="Resource"
+                    placeholder="Resource..."
                     size={SelectInputSize.MEDIUM}
                     isDisabled={draft.isResourceLocked}
                     fillWidth
                   />
                 ) : (
                   <TextInput
+                    ariaLabel="Resource"
                     value={resource}
                     onChange={draftState.setResource}
                     placeholder="orders.>"
@@ -282,6 +284,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                 {hasReadLevers && (
                   <Box width={PIPELINE_CANVAS_ROUTES_READ_MODE_SELECT_WIDTH}>
                     <SelectInput
+                      ariaLabel="Read mode"
                       fillWidth
                       options={readModeSelectOptions}
                       value={String(readMode)}
@@ -290,7 +293,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                       }}
                       variant={SelectInputVariant.TERTIARY}
                       size={SelectInputSize.SMALL}
-                      placeholder="Read mode"
+                      placeholder="Read mode..."
                       isDisabled={isLoading}
                     />
                   </Box>
@@ -298,6 +301,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                 {hasCursorSelect && (
                   <Box width={PIPELINE_CANVAS_ROUTES_CURSOR_SELECT_WIDTH}>
                     <SelectInput
+                      ariaLabel="Cursor"
                       fillWidth
                       options={cursorSelectOptions}
                       value={cursor || null}
@@ -306,7 +310,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                       }}
                       variant={SelectInputVariant.TERTIARY}
                       size={SelectInputSize.SMALL}
-                      placeholder="Cursor"
+                      placeholder="Cursor..."
                       isDisabled={isLoading}
                     />
                   </Box>
@@ -323,6 +327,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
               <ControlsGroup>
                 <Box width={PIPELINE_CANVAS_ROUTES_WRITE_MODE_SELECT_WIDTH}>
                   <SelectInput
+                    ariaLabel="Write mode"
                     fillWidth
                     options={writeModeSelectOptions}
                     value={String(writeMode)}
@@ -331,7 +336,7 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
                     }}
                     variant={SelectInputVariant.TERTIARY}
                     size={SelectInputSize.SMALL}
-                    placeholder="Write mode"
+                    placeholder="Write mode..."
                     isDisabled={isLoading}
                   />
                 </Box>
@@ -339,13 +344,14 @@ const PipelineCanvasRoutesDraftRow = ({ draftState }: PipelineCanvasRoutesDraftR
             </EdgeArea>
             <Box width={PIPELINE_CANVAS_ROUTES_SINK_ISLAND_WIDTH}>
               <SelectInput
+                ariaLabel="Sink"
                 fillWidth
                 options={sinkOptions}
                 value={draft.sinkId || null}
                 onChange={(id) => {
                   if (id !== null) draftState.setSinkId(id);
                 }}
-                placeholder="Sink"
+                placeholder="Sink..."
                 size={SelectInputSize.MEDIUM}
                 isDisabled={sinkOptions.length <= 1}
               />

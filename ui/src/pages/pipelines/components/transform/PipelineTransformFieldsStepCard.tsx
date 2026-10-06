@@ -75,12 +75,13 @@ const PipelineTransformFieldsStepCard = ({
                 gutter="for"
               >
                 <SelectInput
+                  ariaLabel="Resource"
                   options={resourceOptions}
                   value={draft.resource || null}
                   onChange={(id) => {
                     if (id !== null) setResource(id);
                   }}
-                  placeholder="Choose a resource"
+                  placeholder="Choose a resource..."
                   variant={SelectInputVariant.TERTIARY}
                   size={SelectInputSize.MEDIUM}
                   isDisabled={isReadOnly}

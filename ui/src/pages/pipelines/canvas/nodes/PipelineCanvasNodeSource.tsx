@@ -66,8 +66,6 @@ const PipelineCanvasNodeSource = memo(({ id, data, selected }: PipelineCanvasNod
       (name): name is string => !!name && name !== nodeHandleId,
     );
     const own = edges.filter((edge) => edge.source === id && edge.data?.transform !== undefined);
-    // A resource routed to several sinks is invalid if any of its edges is.
-    // An all-resources edge marks every resource its definition names.
     const transformed = new Map<string, boolean>();
     for (const edge of own) {
       const resource = getCanvasEdgeResource(edge);

@@ -125,8 +125,8 @@ const PipelineTransformFieldsSubject = ({
             literalKind
               ? TRANSFORM_LITERAL_KIND_TO_PLACEHOLDER_MAP[literalKind]
               : isColumnOnly
-                ? "Choose a column"
-                : "Choose a column or value"
+                ? "Choose a column..."
+                : "Choose a column or value..."
           }
           logicalTypes={
             action.kind === TransformActionKind.FUNCTION

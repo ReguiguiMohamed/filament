@@ -59,7 +59,7 @@ const PipelineTransformFieldsStepDrop = ({
                   ),
                 })
               }
-              placeholder="Choose a column"
+              placeholder="Choose a column..."
               isColumnOnly
               isError={errors.has(getTransformDropPath(index))}
             />

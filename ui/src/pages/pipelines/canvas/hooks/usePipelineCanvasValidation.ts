@@ -35,12 +35,8 @@ export enum PipelineCanvasValidationIssueKind {
 
 export interface PipelineCanvasValidationIssue {
   kind: PipelineCanvasValidationIssueKind;
-  // Set when a resource's transformation no longer compiles; the builder
-  // holds the step-level messages.
   resource?: string;
-  // The canvas edge carrying that resource, so the issue can open its panel.
   edgeId?: CanvasEdge["id"];
-  // Steps that failed to compile on that resource.
   invalidSteps?: number;
   message: string;
 }
@@ -54,8 +50,6 @@ export interface PipelineCanvasValidation {
   isError: boolean;
 }
 
-// Transform issues are keyed by their path in the definition; every other
-// edge error names the lever it concerns.
 const isTransformIssue = (error: ValidationError): boolean =>
   error.field === "transform" || error.field.startsWith("resources[");
 
@@ -98,8 +92,6 @@ const getCanvasValidationIssues = (
       })),
     ];
   });
-  // Graph-level problems collapse to one row; the canvas itself shows what
-  // is missing.
   const graphIssues: PipelineCanvasValidationIssue[] =
     validation.errors.length > 0
       ? [{ kind: PipelineCanvasValidationIssueKind.GRAPH, message: "Invalid pipeline graph" }]
@@ -107,9 +99,6 @@ const getCanvasValidationIssues = (
   return [...edgeIssues, ...graphIssues];
 };
 
-// Validates the canvas as it would be saved, so Save and the edge styling
-// agree with the server on what is invalid. The request is keyed by content,
-// so moving nodes never refetches.
 export const usePipelineCanvasValidation = (): PipelineCanvasValidation => {
   const { id } = useParams({ from: "/_app/pipelines/$id" });
   const { data: pipelineData } = useSuspenseGetPipelineQuery({

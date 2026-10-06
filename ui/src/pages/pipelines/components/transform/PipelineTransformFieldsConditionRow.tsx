@@ -143,17 +143,18 @@ const PipelineTransformFieldsConditionRow = ({
         <PipelineTransformFieldsLeaf
           expr={root}
           onChange={setColumn}
-          placeholder="Choose a column"
+          placeholder="Choose a column..."
           isColumnOnly
           isError={editor.errors.has(call ? getTransformInputPath(path, call) : path)}
         />
         <OperatorValue>
           <SelectInput
+            ariaLabel="Operator"
             options={operatorOptions}
             value={selectedOperatorId || null}
             onChange={(id) => (id === null ? onChange(root) : setOperator(id))}
             isClearable
-            placeholder="Choose an operator"
+            placeholder="Choose an operator..."
             variant={SelectInputVariant.TERTIARY}
             size={SelectInputSize.MEDIUM}
             isError={call !== undefined && editor.errors.has(path)}
@@ -164,7 +165,7 @@ const PipelineTransformFieldsConditionRow = ({
             <PipelineTransformFieldsLeaf
               expr={value}
               onChange={setValue}
-              placeholder="Value"
+              placeholder="Value..."
               logicalTypes={getTransformArgumentTypes(fn, 1, columnType)}
               isLiteralOnly={valueSpec.isLiteral}
               isColumnOnly={valueSpec.isColumn}

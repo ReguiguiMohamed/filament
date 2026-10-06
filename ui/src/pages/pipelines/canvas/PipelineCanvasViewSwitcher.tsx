@@ -24,6 +24,7 @@ const PipelineCanvasViewSwitcher = () => {
 
   return (
     <ToggleInput
+      ariaLabel="View"
       options={items}
       value={view}
       onChange={setView}

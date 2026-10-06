@@ -62,7 +62,7 @@ const PipelineTransformFieldsStepRename = ({
                   from: next.kind === TransformExprKind.COLUMN ? next.name : "",
                 })
               }
-              placeholder="Choose a column"
+              placeholder="Choose a column..."
               isColumnOnly
             />
           </PipelineTransformFieldsRow>
@@ -74,6 +74,7 @@ const PipelineTransformFieldsStepRename = ({
           gutter="to"
         >
           <TextInput
+            ariaLabel="New name"
             value={pair.to}
             onChange={(to) => setPair(index, { ...pair, to })}
             placeholder={pair.from ? `${pair.from}${TRANSFORM_NEW_COLUMN_SUFFIX}` : "New name"}
