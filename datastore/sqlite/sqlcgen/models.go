@@ -210,6 +210,59 @@ type Schedule struct {
 	UpdatedAt       int64
 }
 
+type SchemaBindingRevision struct {
+	TenantID       string
+	ScopeID        string
+	Revision       int64
+	PayloadVersion int64
+	BindingsBytes  []byte
+	CreatedAt      int64
+}
+
+type SchemaOperation struct {
+	TenantID          string
+	ScopeID           string
+	OperationID       string
+	Sequence          int64
+	Revision          int64
+	Phase             string
+	PayloadVersion    int64
+	RecordBytes       []byte
+	ActivatedRevision int64
+	CreatedAt         int64
+	UpdatedAt         int64
+	ActivatedAt       sql.NullInt64
+}
+
+type SchemaState struct {
+	TenantID           string
+	ScopeID            string
+	PipelineID         string
+	RouteID            string
+	ContractID         string
+	Revision           int64
+	PayloadVersion     int64
+	InitialBytes       []byte
+	BindingsBytes      []byte
+	PendingOperationID string
+	CreatedAt          int64
+	UpdatedAt          int64
+	StorageRevision    int64
+}
+
+type SchemaVersion struct {
+	TenantID          string
+	ScopeID           string
+	VersionID         string
+	Resource          string
+	PreviousVersionID string
+	EncodingVersion   int64
+	Fingerprint       []byte
+	ModelBytes        []byte
+	RecordBytes       []byte
+	CreatedAt         int64
+}
+
 type Secret struct {
 	TenantID   string
 	Ref        string

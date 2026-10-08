@@ -314,6 +314,59 @@ type Schedule struct {
 	UpdatedAt       pgtype.Timestamptz
 }
 
+type SchemaBindingRevision struct {
+	TenantID       string
+	ScopeID        string
+	Revision       int64
+	PayloadVersion int64
+	BindingsBytes  []byte
+	CreatedAt      pgtype.Timestamptz
+}
+
+type SchemaOperation struct {
+	TenantID          string
+	ScopeID           string
+	OperationID       string
+	Sequence          int64
+	Revision          int64
+	Phase             string
+	PayloadVersion    int64
+	RecordBytes       []byte
+	ActivatedRevision int64
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	ActivatedAt       pgtype.Timestamptz
+}
+
+type SchemaState struct {
+	TenantID           string
+	ScopeID            string
+	PipelineID         string
+	RouteID            string
+	ContractID         string
+	Revision           int64
+	PayloadVersion     int64
+	InitialBytes       []byte
+	BindingsBytes      []byte
+	PendingOperationID string
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	StorageRevision    int64
+}
+
+type SchemaVersion struct {
+	TenantID          string
+	ScopeID           string
+	VersionID         string
+	Resource          string
+	PreviousVersionID string
+	EncodingVersion   int64
+	Fingerprint       []byte
+	ModelBytes        []byte
+	RecordBytes       []byte
+	CreatedAt         pgtype.Timestamptz
+}
+
 type Secret struct {
 	ID              string
 	TenantID        string
