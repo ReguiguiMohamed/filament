@@ -46,6 +46,24 @@ type Notifier struct {
 	UpdatedAt        int64
 }
 
+type Outbox struct {
+	Sequence       int64
+	TenantID       string
+	ID             string
+	Destination    string
+	OrderingKey    string
+	Kind           string
+	PayloadVersion int64
+	Payload        []byte
+	CreatedAt      int64
+	AttemptCount   int64
+	NextAttemptAt  int64
+	LastErrorCode  string
+	PublishedAt    int64
+	ClaimToken     string
+	ClaimExpiresAt int64
+}
+
 type Pipeline struct {
 	ID                  string
 	TenantID            string
